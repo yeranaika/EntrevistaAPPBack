@@ -13,3 +13,4 @@ services:
       - "5432:5432"
     volumes:
       - ./data:/var/lib/postgresql/data
+      - ./BasedeDatos.EntrevistaApp.sql:/docker-entrypoint-initdb.d/BasedeDatos.EntrevistaApp.sql
