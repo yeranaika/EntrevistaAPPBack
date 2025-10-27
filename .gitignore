@@ -34,3 +34,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker / PostgreSQL ###
+data/
+*.sql~        # evita subir backups temporales
+docker-compose.override.yml
