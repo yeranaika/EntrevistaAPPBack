@@ -1,7 +1,8 @@
+// src/main/kotlin/plugins/Settings.kt
 package plugins
 
-import com.typesafe.config.ConfigFactory
 import io.ktor.server.application.*
+import io.github.cdimascio.dotenv.dotenv
 
 data class Settings(
     val dbUrl: String,
@@ -13,17 +14,23 @@ data class Settings(
 )
 
 fun Application.settings(): Settings {
-    // Ktor ya carga application.yaml; si pasas -Dconfig.file o -Dconfig.resource, se fusiona/override.
     val cfg = environment.config
-    fun get(path: String): String =
-        cfg.propertyOrNull(path)?.getString() ?: error("Falta config: $path")
+    val env = dotenv {
+        ignoreIfMissing = true   // en CI/Prod puedes no tener .env
+    }
+
+    fun read(key: String, path: String): String =
+        env[key]                                   // 1) .env
+        ?: System.getenv(key)                      // 2) variables de entorno del SO
+        ?: cfg.propertyOrNull(path)?.getString()   // 3) application.yaml
+        ?: error("Falta config: $key / $path")
 
     return Settings(
-        dbUrl       = get("db.url"),
-        dbUser      = get("db.user"),
-        dbPass      = get("db.pass"),
-        jwtIssuer   = get("security.jwt.issuer"),
-        jwtAudience = get("security.jwt.audience"),
-        jwtSecret   = get("security.jwt.secret"),
+        dbUrl       = read("DB_URL", "db.url"),
+        dbUser      = read("DB_USER", "db.user"),
+        dbPass      = read("DB_PASS", "db.pass"),
+        jwtIssuer   = read("JWT_ISSUER", "security.jwt.issuer"),
+        jwtAudience = read("JWT_AUDIENCE", "security.jwt.audience"),
+        jwtSecret   = read("JWT_SECRET", "security.jwt.secret"),
     )
 }

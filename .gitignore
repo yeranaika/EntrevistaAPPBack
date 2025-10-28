@@ -11,6 +11,8 @@ build/
 # ignorar credenciales
 /src/main/resources/secrets.conf
 *.secrets.*
+.env
+.env.*
 
 ### STS ###
 .apt_generated

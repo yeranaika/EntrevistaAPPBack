@@ -26,6 +26,9 @@ application {
 }
 
 dependencies {
+    //dpara manejar variables de entorno
+    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
+
     // Ktor
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
@@ -63,9 +66,4 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages-jvm:3.0.0")
     implementation("io.ktor:ktor-server-auth-jvm:3.0.0")
     implementation("io.ktor:ktor-server-auth-jwt-jvm:3.0.0")
-}
-
-// tareas clave secreta
-tasks.named<JavaExec>("run") {
-    jvmArgs("-Dconfig.resource=secrets.conf")
 }
