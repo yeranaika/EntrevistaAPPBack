@@ -8,9 +8,9 @@ build/
 /src/DB/data/*
 !/src/DB/data/.gitkeep
 
-# Nunca subir secretos entorno env
-.env
-*.env
+# ignorar credenciales
+/src/main/resources/secrets.conf
+*.secrets.*
 
 ### STS ###
 .apt_generated
