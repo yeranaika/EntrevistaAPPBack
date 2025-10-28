@@ -15,6 +15,17 @@ CREATE TABLE usuario (
     CONSTRAINT chk_email_format CHECK (correo ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
+-- Tabla de refresh tokens para gestión de sesiones
+CREATE TABLE refresh_token (
+    refresh_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    issued_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT chk_rt_exp CHECK (expires_at > issued_at)
+);
+
 CREATE TABLE perfil_usuario (
     perfil_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
@@ -281,6 +292,9 @@ CREATE INDEX idx_cache_dispositivo ON cache_offline(dispositivo_id);
 CREATE INDEX idx_log_usuario ON log_auditoria(usuario_id, fecha_creacion DESC);
 CREATE INDEX idx_log_tipo ON log_auditoria(tipo_evento, fecha_creacion DESC);
 
+-- Índices para refresh tokens
+CREATE INDEX  idx_refresh_usuario ON refresh_token(usuario_id);
+CREATE INDEX  idx_refresh_validos
 
 -- COMENTARIOS DE DOCUMENTACIÓN
 
