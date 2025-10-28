@@ -8,6 +8,10 @@ build/
 /src/DB/data/*
 !/src/DB/data/.gitkeep
 
+# Nunca subir secretos entorno env
+.env
+*.env
+
 ### STS ###
 .apt_generated
 .classpath

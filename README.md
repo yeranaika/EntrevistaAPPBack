@@ -36,7 +36,10 @@ git switch main
 git pull
 
 # Crear rama para tu cambio
-git switch -c feature/mi-cambio
+git switch -c (nombre rama)
+
+#para el cambio de nmombre de la rama 
+git branch -m nueva
 
 # Guardar trabajo
 git add .
