@@ -6,10 +6,11 @@ import io.ktor.server.netty.EngineMain
 // importa desde el package 'plugins'
 import plugins.configureSerialization
 import plugins.configureStatusPages
-import plugins.configureDatabase
-import plugins.configureSecurity
 import com.example.configureMonitoring
-import com.example.configureRouting
+import plugins.configureDatabase
+import security.configureSecurity
+
+import routes.configureRouting
 
 fun main(args: Array<String>) = EngineMain.main(args)
 

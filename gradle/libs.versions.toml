@@ -31,3 +31,4 @@ postgresql                      = { module = "org.postgresql:postgresql", versio
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktor       = { id = "io.ktor.plugin",         version.ref = "ktor" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
