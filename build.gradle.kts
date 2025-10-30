@@ -5,6 +5,7 @@ plugins {
     application
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
+    alias(libs.plugins.kotlin.serialization) // <- NUEVO
 }
 
 group = "com.example"

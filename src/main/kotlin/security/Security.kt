@@ -1,4 +1,4 @@
-package plugins
+package security
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -6,6 +6,8 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.util.AttributeKey
+import plugins.settings   
+
 
 data class AuthCtx(val issuer: String, val audience: String, val algorithm: Algorithm)
 val AuthCtxKey = AttributeKey<AuthCtx>("auth-ctx")
