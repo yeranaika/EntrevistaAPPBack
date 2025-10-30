@@ -1,33 +1,30 @@
+// src/main/kotlin/routes/Routing.kt
 package routes
 
+import data.UserRepository
+import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
-import com.auth0.jwt.algorithms.Algorithm
-import plugins.settings
-import security.AuthCtx
-import security.AuthCtxKey
+import routes.auth.authRoutes
 
 fun Application.configureRouting() {
     routing {
-        get("/health") { call.respondText("OK") }
-
-        val ctx = if (attributes.contains(AuthCtxKey)) {
-            attributes[AuthCtxKey]
-        } else {
-            // Fallback por si configureSecurity() aún no puso el atributo
-            val s = settings()
-            AuthCtx(s.jwtIssuer, s.jwtAudience, Algorithm.HMAC512(s.jwtSecret))
+        // Healthcheck simple
+        get("/health") {
+            call.respondText("OK", ContentType.Text.Plain)
         }
 
-        authRoutes(ctx.issuer, ctx.audience, ctx.algorithm)
+        // Repositorio y rutas públicas de auth
+        val userRepo = UserRepository()
+        authRoutes(userRepo)  // <- SOLO pasa el repo (coincide con la firma)
 
+        // Ejemplo de rutas protegidas (si tienes el plugin JWT con el name "auth-jwt")
         authenticate("auth-jwt") {
             get("/me") {
-                val sub = call.principal<JWTPrincipal>()!!.subject
-                call.respond(mapOf("userId" to sub))
+                // Aquí podrías leer el principal del JWT y responder datos del usuario
+                call.respond(HttpStatusCode.OK, mapOf("status" to "authenticated"))
             }
         }
     }
