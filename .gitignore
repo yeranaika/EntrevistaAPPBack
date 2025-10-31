@@ -4,6 +4,16 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# ── DB (no subir datos locales) ───────────────────────────────
+/src/DB/data/*
+!/src/DB/data/.gitkeep
+
+# ignorar credenciales
+/src/main/resources/secrets.conf
+*.secrets.*
+.env
+.env.*
+
 ### STS ###
 .apt_generated
 .classpath
