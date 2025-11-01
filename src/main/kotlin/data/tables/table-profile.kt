@@ -1,15 +1,19 @@
 package data.tables
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.builtins.serializer
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
+import org.jetbrains.exposed.sql.json.json
 
-// Tabla real: app.perfil_usuario  (usa ?currentSchema=app en tu DB_URL)
 object ProfileTable : Table("perfil_usuario") {
     val perfilId           = uuid("perfil_id")
     val usuarioId          = uuid("usuario_id").index()
     val nivelExperiencia   = varchar("nivel_experiencia", 40).nullable()
     val area               = varchar("area", 10).nullable()
-    val flagsAccTxt        = text("flags_accesibilidad").nullable()   // <<— JSON como String
+    // ← JSON tipado (si tu columna fuera JSONB usa jsonb(...) en vez de json(...))
+    val flagsAccesibilidad = json<JsonElement>("flags_accesibilidad", Json, JsonElement.serializer()).nullable()
     val notaObjetivos      = text("nota_objetivos").nullable()
     val pais               = varchar("pais", 2).nullable()
     val fechaActualizacion = timestampWithTimeZone("fecha_actualizacion")
