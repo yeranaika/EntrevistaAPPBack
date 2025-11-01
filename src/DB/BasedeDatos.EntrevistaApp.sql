@@ -40,7 +40,7 @@ CREATE TABLE perfil_usuario (
 
 CREATE TABLE  password_reset (
   token       UUID PRIMARY KEY,
-  usuario_id  UUID NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+  usuario_id  UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
   code        VARCHAR(12) NOT NULL,
   issued_at   TIMESTAMPTZ NOT NULL,
   expires_at  TIMESTAMPTZ NOT NULL,
