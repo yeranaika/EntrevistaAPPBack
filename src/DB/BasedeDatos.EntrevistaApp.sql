@@ -38,6 +38,15 @@ CREATE TABLE perfil_usuario (
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS password_reset (
+  token      UUID PRIMARY KEY,
+  usuario_id UUID NOT NULL,
+  code       VARCHAR(12) NOT NULL,
+  issued_at  TIMESTAMPTZ NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used       BOOLEAN NOT NULL DEFAULT FALSE
+);
+
 CREATE TABLE consentimiento (
     consentimiento_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
