@@ -38,14 +38,15 @@ CREATE TABLE perfil_usuario (
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS password_reset (
-  token      UUID PRIMARY KEY,
-  usuario_id UUID NOT NULL,
-  code       VARCHAR(12) NOT NULL,
-  issued_at  TIMESTAMPTZ NOT NULL,
-  expires_at TIMESTAMPTZ NOT NULL,
-  used       BOOLEAN NOT NULL DEFAULT FALSE
+CREATE TABLE  password_reset (
+  token       UUID PRIMARY KEY,
+  usuario_id  UUID NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+  code        VARCHAR(12) NOT NULL,
+  issued_at   TIMESTAMPTZ NOT NULL,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  used        BOOLEAN NOT NULL DEFAULT FALSE
 );
+
 
 CREATE TABLE consentimiento (
     consentimiento_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -280,6 +281,11 @@ CREATE TABLE log_auditoria (
 -- Índices para usuarios y perfiles
 CREATE INDEX idx_perfil_usuario ON perfil_usuario(usuario_id);
 CREATE INDEX idx_usuario_correo_activo ON usuario(correo) WHERE estado = 'activo';
+
+-- Indice para recuperacion de contraseñas
+CREATE INDEX IF NOT EXISTS idx_password_reset_usuario ON password_reset(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_code ON password_reset(code);
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires ON password_reset(expires_at);
 
 -- Índices para consentimientos y suscripciones
 CREATE INDEX idx_consentimiento_usuario ON consentimiento(usuario_id);
