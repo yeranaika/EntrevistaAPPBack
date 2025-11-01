@@ -2,11 +2,8 @@ package data.repository
 
 import data.tables.ProfileTable
 import kotlinx.coroutines.Dispatchers
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 
@@ -20,8 +17,8 @@ data class ProfileRow(
     val flagsAccesibilidad: JsonElement?
 )
 
-private suspend fun <T> dbTx(block: suspend Transaction.() -> T): T =
-    newSuspendedTransaction(context = Dispatchers.IO, statement = block)
+private suspend fun <T> dbTx(block: Transaction.() -> T): T =
+    newSuspendedTransaction(Dispatchers.IO) { block() }
 
 class ProfileRepository {
 
@@ -44,18 +41,17 @@ class ProfileRepository {
     ): UUID = dbTx {
         val pid = UUID.randomUUID()
         ProfileTable.insert {
-            it[perfilId]                = pid
-            it[usuarioId]               = userId
+            it[perfilId]                 = pid
+            it[usuarioId]                = userId
             it[ProfileTable.nivelExperiencia] = nivelExperiencia
-            it[ProfileTable.area]              = area
-            it[ProfileTable.pais]              = pais
-            it[ProfileTable.notaObjetivos]     = notaObjetivos
-            it[flagsAccTxt]             = flagsAccesibilidad?.toString() // guardamos JSON como String
+            it[ProfileTable.area]        = area
+            it[ProfileTable.pais]        = pais
+            it[ProfileTable.notaObjetivos] = notaObjetivos
+            it[ProfileTable.flagsAccesibilidad] = flagsAccesibilidad   // ← JsonElement directo
         }
         pid
     }
 
-    /** Update parcial por perfilId. */
     suspend fun updatePartial(
         perfilId: UUID,
         nivelExperiencia: String? = null,
@@ -69,24 +65,18 @@ class ProfileRepository {
             if (area != null)             it[ProfileTable.area]             = area
             if (pais != null)             it[ProfileTable.pais]             = pais
             if (notaObjetivos != null)    it[ProfileTable.notaObjetivos]    = notaObjetivos
-            if (flagsAccesibilidad != null) it[flagsAccTxt]                 = flagsAccesibilidad.toString()
+            if (flagsAccesibilidad != null) it[ProfileTable.flagsAccesibilidad] = flagsAccesibilidad // ← JsonElement
         }
     }
 
-    // ---------- Mapper ----------
-    private fun ResultRow.toRow(): ProfileRow {
-        val raw = this[ProfileTable.flagsAccTxt]
-        val json: JsonElement? = raw?.let {
-            runCatching { Json.parseToJsonElement(it) }.getOrNull() ?: JsonNull
-        }
-        return ProfileRow(
+    private fun ResultRow.toRow(): ProfileRow =
+        ProfileRow(
             perfilId           = this[ProfileTable.perfilId],
             userId             = this[ProfileTable.usuarioId],
             nivelExperiencia   = this[ProfileTable.nivelExperiencia],
             area               = this[ProfileTable.area],
             pais               = this[ProfileTable.pais],
             notaObjetivos      = this[ProfileTable.notaObjetivos],
-            flagsAccesibilidad = json
+            flagsAccesibilidad = this[ProfileTable.flagsAccesibilidad]     // ← ya viene como JsonElement?
         )
-    }
 }
