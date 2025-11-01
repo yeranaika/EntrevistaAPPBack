@@ -1,7 +1,8 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
-
-
+-- Encabezado recomendado
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE SCHEMA IF NOT EXISTS app;
+SET search_path TO app, public;
+BEGIN;
 -- 1) Núcleo de cuentas y perfil
 
 CREATE TABLE usuario (
