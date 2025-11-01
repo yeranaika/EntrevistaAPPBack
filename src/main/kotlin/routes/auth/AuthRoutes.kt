@@ -1,4 +1,5 @@
-package routes
+package routes.auth
+
 
 import com.auth0.jwt.algorithms.Algorithm
 import data.repository.PasswordResetRepository

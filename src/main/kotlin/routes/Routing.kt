@@ -6,6 +6,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import com.auth0.jwt.algorithms.Algorithm
+import routes.auth.authRoutes  
 import plugins.settings
 import security.AuthCtx
 import security.AuthCtxKey
