@@ -12,7 +12,8 @@ import io.ktor.server.routing.*
 
 import routes.auth.authRoutes
 import routes.me.meRoutes
-import routes.consent.ConsentRoutes    
+import routes.consent.ConsentRoutes
+import com.example.routes.intentosRoutes  // ⬅️ AGREGAR ESTE IMPORT
 
 import security.AuthCtx
 import security.AuthCtxKey
@@ -45,7 +46,10 @@ fun Application.configureRouting() {
         // /me y /me/perfil (GET/PUT)
         meRoutes(users, profiles)
 
-
-        ConsentRoutes(consentRepo) 
+        // Consentimientos
+        ConsentRoutes(consentRepo)
+        
+        // Intentos de prueba  ⬅️ AGREGAR ESTE COMENTARIO Y LA LÍNEA DE ABAJO
+        intentosRoutes()
     }
 }
