@@ -2,10 +2,13 @@ package routes.auth
 
 
 import com.auth0.jwt.algorithms.Algorithm
-import data.repository.PasswordResetRepository
-import data.repository.RefreshTokenRepository
-import data.repository.UserRepository
-import data.repository.ProfileRepository
+
+//repositorios
+import data.repository.usuarios.PasswordResetRepository
+import data.repository.usuarios.RefreshTokenRepository
+import data.repository.usuarios.UserRepository
+import data.repository.usuarios.ProfileRepository
+
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*

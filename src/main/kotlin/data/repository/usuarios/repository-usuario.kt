@@ -1,6 +1,7 @@
-package data.repository
+package data.repository.usuarios
 
-import data.tables.UsuarioTable
+
+import data.tables.usuarios.UsuarioTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.*

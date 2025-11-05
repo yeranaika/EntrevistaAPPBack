@@ -12,6 +12,7 @@ object UsuarioTable : Table("usuario") {
     val nombre         = varchar("nombre", 120).nullable()
     val idioma         = varchar("idioma", 10).default("es")
     val estado         = varchar("estado", 19).default("activo")
+    val rol = varchar("rol", 10).default("user")   // ← NUEVO
     val fechaCreacion  = timestampWithTimeZone("fecha_creacion") // DEFAULT now()
 
     override val primaryKey = PrimaryKey(usuarioId)

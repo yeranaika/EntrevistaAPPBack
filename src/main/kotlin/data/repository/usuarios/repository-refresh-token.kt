@@ -1,6 +1,7 @@
-package data.repository
+package data.repository.usuarios
+
 // tabla refresh_token
-import data.tables.RefreshTokenTable
+import data.tables.usuarios.RefreshTokenTable
 
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.ResultRow

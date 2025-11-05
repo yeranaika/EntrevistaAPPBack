@@ -14,8 +14,11 @@ CREATE TABLE usuario (
     nombre VARCHAR(120),
     idioma VARCHAR(10) NOT NULL DEFAULT 'es',
     estado VARCHAR(19) NOT NULL DEFAULT 'activo',
+    rol VARCHAR(10)  NOT NULL DEFAULT 'user',
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT chk_email_format CHECK (correo ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+    CONSTRAINT chk_email_format CHECK (correo ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+    CONSTRAINT chk_usuario_rol CHECK (rol IN ('user','admin'))
+
 );
 
 -- Tabla de refresh tokens para gestión de sesiones
@@ -134,18 +137,26 @@ CREATE TABLE prueba_pregunta (
 
 CREATE UNIQUE INDEX uq_prueba_pregunta_orden ON prueba_pregunta(prueba_id, orden);
 
-CREATE TABLE intento_prueba (
-    intento_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    prueba_id UUID NOT NULL REFERENCES prueba(prueba_id) ON DELETE CASCADE,
-    usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
-    fecha_inicio TIMESTAMPTZ NOT NULL DEFAULT now(),
-    fecha_fin TIMESTAMPTZ,
-    puntaje NUMERIC(5,2),
-    recomendaciones TEXT,
-    CONSTRAINT chk_puntaje_rango CHECK (puntaje >= 0 AND puntaje <= 100)
+CREATE TABLE IF NOT EXISTS public.intento_prueba (
+  intento_id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id            UUID        NOT NULL REFERENCES public.usuario(usuario_id) ON DELETE CASCADE,
+  prueba_id             UUID        NOT NULL REFERENCES public.prueba(prueba_id)  ON DELETE CASCADE,
+
+  -- tal como en tu Exposed (varchar de 50)
+  fecha_inicio          VARCHAR(50) NOT NULL,
+  fecha_fin             VARCHAR(50),
+
+  -- columnas adicionales que usa tu repo
+  puntaje_total         INTEGER     NOT NULL DEFAULT 0,
+  estado                VARCHAR(20) NOT NULL DEFAULT 'en_progreso',
+  tiempo_total_segundos INTEGER,
+  creado_en             VARCHAR(50) NOT NULL,
+  actualizado_en        VARCHAR(50) NOT NULL
 );
 
-CREATE INDEX intento_prueba_user_idx ON intento_prueba(usuario_id, prueba_id);
+-- Índices útiles
+CREATE INDEX IF NOT EXISTS idx_intento_usuario_prueba ON public.intento_prueba(usuario_id, prueba_id);
+CREATE INDEX IF NOT EXISTS idx_intento_fecha_inicio   ON public.intento_prueba(fecha_inicio);
 
 CREATE TABLE respuesta_prueba (
     respuesta_prueba_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

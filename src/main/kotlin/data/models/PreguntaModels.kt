@@ -14,8 +14,8 @@ data class CreatePreguntaReq(
     val nivel: Nivel,
     val sector: String? = null,
     val texto: String,
-    val pistas: Map<String, String>? = null,
-    val historica: Map<String, String>? = null,
+    val pistas: Map<String, String>? = null,     // se guarda como JSON string
+    val historica: Map<String, String>? = null,  // se guarda como JSON string
     val activa: Boolean = true
 )
 
@@ -26,10 +26,10 @@ data class PreguntaRes(
     val nivel: Nivel,
     val sector: String? = null,
     val texto: String,
-    val pistas: Map<String, String>? = null,
-    val historica: Map<String, String>? = null,
+    val pistas: Map<String, String>?,     // ya parseado
+    val historica: Map<String, String>?,  // ya parseado
     val activa: Boolean,
-    val fechaCreacion: String
+    val fechaCreacion: String             // ISO-8601
 )
 
 @Serializable

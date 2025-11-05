@@ -1,6 +1,7 @@
-package data.repository
+package data.repository.usuarios
 
-import data.tables.ProfileTable
+
+import data.tables.usuarios.ProfileTable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.JsonElement
 import org.jetbrains.exposed.sql.*
