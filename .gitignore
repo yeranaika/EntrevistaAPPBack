@@ -44,3 +44,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Docker / PostgreSQL ###
+*.sql~      
+docker-compose.override.yml

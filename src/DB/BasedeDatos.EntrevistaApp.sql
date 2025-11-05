@@ -1,6 +1,9 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- Encabezado recomendado
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE SCHEMA IF NOT EXISTS app;
+SET search_path TO app, public;
 
-
+BEGIN;
 
 -- 1) Núcleo de cuentas y perfil
 
@@ -36,6 +39,16 @@ CREATE TABLE perfil_usuario (
     pais VARCHAR(2),  -- ISO 3166-1 alpha-2
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE password_reset (
+  token       UUID PRIMARY KEY,
+  usuario_id  UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE, -- CORREGIDO: Era usuario(id)
+  code        VARCHAR(12) NOT NULL,
+  issued_at   TIMESTAMPTZ NOT NULL,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  used        BOOLEAN NOT NULL DEFAULT FALSE
+);
+
 
 CREATE TABLE consentimiento (
     consentimiento_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -78,7 +91,7 @@ CREATE TABLE pago (
 CREATE TABLE objetivo_carrera (
     objetivo_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
-    nombre_cargo VARCHAR(120) NOT NULL,  -- ✅ CORREGIDO: era VARCHAR(3)
+    nombre_cargo VARCHAR(120) NOT NULL,
     sector VARCHAR(10),
     skills_enfoque JSON,
     activo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -271,6 +284,11 @@ CREATE TABLE log_auditoria (
 CREATE INDEX idx_perfil_usuario ON perfil_usuario(usuario_id);
 CREATE INDEX idx_usuario_correo_activo ON usuario(correo) WHERE estado = 'activo';
 
+-- Indice para recuperacion de contraseñas
+CREATE INDEX IF NOT EXISTS idx_password_reset_usuario ON password_reset(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_code ON password_reset(code);
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires ON password_reset(expires_at);
+
 -- Índices para consentimientos y suscripciones
 CREATE INDEX idx_consentimiento_usuario ON consentimiento(usuario_id);
 CREATE INDEX idx_suscripcion_usuario ON suscripcion(usuario_id);
@@ -294,7 +312,8 @@ CREATE INDEX idx_log_tipo ON log_auditoria(tipo_evento, fecha_creacion DESC);
 
 -- Índices para refresh tokens
 CREATE INDEX  idx_refresh_usuario ON refresh_token(usuario_id);
-CREATE INDEX  idx_refresh_validos
+-- CORREGIDO: Se eliminó la línea 'CREATE INDEX  idx_refresh_validos' que estaba incompleta.
+
 
 -- COMENTARIOS DE DOCUMENTACIÓN
 
@@ -310,3 +329,5 @@ COMMENT ON COLUMN perfil_usuario.pais IS 'Código ISO 3166-1 alpha-2 (Ej: CL, US
 COMMENT ON COLUMN pregunta.nivel IS 'Códigos: jr=junior, mid=intermedio, sr=senior';
 COMMENT ON COLUMN sesion_entrevista.modo IS 'Códigos: tec=técnica, soft=habilidades blandas, mix=mixto';
 
+-- Finaliza la transacción y guarda todos los cambios
+COMMIT;
