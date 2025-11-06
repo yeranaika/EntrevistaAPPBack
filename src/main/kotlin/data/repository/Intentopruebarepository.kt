@@ -3,10 +3,10 @@ package com.example.data.repository
 import com.example.data.models.*
 import com.example.data.tables.IntentoPruebaTable
 import com.example.data.tables.RespuestaPruebaTable
-import com.example.data.tables.PreguntaMostradaTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
@@ -16,7 +16,7 @@ object IntentoPruebaRepository {
     // CREAR INTENTO
     // ============================================
     suspend fun crearIntento(usuarioId: UUID, pruebaId: UUID): IntentoPrueba = transaction {
-        val now = Instant.now().toString()
+        val now = Instant.now()
         val intentoId = UUID.randomUUID()
 
         IntentoPruebaTable.insert {
@@ -24,29 +24,26 @@ object IntentoPruebaRepository {
             it[this.usuarioId] = usuarioId
             it[this.pruebaId] = pruebaId
             it[fechaInicio] = now
-            it[estado] = "en_progreso"
-            it[creadoEn] = now
-            it[actualizadoEn] = now
         }
 
         IntentoPrueba(
             intentoId = intentoId.toString(),
             usuarioId = usuarioId.toString(),
             pruebaId = pruebaId.toString(),
-            fechaInicio = now,
+            fechaInicio = now.toString(),
             fechaFin = null,
             puntajeTotal = 0,
             estado = EstadoIntento.EN_PROGRESO,
             tiempoTotalSegundos = null,
-            creadoEn = now,
-            actualizadoEn = now
+            creadoEn = now.toString(),
+            actualizadoEn = now.toString()
         )
     }
 
     // ============================================
     // OBTENER INTENTO
     // ============================================
-    suspend fun obtenerIntento(intentoId: UUID): IntentoPrueba? = transaction {
+    suspend fun obtenerIntento(intentoId: UUID, usuarioIdFromJWT: String? = null): IntentoPrueba? = transaction {
         IntentoPruebaTable
             .selectAll()
             .where { IntentoPruebaTable.intentoId eq intentoId }
@@ -55,12 +52,55 @@ object IntentoPruebaRepository {
     }
 
     // ============================================
-    // OBTENER SIGUIENTE PREGUNTA (placeholder)
+    // OBTENER SIGUIENTE PREGUNTA
     // ============================================
     suspend fun obtenerSiguientePregunta(intentoId: UUID): PreguntaConOrden? = transaction {
-        // TODO: Implementar segun tu modelo de preguntas
-        // Por ahora retorna null
-        null
+        // 1. Obtener el intento para saber qué prueba es
+        val intento = IntentoPruebaTable
+            .selectAll()
+            .where { IntentoPruebaTable.intentoId eq intentoId }
+            .singleOrNull() ?: return@transaction null
+
+        val pruebaId = intento[IntentoPruebaTable.pruebaId]
+
+        // 2. Obtener IDs de prueba_pregunta ya respondidas
+        val preguntasRespondidasIds = RespuestaPruebaTable
+            .select(RespuestaPruebaTable.pruebaPreguntaId)
+            .where { RespuestaPruebaTable.intentoId eq intentoId }
+            .map { it[RespuestaPruebaTable.pruebaPreguntaId] }
+
+        // 3. Buscar la siguiente pregunta no respondida
+        val siguientePregunta = exec("""
+            SELECT 
+                pp.prueba_pregunta_id,
+                pp.orden,
+                p.texto,
+                p.tipo_banco,
+                pp.opciones,
+                pp.clave_correcta
+            FROM app.prueba_pregunta pp
+            JOIN app.pregunta p ON pp.pregunta_id = p.pregunta_id
+            WHERE pp.prueba_id = '$pruebaId'
+            ${if (preguntasRespondidasIds.isNotEmpty()) 
+                "AND pp.prueba_pregunta_id NOT IN (${preguntasRespondidasIds.joinToString(",") { "'$it'" }})" 
+                else ""}
+            ORDER BY pp.orden
+            LIMIT 1
+        """.trimIndent()) { rs ->
+            if (rs.next()) {
+                PreguntaConOrden(
+                    preguntaId = rs.getString("prueba_pregunta_id"),
+                    orden = rs.getInt("orden"),
+                    textoPregunta = rs.getString("texto"),
+                    opciones = null, // Las opciones están en JSON, parsear si es necesario
+                    tipoPregunta = rs.getString("tipo_banco")
+                )
+            } else {
+                null
+            }
+        }
+
+        siguientePregunta
     }
 
     // ============================================
@@ -68,26 +108,22 @@ object IntentoPruebaRepository {
     // ============================================
     suspend fun guardarRespuesta(
         intentoId: UUID,
-        preguntaId: UUID,
+        preguntaId: UUID, // Este es prueba_pregunta_id
         respuestaUsuario: String,
         esCorrecta: Boolean? = null,
         puntajeObtenido: Int = 0,
         tiempoRespuestaSegundos: Int? = null,
         orden: Int
     ): RespuestaPrueba = transaction {
-        val now = Instant.now().toString()
+        val now = Instant.now()
         val respuestaId = UUID.randomUUID()
 
         RespuestaPruebaTable.insert {
             it[this.respuestaId] = respuestaId
             it[this.intentoId] = intentoId
-            it[this.preguntaId] = preguntaId
+            it[pruebaPreguntaId] = preguntaId
             it[this.respuestaUsuario] = respuestaUsuario
-            it[this.esCorrecta] = esCorrecta
-            it[this.puntajeObtenido] = puntajeObtenido
-            it[this.tiempoRespuestaSegundos] = tiempoRespuestaSegundos
-            it[this.orden] = orden
-            it[creadoEn] = now
+            it[correcta] = esCorrecta
         }
 
         RespuestaPrueba(
@@ -99,20 +135,29 @@ object IntentoPruebaRepository {
             puntajeObtenido = puntajeObtenido,
             tiempoRespuestaSegundos = tiempoRespuestaSegundos,
             orden = orden,
-            creadoEn = now
+            creadoEn = now.toString()
         )
     }
 
     // ============================================
-    // VERIFICAR SI RESPUESTA ES CORRECTA (placeholder)
+    // VERIFICAR SI RESPUESTA ES CORRECTA
     // ============================================
     suspend fun verificarRespuesta(
-        preguntaId: UUID,
+        preguntaId: UUID, // Este es prueba_pregunta_id
         respuestaUsuario: String
     ): Boolean = transaction {
-        // TODO: Implementar verificacion segun tu modelo de preguntas
-        // Por ahora retorna false
-        false
+        // Buscar la clave correcta en prueba_pregunta
+        val claveCorrecta = exec("""
+            SELECT clave_correcta
+            FROM app.prueba_pregunta
+            WHERE prueba_pregunta_id = '$preguntaId'
+            LIMIT 1
+        """.trimIndent()) { rs ->
+            if (rs.next()) rs.getString("clave_correcta") else null
+        }
+
+        // Comparar (case-insensitive)
+        claveCorrecta?.equals(respuestaUsuario, ignoreCase = true) ?: false
     }
 
     // ============================================
@@ -133,7 +178,7 @@ object IntentoPruebaRepository {
         intentoId: UUID,
         abandonado: Boolean = false
     ): FinalizarIntentoResponse = transaction {
-        val now = Instant.now().toString()
+        val now = Instant.now()
         
         // Obtener intento
         val intento = IntentoPruebaTable
@@ -148,50 +193,69 @@ object IntentoPruebaRepository {
             .toList()
 
         val totalPreguntas = respuestas.size
-        val respuestasCorrectas = respuestas.count { it[RespuestaPruebaTable.esCorrecta] == true }
-        val puntajeTotal = respuestas.sumOf { it[RespuestaPruebaTable.puntajeObtenido] }
+        val respuestasCorrectas = respuestas.count { it[RespuestaPruebaTable.correcta] == true }
+        
+        // Calcular puntaje (0-100)
+        val puntaje = if (totalPreguntas > 0) {
+            BigDecimal((respuestasCorrectas.toDouble() / totalPreguntas) * 100)
+                .setScale(2, java.math.RoundingMode.HALF_UP)
+        } else {
+            BigDecimal.ZERO
+        }
         
         // Calcular tiempo total
-        val fechaInicio = Instant.parse(intento[IntentoPruebaTable.fechaInicio])
-        val tiempoTotal = (Instant.now().epochSecond - fechaInicio.epochSecond).toInt()
+        val fechaInicio = intento[IntentoPruebaTable.fechaInicio]
+        val tiempoTotal = (now.epochSecond - fechaInicio.epochSecond).toInt()
+
+        // Generar recomendaciones
+        val porcentajeAciertos = puntaje.toDouble()
+        val recomendacionesTexto = generarRecomendaciones(porcentajeAciertos, totalPreguntas)
+            .joinToString("\n")
 
         // Actualizar intento
         IntentoPruebaTable.update({ IntentoPruebaTable.intentoId eq intentoId }) {
             it[fechaFin] = now
-            it[this.puntajeTotal] = puntajeTotal
-            it[estado] = if (abandonado) "abandonado" else "finalizado"
-            it[tiempoTotalSegundos] = tiempoTotal
-            it[actualizadoEn] = now
+            it[this.puntaje] = puntaje
+            it[recomendaciones] = recomendacionesTexto
         }
-
-        val porcentajeAciertos = if (totalPreguntas > 0) {
-            (respuestasCorrectas.toDouble() / totalPreguntas) * 100
-        } else 0.0
-
-        // Generar recomendaciones
-        val recomendaciones = generarRecomendaciones(porcentajeAciertos, totalPreguntas)
 
         FinalizarIntentoResponse(
             intentoId = intentoId.toString(),
-            puntajeTotal = puntajeTotal,
+            puntajeTotal = puntaje.toInt(),
             totalPreguntas = totalPreguntas,
             respuestasCorrectas = respuestasCorrectas,
             porcentajeAciertos = porcentajeAciertos,
             tiempoTotalSegundos = tiempoTotal,
             estado = if (abandonado) EstadoIntento.ABANDONADO else EstadoIntento.FINALIZADO,
-            recomendaciones = recomendaciones
+            recomendaciones = generarRecomendaciones(porcentajeAciertos, totalPreguntas)
         )
     }
 
     // ============================================
     // OBTENER PROGRESO
     // ============================================
-    suspend fun obtenerProgreso(intentoId: UUID, totalPreguntas: Int): ProgresoIntento = transaction {
+    suspend fun obtenerProgreso(intentoId: UUID): ProgresoIntento = transaction {
         val respondidas = RespuestaPruebaTable
             .selectAll()
             .where { RespuestaPruebaTable.intentoId eq intentoId }
             .count()
             .toInt()
+
+        // Obtener total de preguntas de la prueba
+        val intento = IntentoPruebaTable
+            .selectAll()
+            .where { IntentoPruebaTable.intentoId eq intentoId }
+            .singleOrNull() ?: return@transaction ProgresoIntento(0, 0, 0.0)
+        
+        val pruebaId = intento[IntentoPruebaTable.pruebaId]
+        
+        val totalPreguntas = exec("""
+            SELECT COUNT(*) as total
+            FROM app.prueba_pregunta
+            WHERE prueba_id = '$pruebaId'
+        """.trimIndent()) { rs ->
+            if (rs.next()) rs.getInt("total") else 0
+        } ?: 0
 
         val porcentaje = if (totalPreguntas > 0) {
             (respondidas.toDouble() / totalPreguntas) * 100
@@ -216,7 +280,7 @@ object IntentoPruebaRepository {
     }
 
     // ============================================
-    // OBTENER ESTADISTICAS (simplificado)
+    // OBTENER ESTADISTICAS
     // ============================================
     suspend fun obtenerEstadisticas(intentoId: UUID): EstadisticasIntento? = transaction {
         val intento = IntentoPruebaTable
@@ -231,20 +295,27 @@ object IntentoPruebaRepository {
             .toList()
 
         val totalRespuestas = respuestas.size
-        val respuestasCorrectas = respuestas.count { it[RespuestaPruebaTable.esCorrecta] == true }
+        val respuestasCorrectas = respuestas.count { it[RespuestaPruebaTable.correcta] == true }
         val porcentaje = if (totalRespuestas > 0) {
             (respuestasCorrectas.toDouble() / totalRespuestas) * 100
         } else 0.0
 
+        // Calcular tiempo total si está finalizado
+        val tiempoTotal = intento.fechaFin?.let { fechaFin ->
+            val inicio = Instant.parse(intento.fechaInicio)
+            val fin = Instant.parse(fechaFin)
+            (fin.epochSecond - inicio.epochSecond).toInt()
+        }
+
         EstadisticasIntento(
             intentoId = intento.intentoId,
-            usuarioNombre = "Usuario", // TODO: Obtener del join con usuario
-            pruebaTitulo = "Prueba", // TODO: Obtener del join con prueba
+            usuarioNombre = "Usuario", // TODO: Join con usuario
+            pruebaTitulo = "Prueba", // TODO: Join con prueba
             fechaInicio = intento.fechaInicio,
             fechaFin = intento.fechaFin,
             puntajeTotal = intento.puntajeTotal,
             estado = intento.estado,
-            tiempoTotal = intento.tiempoTotalSegundos,
+            tiempoTotal = tiempoTotal,
             totalRespuestas = totalRespuestas,
             respuestasCorrectas = respuestasCorrectas,
             porcentajeAciertos = porcentaje
@@ -256,22 +327,31 @@ object IntentoPruebaRepository {
     // ============================================
 
     private fun rowToIntento(row: ResultRow): IntentoPrueba {
+        val fechaInicio = row[IntentoPruebaTable.fechaInicio]
+        val fechaFin = row[IntentoPruebaTable.fechaFin]
+        
+        // Inferir estado basado en fecha_fin
+        val estado = when {
+            fechaFin == null -> EstadoIntento.EN_PROGRESO
+            else -> EstadoIntento.FINALIZADO
+        }
+
+        // Calcular tiempo total si está finalizado
+        val tiempoTotal = fechaFin?.let {
+            (it.epochSecond - fechaInicio.epochSecond).toInt()
+        }
+
         return IntentoPrueba(
             intentoId = row[IntentoPruebaTable.intentoId].toString(),
             usuarioId = row[IntentoPruebaTable.usuarioId].toString(),
             pruebaId = row[IntentoPruebaTable.pruebaId].toString(),
-            fechaInicio = row[IntentoPruebaTable.fechaInicio],
-            fechaFin = row[IntentoPruebaTable.fechaFin],
-            puntajeTotal = row[IntentoPruebaTable.puntajeTotal],
-            estado = when(row[IntentoPruebaTable.estado].lowercase()) {
-                "en_progreso" -> EstadoIntento.EN_PROGRESO
-                "finalizado" -> EstadoIntento.FINALIZADO
-                "abandonado" -> EstadoIntento.ABANDONADO
-                else -> EstadoIntento.EN_PROGRESO
-            },
-            tiempoTotalSegundos = row[IntentoPruebaTable.tiempoTotalSegundos],
-            creadoEn = row[IntentoPruebaTable.creadoEn],
-            actualizadoEn = row[IntentoPruebaTable.actualizadoEn]
+            fechaInicio = fechaInicio.toString(),
+            fechaFin = fechaFin?.toString(),
+            puntajeTotal = row[IntentoPruebaTable.puntaje]?.toInt() ?: 0,
+            estado = estado,
+            tiempoTotalSegundos = tiempoTotal,
+            creadoEn = fechaInicio.toString(),
+            actualizadoEn = (fechaFin ?: fechaInicio).toString()
         )
     }
 

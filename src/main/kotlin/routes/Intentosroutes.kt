@@ -84,13 +84,15 @@ fun Route.intentosRoutes() {
                     return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "intentoId invalido"))
                 }
 
-                // Verificar que el intento existe y pertenece al usuario
-                val intento = IntentoPruebaRepository.obtenerIntento(intentoUUID)
-                    ?: return@get call.respond(HttpStatusCode.NotFound, mapOf("error" to "Intento no encontrado"))
-
-                // Verificar autorizacion
+                // Obtener usuario autenticado
                 val principal = call.principal<JWTPrincipal>()
                 val usuarioId = principal?.subject
+                
+                // Verificar que el intento existe y pertenece al usuario
+                val intento = IntentoPruebaRepository.obtenerIntento(intentoUUID, usuarioId)
+                    ?: return@get call.respond(HttpStatusCode.NotFound, mapOf("error" to "Intento no encontrado"))
+
+                // Verificar autorización (ahora debería funcionar porque usamos el mismo usuarioId)
                 if (intento.usuarioId != usuarioId) {
                     return@get call.respond(HttpStatusCode.Forbidden, mapOf("error" to "No autorizado"))
                 }
@@ -116,10 +118,7 @@ fun Route.intentosRoutes() {
                 }
 
                 // Obtener progreso
-                val progreso = IntentoPruebaRepository.obtenerProgreso(
-                    intentoUUID,
-                    totalPreguntas = 10 // TODO: Obtener del objeto prueba
-                )
+                val progreso = IntentoPruebaRepository.obtenerProgreso(intentoUUID)
 
                 val response = ObtenerSiguientePreguntaResponse(
                     pregunta = siguientePregunta,
