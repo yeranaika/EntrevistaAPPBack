@@ -1,4 +1,4 @@
-package data.repository
+package data.repository.admin
 
 import data.mapper.toPreguntaRes
 import data.models.CreatePreguntaReq

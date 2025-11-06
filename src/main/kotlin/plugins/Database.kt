@@ -8,21 +8,33 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 
+// instancia de la base de datos para usar en application
+object DatabaseFactory {
+    @Volatile private var _db: Database? = null
+    val db: Database
+        get() = _db ?: error("Database not initialized. Call configureDatabase() first.")
+    internal fun set(database: Database) { _db = database }
+}
+
 fun Application.configureDatabase() {
     val s = settings()
     var last: Throwable? = null
     repeat(30) { attempt ->
         try {
-            Database.connect(
+            // 1) CONECTA y GUARDA
+            val db = Database.connect(
                 url = s.dbUrl,
                 driver = "org.postgresql.Driver",
                 user = s.dbUser,
                 password = s.dbPass
             )
-            transaction {
+            DatabaseFactory.set(db)   // ← ← ← IMPORTANTE
+
+            // 2) Migraciones ligeras / createMissing...
+            transaction(db) {
                 SchemaUtils.createMissingTablesAndColumns(
                     UsuarioTable,
-                    ConsentimientoTable // incluye todas tus tablas aquí
+                    ConsentimientoTable // agrega el resto de tus tablas aquí
                 )
             }
             log.info("✅ DB conectada en intento ${attempt + 1}")
@@ -30,8 +42,7 @@ fun Application.configureDatabase() {
         } catch (e: Throwable) {
             last = e
             log.warn("DB no lista aún (intento ${attempt + 1}): ${e.message}")
-            // IMPORTANTE: usar sleep en vez de delay
-            Thread.sleep(1_000) // 1 segundo
+            Thread.sleep(1_000)
         }
     }
     error("No se pudo conectar a la DB: ${last?.message}")
