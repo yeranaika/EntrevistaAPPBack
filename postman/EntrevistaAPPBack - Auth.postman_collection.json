@@ -363,7 +363,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjIxMzQzMTEsImV4cCI6MTc2MjEzNTIxMX0.CZSoKC1e5KrWus8dPzQ0omLyn9dYf61S01onDsMLMxSZWtXp_9qp5uMlLhFYrStpddpGL0zAVG3jwGi0K4mdbw",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTk5OTEsImV4cCI6MTc2MjQ2MDg5MX0.5VK3ozkdBB-LMQwLYF7bqt2mumDH0veB6JUH-pk2TMNyOtyn9gLVocOSjEQV-cXu_wuo6nRzyvwkR2XfNEcpPQ",
 								"type": "text"
 							}
 						],
@@ -377,7 +377,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://127.0.0.1:8080/intentos/mis-intentos",
+							"raw": "http://127.0.0.1:8081/intentos/mis-intentos",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -385,10 +385,117 @@
 								"0",
 								"1"
 							],
-							"port": "8080",
+							"port": "8081",
 							"path": [
 								"intentos",
 								"mis-intentos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Crear Intento",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTk5OTEsImV4cCI6MTc2MjQ2MDg5MX0.5VK3ozkdBB-LMQwLYF7bqt2mumDH0veB6JUH-pk2TMNyOtyn9gLVocOSjEQV-cXu_wuo6nRzyvwkR2XfNEcpPQ",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/intentos",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"pruebas",
+								"4e2c10a9-c301-497b-8a2f-f937d2a402fa",
+								"intentos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Responder Pregunta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTk5OTEsImV4cCI6MTc2MjQ2MDg5MX0.5VK3ozkdBB-LMQwLYF7bqt2mumDH0veB6JUH-pk2TMNyOtyn9gLVocOSjEQV-cXu_wuo6nRzyvwkR2XfNEcpPQ"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"preguntaId\": \"61c7c145-3faa-4ce2-a2a4-94bc52bdb974\",\r\n  \"respuestaUsuario\": \"1\",\r\n  \"tiempoRespuestaSegundos\": 30\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/intentos/ab5d4926-4f50-4585-948c-a294c2157eec/respuestas",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"intentos",
+								"ab5d4926-4f50-4585-948c-a294c2157eec",
+								"respuestas"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Finalizar Intento",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTcxNjMsImV4cCI6MTc2MjQ1ODA2M30.w-XtM1GFkxULZNmkNcxc4NYhzvmhSERoO7j9t3yarwqJweyjOVxV01lyPWVoLJMXShvszJGOv_kC2P5uscDvcg",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"abandonado\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/intentos/ab5d4926-4f50-4585-948c-a294c2157eec/finalizar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"intentos",
+								"ab5d4926-4f50-4585-948c-a294c2157eec",
+								"finalizar"
 							]
 						}
 					},
