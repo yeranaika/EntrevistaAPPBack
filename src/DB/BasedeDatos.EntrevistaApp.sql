@@ -18,7 +18,6 @@ CREATE TABLE usuario (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_email_format CHECK (correo ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     CONSTRAINT chk_usuario_rol CHECK (rol IN ('user','admin'))
-
 );
 
 -- Tabla de refresh tokens para gestión de sesiones
@@ -45,13 +44,12 @@ CREATE TABLE perfil_usuario (
 
 CREATE TABLE password_reset (
   token       UUID PRIMARY KEY,
-  usuario_id  UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE, -- CORREGIDO: Era usuario(id)
+  usuario_id  UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
   code        VARCHAR(12) NOT NULL,
   issued_at   TIMESTAMPTZ NOT NULL,
   expires_at  TIMESTAMPTZ NOT NULL,
   used        BOOLEAN NOT NULL DEFAULT FALSE
 );
-
 
 CREATE TABLE consentimiento (
     consentimiento_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,7 +59,6 @@ CREATE TABLE consentimiento (
     fecha_otorgado TIMESTAMPTZ NOT NULL DEFAULT now(),
     fecha_revocado TIMESTAMPTZ
 );
-
 
 -- 2) Suscripciones y pagos
 
@@ -88,7 +85,6 @@ CREATE TABLE pago (
     CONSTRAINT chk_estado_pago CHECK (estado IN ('pendiente', 'aprobado', 'fallido', 'reembolso'))
 );
 
-
 -- 3) Contenidos: objetivos/cargos y banco de preguntas
 
 CREATE TABLE objetivo_carrera (
@@ -103,9 +99,9 @@ CREATE TABLE objetivo_carrera (
 
 CREATE TABLE pregunta (
     pregunta_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tipo_banco VARCHAR(5),  -- Códigos: "tec", "soft", "mix"
+    tipo_banco VARCHAR(5),  -- tec | soft | mix
     sector VARCHAR(80),
-    nivel VARCHAR(3),  -- Códigos: "jr", "mid", "sr"
+    nivel VARCHAR(3),       -- jr | mid | sr
     texto TEXT NOT NULL,
     pistas JSON,
     historica JSON,
@@ -113,14 +109,13 @@ CREATE TABLE pregunta (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-
 -- 4) Pruebas (tests) y sus intentos
 
 CREATE TABLE prueba (
     prueba_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tipo_prueba VARCHAR(8) NOT NULL DEFAULT 'aprendiz',
     area VARCHAR(80),
-    nivel VARCHAR(3),  -- Códigos: "jr", "mid", "sr"
+    nivel VARCHAR(3),  -- jr | mid | sr
     metadata VARCHAR(120),
     activo BOOLEAN NOT NULL DEFAULT TRUE
 );
@@ -137,10 +132,11 @@ CREATE TABLE prueba_pregunta (
 
 CREATE UNIQUE INDEX uq_prueba_pregunta_orden ON prueba_pregunta(prueba_id, orden);
 
-CREATE TABLE IF NOT EXISTS public.intento_prueba (
+-- *** CORREGIDO: todo en app (por search_path) y FKs a usuario/prueba en app ***
+CREATE TABLE intento_prueba (
   intento_id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  usuario_id            UUID        NOT NULL REFERENCES public.usuario(usuario_id) ON DELETE CASCADE,
-  prueba_id             UUID        NOT NULL REFERENCES public.prueba(prueba_id)  ON DELETE CASCADE,
+  usuario_id            UUID        NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
+  prueba_id             UUID        NOT NULL REFERENCES prueba(prueba_id)  ON DELETE CASCADE,
 
   -- tal como en tu Exposed (varchar de 50)
   fecha_inicio          VARCHAR(50) NOT NULL,
@@ -155,8 +151,8 @@ CREATE TABLE IF NOT EXISTS public.intento_prueba (
 );
 
 -- Índices útiles
-CREATE INDEX IF NOT EXISTS idx_intento_usuario_prueba ON public.intento_prueba(usuario_id, prueba_id);
-CREATE INDEX IF NOT EXISTS idx_intento_fecha_inicio   ON public.intento_prueba(fecha_inicio);
+CREATE INDEX IF NOT EXISTS idx_intento_usuario_prueba ON intento_prueba(usuario_id, prueba_id);
+CREATE INDEX IF NOT EXISTS idx_intento_fecha_inicio   ON intento_prueba(fecha_inicio);
 
 CREATE TABLE respuesta_prueba (
     respuesta_prueba_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -169,14 +165,13 @@ CREATE TABLE respuesta_prueba (
 
 CREATE UNIQUE INDEX uq_respuesta_prueba_item ON respuesta_prueba(intento_id, prueba_pregunta_id);
 
-
 -- 5) Sesiones de entrevista (chat) y feedback
 
 CREATE TABLE sesion_entrevista (
     sesion_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
-    modo VARCHAR(5),  -- Códigos: "tec", "soft", "mix"
-    nivel VARCHAR(3),  -- Códigos: "jr", "mid", "sr"
+    modo VARCHAR(5),   -- tec | soft | mix
+    nivel VARCHAR(3),  -- jr | mid | sr
     fecha_inicio TIMESTAMPTZ NOT NULL DEFAULT now(),
     fecha_fin TIMESTAMPTZ,
     es_premium BOOLEAN NOT NULL DEFAULT FALSE,
@@ -215,12 +210,11 @@ CREATE UNIQUE INDEX uq_respuesta_por_pregunta ON respuesta(sesion_pregunta_id);
 CREATE TABLE retroalimentacion (
     retroalimentacion_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     respuesta_id UUID NOT NULL UNIQUE REFERENCES respuesta(respuesta_id) ON DELETE CASCADE,
-    nivel_feedback VARCHAR(8),  -- Códigos: "free", "premium"
+    nivel_feedback VARCHAR(8),  -- free | premium
     enunciado TEXT,
     aciertos JSON,
     faltantes JSON
 );
-
 
 -- 6) Instituciones y licencias
 
@@ -267,7 +261,6 @@ CREATE TABLE licencia_asignacion (
     CONSTRAINT chk_estado_asignacion CHECK (estado IN ('activa', 'inactiva', 'revocada'))
 );
 
-
 -- 7) Offline cache y auditoría
 
 CREATE TABLE cache_offline (
@@ -287,47 +280,42 @@ CREATE TABLE log_auditoria (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-
 -- ÍNDICES OPTIMIZADOS PARA PERFORMANCE
 
-
--- Índices para usuarios y perfiles
+-- usuarios y perfiles
 CREATE INDEX idx_perfil_usuario ON perfil_usuario(usuario_id);
 CREATE INDEX idx_usuario_correo_activo ON usuario(correo) WHERE estado = 'activo';
 
--- Indice para recuperacion de contraseñas
+-- password reset
 CREATE INDEX IF NOT EXISTS idx_password_reset_usuario ON password_reset(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_code ON password_reset(code);
 CREATE INDEX IF NOT EXISTS idx_password_reset_expires ON password_reset(expires_at);
 
--- Índices para consentimientos y suscripciones
+-- consentimientos y suscripciones
 CREATE INDEX idx_consentimiento_usuario ON consentimiento(usuario_id);
 CREATE INDEX idx_suscripcion_usuario ON suscripcion(usuario_id);
 CREATE INDEX idx_suscripcion_activa ON suscripcion(usuario_id, estado) WHERE estado = 'activa';
 
--- Índices para contenidos
+-- contenidos
 CREATE INDEX idx_objetivo_usuario ON objetivo_carrera(usuario_id);
 CREATE INDEX idx_pregunta_activa ON pregunta(nivel, tipo_banco) WHERE activa = TRUE;
 CREATE INDEX idx_prueba_activa ON prueba(tipo_prueba, nivel) WHERE activo = TRUE;
 
--- Índices para instituciones
+-- instituciones
 CREATE INDEX idx_institucion_miembro_inst ON institucion_miembro(institucion_id);
 CREATE INDEX idx_institucion_miembro_user ON institucion_miembro(usuario_id);
 CREATE INDEX idx_licencia_inst ON licencia_institucional(institucion_id);
 
--- Índices para cache y auditoría
+-- cache y auditoría
 CREATE INDEX idx_cache_usuario ON cache_offline(usuario_id);
 CREATE INDEX idx_cache_dispositivo ON cache_offline(dispositivo_id);
 CREATE INDEX idx_log_usuario ON log_auditoria(usuario_id, fecha_creacion DESC);
 CREATE INDEX idx_log_tipo ON log_auditoria(tipo_evento, fecha_creacion DESC);
 
--- Índices para refresh tokens
-CREATE INDEX  idx_refresh_usuario ON refresh_token(usuario_id);
--- CORREGIDO: Se eliminó la línea 'CREATE INDEX  idx_refresh_validos' que estaba incompleta.
+-- refresh tokens
+CREATE INDEX idx_refresh_usuario ON refresh_token(usuario_id);
 
-
--- COMENTARIOS DE DOCUMENTACIÓN
-
+-- COMENTARIOS
 
 COMMENT ON TABLE usuario IS 'Tabla principal de usuarios del sistema';
 COMMENT ON TABLE perfil_usuario IS 'Información extendida del perfil de usuario';
@@ -340,5 +328,4 @@ COMMENT ON COLUMN perfil_usuario.pais IS 'Código ISO 3166-1 alpha-2 (Ej: CL, US
 COMMENT ON COLUMN pregunta.nivel IS 'Códigos: jr=junior, mid=intermedio, sr=senior';
 COMMENT ON COLUMN sesion_entrevista.modo IS 'Códigos: tec=técnica, soft=habilidades blandas, mix=mixto';
 
--- Finaliza la transacción y guarda todos los cambios
 COMMIT;
