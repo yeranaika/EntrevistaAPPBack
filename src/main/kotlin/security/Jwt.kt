@@ -10,6 +10,9 @@ import java.util.Date
  * @param subject userId (UUID en string)
  * @param extraClaims claims extra (ej. mapOf("role" to "admin"))
  * @param ttlSeconds duración del token (segundos)
+ * Emite un Access Token JWT (corto).
+ * @param subject userId (string UUID)
+ * @param ttlSeconds duración en segundos (ej: 900 = 15min)
  */
 fun issueAccessToken(
     subject: String,
@@ -23,6 +26,11 @@ fun issueAccessToken(
     val exp = now.plusSeconds(ttlSeconds.toLong())
 
     val builder = JWT.create()
+    ttlSeconds: Int
+): String {
+    val now = Instant.now()
+    val exp = now.plusSeconds(ttlSeconds.toLong())
+    return JWT.create()
         .withIssuer(issuer)
         .withAudience(audience)
         .withSubject(subject)
@@ -43,4 +51,5 @@ fun issueAccessToken(
     }
 
     return builder.sign(algorithm)
+        .sign(algorithm)
 }

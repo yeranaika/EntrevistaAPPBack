@@ -3,6 +3,7 @@ package routes.consent
 
 import data.mapper.toConsentRes
 import data.repository.usuarios.ConsentimientoRepository
+import data.repository.ConsentimientoRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*

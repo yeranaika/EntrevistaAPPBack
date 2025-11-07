@@ -15,6 +15,9 @@ import routes.configureRouting
 import kotlinx.serialization.json.Json
 import data.repository.admin.PreguntaRepository
 import data.repository.admin.AdminUserRepository
+import routes.consent.ConsentRoutes
+
+
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
@@ -34,5 +37,8 @@ fun Application.module() {
 
 
     configureRouting(preguntaRepo, adminUserRepo)   // ← routing recibe 2 repos
+    configureDatabase()
+    configureSecurity()     // <- esto debe poblar AuthCtxKey
+    configureRouting()      // <- ya puede leer AuthCtx de attributes
     configureMonitoring()
 }

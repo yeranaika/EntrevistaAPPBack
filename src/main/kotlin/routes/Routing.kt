@@ -5,6 +5,11 @@ import data.repository.admin.AdminUserRepository
 import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
 import data.repository.usuarios.ConsentimientoRepository 
+import com.auth0.jwt.algorithms.Algorithm
+
+import data.repository.ProfileRepository
+import data.repository.UserRepository
+import data.repository.ConsentimientoRepository 
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -25,11 +30,15 @@ fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository
 ) {
+
+
+fun Application.configureRouting() {
     // Instancias de repos
     val users = UserRepository()
     val profiles = ProfileRepository()
     val consentRepo = ConsentimientoRepository() 
   
+
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
         attributes[AuthCtxKey]
