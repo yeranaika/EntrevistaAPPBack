@@ -1,7 +1,7 @@
 package routes.me
 
-import data.repository.ProfileRepository
-import data.repository.UserRepository
+import data.repository.usuarios.ProfileRepository
+import data.repository.usuarios.UserRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*

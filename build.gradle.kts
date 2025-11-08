@@ -64,7 +64,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-json:0.55.0")
 
     // Seguridad: hash de contraseñas en la app 
-    implementation("de.mkammerer:argon2-jvm:2.11")                     // Argon2id (reemplaza contraseña en claro)
+    implementation("de.mkammerer:argon2-jvm:2.11")     
+    implementation("at.favre.lib:bcrypt:0.10.2")                // Argon2id (reemplaza contraseña en claro)
 
     // JWT
     implementation("com.auth0:java-jwt:4.4.0")

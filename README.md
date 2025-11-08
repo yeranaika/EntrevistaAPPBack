@@ -69,3 +69,11 @@ Listo. Copia y pega en `README.md`.
   # macOS/Linux
   ./gradlew --refresh-dependencies clean run
   ```
+
+## levantamiento de base de datos docker
+
+#levanat base de datos con archivo .yml
+docker compose up -d
+
+#para verificar que se creo
+docker ps

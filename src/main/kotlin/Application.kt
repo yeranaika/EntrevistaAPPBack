@@ -7,22 +7,32 @@ import com.example.configureMonitoring
 import plugins.configureSerialization
 import plugins.configureStatusPages
 import plugins.configureDatabase
+import plugins.DatabaseFactory
 
 import security.configureSecurity
 import routes.configureRouting
 
-import routes.consent.ConsentRoutes
-
-
+import kotlinx.serialization.json.Json
+import data.repository.admin.PreguntaRepository
+import data.repository.admin.AdminUserRepository
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
 fun Application.module() {
     // Orden importante: security primero para que ponga AuthCtx en attributes
+    // (en la práctica: antes de montar las rutas; mantenemos security antes de configureRouting)
     configureSerialization()
     configureStatusPages()
-    configureDatabase()
-    configureSecurity()     // <- esto debe poblar AuthCtxKey
-    configureRouting()      // <- ya puede leer AuthCtx de attributes
+    configureDatabase()                       // ← inicializa DatabaseFactory.db
+    configureSecurity()                       // ← esto debe poblar AuthCtxKey
+
+    // --- crea repos (UNA sola vez) y pásalos al routing ---
+    val db = DatabaseFactory.db
+    val json = Json { ignoreUnknownKeys = true }
+
+    val preguntaRepo  = PreguntaRepository(db, json)
+    val adminUserRepo = AdminUserRepository(db)
+
+    configureRouting(preguntaRepo, adminUserRepo)   // ← routing recibe 2 repos
     configureMonitoring()
 }

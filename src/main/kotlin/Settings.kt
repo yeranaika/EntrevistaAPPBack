@@ -3,6 +3,7 @@ package plugins
 
 import io.ktor.server.application.*
 import io.github.cdimascio.dotenv.dotenv
+import io.ktor.util.AttributeKey
 
 data class Settings(
     val dbUrl: String,
@@ -13,8 +14,27 @@ data class Settings(
     val jwtSecret: String
 )
 
-fun Application.settings(): Settings {
-    val cfg = environment.config
+// Cache en attributes para no releer en cada uso
+private val SettingsKey = AttributeKey<Settings>("app-settings")
+
+// Cárgalo una vez al iniciar (llámalo en Application.module())
+fun Application.configureSettings() {
+    if (!attributes.contains(SettingsKey)) {
+        val s = loadSettings(environment)
+        attributes.put(SettingsKey, s)
+        // Loguea solo lo no sensible
+        log.info("Settings loaded → dbUrl=${s.dbUrl}, dbUser=${s.dbUser}, jwtIssuer=${s.jwtIssuer}, jwtAudience=${s.jwtAudience}")
+    }
+}
+
+// Obtén los settings desde cualquier parte (usa el cache si ya está)
+fun Application.settings(): Settings =
+    if (attributes.contains(SettingsKey)) attributes[SettingsKey]
+    else loadSettings(environment)
+
+// Implementación real de lectura
+private fun loadSettings(envApp: ApplicationEnvironment): Settings {
+    val cfg = envApp.config
     val env = dotenv {
         ignoreIfMissing = true   // en CI/Prod puedes no tener .env
     }
