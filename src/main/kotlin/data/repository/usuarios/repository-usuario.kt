@@ -1,6 +1,5 @@
 package data.repository.usuarios
 
-
 import data.tables.usuarios.UsuarioTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.exceptions.ExposedSQLException
@@ -14,7 +13,8 @@ data class UserRow(
     val email: String,
     val hash: String,
     val nombre: String?,
-    val idioma: String?          // ← nullable para evitar NPE si la columna permite NULL o tiene default
+    val idioma: String?,
+    val rol: String
 )
 
 private suspend fun <T> dbTx(block: suspend Transaction.() -> T): T =
@@ -27,11 +27,10 @@ class UserRepository {
     /** ¿Existe un usuario con ese correo? */
     suspend fun existsByEmail(email: String): Boolean = dbTx {
         UsuarioTable
-            .select(UsuarioTable.usuarioId)
+            .selectAll()
             .where { UsuarioTable.correo eq email }
             .limit(1)
-            .empty()
-            .not()
+            .any()
     }
 
     /** Crea un usuario y devuelve su UUID. */
@@ -39,7 +38,8 @@ class UserRepository {
         email: String,
         hash: String,
         nombre: String?,
-        idioma: String?
+        idioma: String?,
+        rol: String = "user"
     ): UUID = dbTx {
         val id = UUID.randomUUID()
         try {
@@ -48,7 +48,8 @@ class UserRepository {
                 it[correo] = email
                 it[contrasenaHash] = hash
                 it[UsuarioTable.nombre] = nombre
-                if (idioma != null) it[UsuarioTable.idioma] = idioma   // si la columna es nullable o tiene default
+                if (idioma != null) it[UsuarioTable.idioma] = idioma
+                it[UsuarioTable.rol] = rol
             }
             id
         } catch (e: ExposedSQLException) {
@@ -77,14 +78,14 @@ class UserRepository {
             ?.toUserRow()
     }
 
-    /** Actualiza solo el nombre. Retorna filas afectadas (0 o 1). */
+    /** Actualiza solo el nombre. */
     suspend fun updateNombre(id: UUID, nuevoNombre: String?): Int = dbTx {
         UsuarioTable.update({ UsuarioTable.usuarioId eq id }) {
             it[nombre] = nuevoNombre
         }
     }
 
-    /** Actualiza solo el idioma. Retorna filas afectadas (0 o 1). */
+    /** Actualiza solo el idioma. */
     suspend fun updateIdioma(id: UUID, nuevoIdioma: String?): Int = dbTx {
         if (nuevoIdioma == null) return@dbTx 0
         UsuarioTable.update({ UsuarioTable.usuarioId eq id }) {
@@ -92,18 +93,32 @@ class UserRepository {
         }
     }
 
-    /** Actualiza el hash de contraseña. Retorna filas afectadas (0 o 1). */
+    /** Actualiza el hash de contraseña. */
     suspend fun updatePasswordHash(id: UUID, newHash: String): Int = dbTx {
         UsuarioTable.update({ UsuarioTable.usuarioId eq id }) {
             it[contrasenaHash] = newHash
         }
     }
 
-    /** Actualiza el hash de contraseña (alias usado por rutas). */
-    suspend fun updatePassword(userId: UUID, newHash: String): Int = dbTx {
+    /** Alias usado por rutas. */
+    suspend fun updatePassword(userId: UUID, newHash: String): Int =
+        updatePasswordHash(userId, newHash)
+
+    /** Cambia el rol (user/admin). */
+    suspend fun updateRol(userId: UUID, rol: String): Int = dbTx {
+        require(rol == "user" || rol == "admin") { "rol inválido" }
         UsuarioTable.update({ UsuarioTable.usuarioId eq userId }) {
-            it[contrasenaHash] = newHash
+            it[UsuarioTable.rol] = rol
         }
+    }
+
+    /** ¿Es admin? (consulta directa en BD). */
+    suspend fun isAdmin(userId: UUID): Boolean = dbTx {
+        UsuarioTable
+            .selectAll()
+            .where { (UsuarioTable.usuarioId eq userId) and (UsuarioTable.rol eq "admin") }
+            .limit(1)
+            .any()
     }
 
     // ---------- Mapper ----------
@@ -112,6 +127,7 @@ class UserRepository {
         email  = this[UsuarioTable.correo],
         hash   = this[UsuarioTable.contrasenaHash],
         nombre = this[UsuarioTable.nombre],
-        idioma = this[UsuarioTable.idioma]    // compila tanto si la columna es nullable como si no
+        idioma = this[UsuarioTable.idioma],
+        rol    = this[UsuarioTable.rol]
     )
 }
