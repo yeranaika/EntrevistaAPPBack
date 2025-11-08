@@ -14,6 +14,7 @@ data class Settings(
     val jwtSecret: String
 )
 
+// Cache en attributes para no releer en cada uso
 private val SettingsKey = AttributeKey<Settings>("app-settings")
 
 // Cárgalo una vez al iniciar (llámalo en Application.module())
@@ -34,12 +35,14 @@ fun Application.settings(): Settings =
 // Implementación real de lectura
 private fun loadSettings(envApp: ApplicationEnvironment): Settings {
     val cfg = envApp.config
-    val env = dotenv { ignoreIfMissing = true } // .env opcional
+    val env = dotenv {
+        ignoreIfMissing = true   // en CI/Prod puedes no tener .env
+    }
 
     fun read(key: String, path: String): String =
         env[key]                                   // 1) .env
-        ?: System.getenv(key)                      // 2) variables del SO
-        ?: cfg.propertyOrNull(path)?.getString()   // 3) application.conf/.yaml
+        ?: System.getenv(key)                      // 2) variables de entorno del SO
+        ?: cfg.propertyOrNull(path)?.getString()   // 3) application.yaml
         ?: error("Falta config: $key / $path")
 
     return Settings(

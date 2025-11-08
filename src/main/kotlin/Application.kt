@@ -20,6 +20,7 @@ fun main(args: Array<String>) = EngineMain.main(args)
 
 fun Application.module() {
     // Orden importante: security primero para que ponga AuthCtx en attributes
+    // (en la práctica: antes de montar las rutas; mantenemos security antes de configureRouting)
     configureSerialization()
     configureStatusPages()
     configureDatabase()                       // ← inicializa DatabaseFactory.db
@@ -30,8 +31,7 @@ fun Application.module() {
     val json = Json { ignoreUnknownKeys = true }
 
     val preguntaRepo  = PreguntaRepository(db, json)
-    val adminUserRepo = data.repository.admin.AdminUserRepository(DatabaseFactory.db)
-
+    val adminUserRepo = AdminUserRepository(db)
 
     configureRouting(preguntaRepo, adminUserRepo)   // ← routing recibe 2 repos
     configureMonitoring()

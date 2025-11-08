@@ -1,0 +1,518 @@
+{
+	"info": {
+		"_postman_id": "6f5920f2-2168-4f30-895c-12dba9e11e0b",
+		"name": "EntrevistaAPPBack - Auth",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35292546"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"201 Created\", function () {",
+									"  pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"demo1@correo.com\",\n  \"password\": \"12345678\",\n  \"nombre\": \"Demo\",\n  \"idioma\": \"es\",\n  \"nivelExperiencia\": \"jr\",\n  \"area\": \"tec\",\n  \"pais\": \"CL\",\n  \"notaObjetivos\": \"Mejorar entrevistas técnicas\",\n  \"flagsAccesibilidad\": { \"tts\": true, \"altoContraste\": false }\n}\n"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/register",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"200 OK\", function () {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"const data = pm.response.json();",
+									"if (data && data.accessToken) {",
+									"  pm.environment.set('accessToken', data.accessToken);",
+									"  console.log('accessToken guardado en variable de entorno');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"demo@correo.com\",\n  \"password\": \"12345678\"\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"201 Created\", function () {",
+									"  pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"demo1@correo.com\"\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/request-reset",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"request-reset"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"201 Created\", function () {",
+									"  pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"fUFcrL7cNQrafxYSWiMnVr-_uDGVTKFH5-7FjU2P7y8\"\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/refresh",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "perfil",
+			"item": [
+				{
+					"name": "Me (protegido)",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAyMDExNywiZXhwIjoxNzYyMDIxMDE3fQ.SnP5MgOdLksxuMqgM8xrgXBO1TdNBEQ4CG_3fJGneoA9JIz5SFkCGBNp2GFBNgFvrqAN-KOa6saaOZ-N_4SERw",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/me",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Me actualizar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMTI5OCwiZXhwIjoxNzYyMDMyMTk4fQ.UhhfuiWwmeBUmtVNl3lEQKRohlCzBsf0n5bctxKJyqYo-cwqO11lVvBG1B1TLNXXB2Bn8qaAqpsiWOVp6VmAeg",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nombre\": \"Nuevo Nombre\",\r\n  \"idioma\": \"es\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8080/me",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "test",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8080/health",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "concentimiento",
+			"item": []
+		},
+		{
+			"name": "intentos",
+			"item": [
+				{
+					"name": "GET Mis Intentos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTk5OTEsImV4cCI6MTc2MjQ2MDg5MX0.5VK3ozkdBB-LMQwLYF7bqt2mumDH0veB6JUH-pk2TMNyOtyn9gLVocOSjEQV-cXu_wuo6nRzyvwkR2XfNEcpPQ",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8081/intentos/mis-intentos",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8081",
+							"path": [
+								"intentos",
+								"mis-intentos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Crear Intento",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTk5OTEsImV4cCI6MTc2MjQ2MDg5MX0.5VK3ozkdBB-LMQwLYF7bqt2mumDH0veB6JUH-pk2TMNyOtyn9gLVocOSjEQV-cXu_wuo6nRzyvwkR2XfNEcpPQ",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/intentos",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"pruebas",
+								"4e2c10a9-c301-497b-8a2f-f937d2a402fa",
+								"intentos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Responder Pregunta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTk5OTEsImV4cCI6MTc2MjQ2MDg5MX0.5VK3ozkdBB-LMQwLYF7bqt2mumDH0veB6JUH-pk2TMNyOtyn9gLVocOSjEQV-cXu_wuo6nRzyvwkR2XfNEcpPQ"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"preguntaId\": \"61c7c145-3faa-4ce2-a2a4-94bc52bdb974\",\r\n  \"respuestaUsuario\": \"1\",\r\n  \"tiempoRespuestaSegundos\": 30\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/intentos/ab5d4926-4f50-4585-948c-a294c2157eec/respuestas",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"intentos",
+								"ab5d4926-4f50-4585-948c-a294c2157eec",
+								"respuestas"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST Finalizar Intento",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIzOWI0MTA5OS1iMGU2LTQxYmMtODcwMi1kNTk3MDA3NDc2MGIiLCJpYXQiOjE3NjI0NTcxNjMsImV4cCI6MTc2MjQ1ODA2M30.w-XtM1GFkxULZNmkNcxc4NYhzvmhSERoO7j9t3yarwqJweyjOVxV01lyPWVoLJMXShvszJGOv_kC2P5uscDvcg",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"abandonado\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/intentos/ab5d4926-4f50-4585-948c-a294c2157eec/finalizar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"intentos",
+								"ab5d4926-4f50-4585-948c-a294c2157eec",
+								"finalizar"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Method: POST  \nURL: [http://127.0.0.1:8080/pruebas/{{pruebaId}}/intentos](http://127.0.0.1:8080/pruebas/%7B%7BpruebaId%7D%7D/intentos)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\nBody (ninguno)\n\n```\n---\n### **2️⃣ GET - Siguiente Pregunta**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/siguiente](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/siguiente)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\n```\n---\n### **3️⃣ POST - Responder Pregunta**\n\n ```\n\nMethod: POST  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/respuestas](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/respuestas)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}  \nContent-Type: application/json\n\nBody (JSON):  \n{  \n\"preguntaId\": \"uuid-de-pregunta\",  \n\"respuestaUsuario\": \"A\",  \n\"tiempoRespuestaSegundos\": 30  \n}\n\n```\n---\n### **4️⃣ POST - Finalizar Intento**\n\n ```\n\nMethod: POST  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/finalizar](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/finalizar)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}  \nContent-Type: application/json\n\nBody (JSON):  \n{  \n\"abandonado\": false  \n}\n\n```\n---\n### **5️⃣ GET - Mis Intentos**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/mis-intentos](http://127.0.0.1:8080/intentos/mis-intentos)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\n```\n---\n### **6️⃣ GET - Estadísticas de Intento**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/estadisticas](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/estadisticas)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}"
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		}
+	]
+}

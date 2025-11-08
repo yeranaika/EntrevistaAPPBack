@@ -6,10 +6,10 @@ import java.time.Instant
 import java.util.Date
 
 /**
- * Emite un Access Token JWT con claims mínimos.
- * @param subject userId (UUID en string)
+ * Emite un Access Token JWT (corto) con claims mínimos.
+ * @param subject userId (string UUID)
+ * @param ttlSeconds duración del token (segundos) (ej: 900 = 15min)
  * @param extraClaims claims extra (ej. mapOf("role" to "admin"))
- * @param ttlSeconds duración del token (segundos)
  */
 fun issueAccessToken(
     subject: String,

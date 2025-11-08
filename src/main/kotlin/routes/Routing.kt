@@ -29,7 +29,7 @@ fun Application.configureRouting(
     val users = UserRepository()
     val profiles = ProfileRepository()
     val consentRepo = ConsentimientoRepository() 
-  
+   
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
         attributes[AuthCtxKey]

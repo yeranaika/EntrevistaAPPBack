@@ -6,7 +6,6 @@ SET search_path TO app, public;
 BEGIN;
 
 -- 1) Núcleo de cuentas y perfil
-
 CREATE TABLE usuario (
     usuario_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     correo VARCHAR(320) NOT NULL UNIQUE,
@@ -61,7 +60,6 @@ CREATE TABLE consentimiento (
 );
 
 -- 2) Suscripciones y pagos
-
 CREATE TABLE suscripcion (
     suscripcion_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
@@ -86,7 +84,6 @@ CREATE TABLE pago (
 );
 
 -- 3) Contenidos: objetivos/cargos y banco de preguntas
-
 CREATE TABLE objetivo_carrera (
     objetivo_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
@@ -110,7 +107,6 @@ CREATE TABLE pregunta (
 );
 
 -- 4) Pruebas (tests) y sus intentos
-
 CREATE TABLE prueba (
     prueba_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tipo_prueba VARCHAR(8) NOT NULL DEFAULT 'aprendiz',
@@ -166,7 +162,6 @@ CREATE TABLE respuesta_prueba (
 CREATE UNIQUE INDEX uq_respuesta_prueba_item ON respuesta_prueba(intento_id, prueba_pregunta_id);
 
 -- 5) Sesiones de entrevista (chat) y feedback
-
 CREATE TABLE sesion_entrevista (
     sesion_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
@@ -217,7 +212,6 @@ CREATE TABLE retroalimentacion (
 );
 
 -- 6) Instituciones y licencias
-
 CREATE TABLE institucion (
     institucion_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre VARCHAR(160),
@@ -262,7 +256,6 @@ CREATE TABLE licencia_asignacion (
 );
 
 -- 7) Offline cache y auditoría
-
 CREATE TABLE cache_offline (
     cache_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
@@ -286,12 +279,12 @@ CREATE TABLE log_auditoria (
 CREATE INDEX idx_perfil_usuario ON perfil_usuario(usuario_id);
 CREATE INDEX idx_usuario_correo_activo ON usuario(correo) WHERE estado = 'activo';
 
--- password reset
+-- Índices para recuperación de contraseñas
 CREATE INDEX IF NOT EXISTS idx_password_reset_usuario ON password_reset(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_password_reset_code ON password_reset(code);
 CREATE INDEX IF NOT EXISTS idx_password_reset_expires ON password_reset(expires_at);
 
--- consentimientos y suscripciones
+-- Índices para consentimientos y suscripciones
 CREATE INDEX idx_consentimiento_usuario ON consentimiento(usuario_id);
 CREATE INDEX idx_suscripcion_usuario ON suscripcion(usuario_id);
 CREATE INDEX idx_suscripcion_activa ON suscripcion(usuario_id, estado) WHERE estado = 'activa';
@@ -312,11 +305,10 @@ CREATE INDEX idx_cache_dispositivo ON cache_offline(dispositivo_id);
 CREATE INDEX idx_log_usuario ON log_auditoria(usuario_id, fecha_creacion DESC);
 CREATE INDEX idx_log_tipo ON log_auditoria(tipo_evento, fecha_creacion DESC);
 
--- refresh tokens
+-- Índices para refresh tokens
 CREATE INDEX idx_refresh_usuario ON refresh_token(usuario_id);
 
 -- COMENTARIOS
-
 COMMENT ON TABLE usuario IS 'Tabla principal de usuarios del sistema';
 COMMENT ON TABLE perfil_usuario IS 'Información extendida del perfil de usuario';
 COMMENT ON TABLE sesion_entrevista IS 'Sesiones de entrevista simulada con IA';
