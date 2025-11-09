@@ -11,7 +11,10 @@ data class Settings(
     val dbPass: String,
     val jwtIssuer: String,
     val jwtAudience: String,
-    val jwtSecret: String
+    val jwtSecret: String,
+    val googleClientId: String, 
+    val googleClientSecret: String, 
+    val googleRedirectUri: String
 )
 
 // Cache en attributes para no releer en cada uso
@@ -52,5 +55,8 @@ private fun loadSettings(envApp: ApplicationEnvironment): Settings {
         jwtIssuer   = read("JWT_ISSUER", "security.jwt.issuer"),
         jwtAudience = read("JWT_AUDIENCE", "security.jwt.audience"),
         jwtSecret   = read("JWT_SECRET", "security.jwt.secret"),
+        googleClientId    = read("GOOGLE_CLIENT_ID", "google.clientId"),
+        googleClientSecret= read("GOOGLE_CLIENT_SECRET", "google.clientSecret"),
+        googleRedirectUri = read("GOOGLE_REDIRECT_URI", "google.redirectUri"),
     )
 }

@@ -41,6 +41,18 @@ CREATE TABLE perfil_usuario (
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+
+CREATE TABLE oauth_account (
+  oauth_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider       TEXT NOT NULL CHECK (provider IN ('google')),
+  subject        TEXT NOT NULL,                 -- "sub" del id_token
+  email          VARCHAR(320),
+  email_verified BOOLEAN,
+  usuario_id     UUID REFERENCES usuario(usuario_id) ON DELETE CASCADE,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (provider, subject)
+);
+
 CREATE TABLE password_reset (
   token       UUID PRIMARY KEY,
   usuario_id  UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,

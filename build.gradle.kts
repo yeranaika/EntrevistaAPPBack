@@ -43,6 +43,18 @@ dependencies {
     // Logging
     implementation(libs.logback.classic)
 
+    //implementacion login google
+    // Ktor (server + oauth + client HTTP para hablar con Google)
+    implementation("io.ktor:ktor-server-auth:3.+")
+    implementation("io.ktor:ktor-server-sessions:3.+")
+    implementation("io.ktor:ktor-client-cio:3.+")
+    implementation("io.ktor:ktor-client-content-negotiation:3.+")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.+")
+
+    // Opción A (simple, recomendada por Google) para validar ID tokens:
+    implementation("com.google.api-client:google-api-client:2.+")
+
+
     // Tests
     testImplementation(libs.ktor.server.test.host) // alias correcto
     testImplementation(libs.kotlin.test.junit)
