@@ -1,8 +1,6 @@
-version: '3.9'
-
 services:
   postgres:
-    image: postgres:16
+    build: .                # <--- en vez de "image: postgres:16"
     container_name: Entrevista_APP
     restart: always
     environment:
@@ -13,4 +11,3 @@ services:
       - "5432:5432"
     volumes:
       - ./data:/var/lib/postgresql/data
-      - ./BasedeDatos.EntrevistaApp.sql:/docker-entrypoint-initdb.d/BasedeDatos.EntrevistaApp.sql
