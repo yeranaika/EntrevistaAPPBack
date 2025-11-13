@@ -15,7 +15,7 @@ import routes.auth.authRoutes
 import routes.auth.googleAuthRoutes
 import routes.me.meRoutes
 import routes.consent.ConsentRoutes
-import routes.admin.AdminPreguntaCreateRoute
+import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminUserCreateRoutes
 import com.example.routes.intentosRoutes
 
@@ -70,7 +70,7 @@ fun Application.configureRouting(
         intentosRoutes()
 
         // Admin: banco de preguntas
-        AdminPreguntaCreateRoute(preguntaRepo)
+        adminPreguntaRoutes(preguntaRepo)
 
         // Admin: crear usuarios (incluye admins)
         AdminUserCreateRoutes(adminUserRepo)
