@@ -1,5 +1,6 @@
 package data.repository.usuarios
 
+import at.favre.lib.crypto.bcrypt.BCrypt
 import data.tables.usuarios.OauthAccountTable
 import data.tables.usuarios.UsuarioTable
 import kotlinx.coroutines.Dispatchers
@@ -12,31 +13,48 @@ interface UsuariosOAuthRepository {
 }
 
 class UsuariosOAuthRepositoryImpl : UsuariosOAuthRepository {
+
+    // hash para contraseña aleatoria
+    private fun hash(password: String): String =
+        BCrypt.withDefaults().hashToString(12, password.toCharArray())
+
     override suspend fun linkOrCreateFromGoogle(sub: String, email: String): UUID = db {
-        // 1) ¿Ya existe vínculo (google,sub)?
+        // 1) ¿Ya existe vínculo (google, sub)?
         OauthAccountTable
-            .selectAll().where { (OauthAccountTable.provider eq "google") and (OauthAccountTable.subject eq sub) }
+            .selectAll()
+            .where { (OauthAccountTable.provider eq "google") and (OauthAccountTable.subject eq sub) }
             .limit(1)
             .firstOrNull()
             ?.let { return@db it[OauthAccountTable.usuarioId] }
 
-        // 2) ¿Existe usuario por correo? (DSL nueva, sin slice)
+        // 2) ¿Existe usuario por correo?
         val userId = UsuarioTable
-            .selectAll().where { UsuarioTable.correo eq email }
+            .selectAll()
+            .where { UsuarioTable.correo eq email }
             .limit(1)
             .firstOrNull()
             ?.get(UsuarioTable.usuarioId)
             ?: run {
                 val id = UUID.randomUUID()
+
+                // contraseña random solo para cumplir NOT NULL
+                val randomPassword = UUID.randomUUID().toString()
+                val passwordHash   = hash(randomPassword)
+
                 UsuarioTable.insert {
-                    it[usuarioId] = id
-                    it[correo]     = email
-                    it[nombre]     = email.substringBefore("@")
+                    it[usuarioId]       = id
+                    it[correo]          = email
+                    it[nombre]          = email.substringBefore("@")
+                    it[contrasenaHash]  = passwordHash      // ⬅️ usa aquí el campo de tu tabla
+                    it[idioma]          = "es"              // si tienes default puedes omitir
+                    it[estado]          = "activo"          // idem
+                    it[rol]             = "user"
+                    // fecha_creacion la pone el DEFAULT now()
                 }
                 id
             }
 
-        // 3) Crear vínculo
+        // 3) Crear vínculo OAuth
         OauthAccountTable.insert {
             it[oauthId]       = UUID.randomUUID()
             it[provider]      = "google"
@@ -45,6 +63,7 @@ class UsuariosOAuthRepositoryImpl : UsuariosOAuthRepository {
             it[emailVerified] = true
             it[usuarioId]     = userId
         }
+
         userId
     }
 }

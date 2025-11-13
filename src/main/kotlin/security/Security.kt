@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
 import io.ktor.server.application.Application
 import io.ktor.util.AttributeKey
 import plugins.settings
-
+import io.ktor.client.plugins.logging.*   // ⬅️ IMPORTANTE
 
 
 // --- Contexto JWT que ya usabas ---
@@ -39,6 +39,10 @@ fun Application.configureSecurity() {
     val oauthHttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true })
+        }
+        install(Logging) {
+            logger = Logger.DEFAULT
+            level = LogLevel.ALL   // MUY VERBOSO, solo para debug
         }
     }
 
