@@ -54,7 +54,10 @@ fun Application.configureRouting(
     // Servicio de Billing (Google Play) usando los repos ya creados
     val billingService = GooglePlayBillingService(
         userRepo = users,
-        suscripcionRepo = suscripcionRepo
+        suscripcionRepo = suscripcionRepo,
+        packageName = s.googlePlayPackage,
+        serviceAccountJsonBase64 = s.googlePlayServiceJsonBase64,
+        useMock = s.googlePlayBillingMock
     )
 
 
