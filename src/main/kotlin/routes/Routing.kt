@@ -6,6 +6,7 @@ import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
 import data.repository.usuarios.ConsentimientoRepository
 import data.repository.usuarios.UsuariosOAuthRepositoryImpl
+import data.repository.billing.SuscripcionRepository          // ⬅️ NUEVO
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -15,16 +16,18 @@ import routes.auth.authRoutes
 import routes.auth.googleAuthRoutes
 import routes.me.meRoutes
 import routes.consent.ConsentRoutes
-import routes.admin.AdminPreguntaCreateRoute
+import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminUserCreateRoutes
 import routes.admin.adminRoutes
 import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
+import routes.billing.billingRoutes                          // ⬅️ NUEVO
 
 import plugins.settings   // ⬅ importante
 import security.AuthCtx
 import security.AuthCtxKey
 import security.auth.GoogleTokenVerifier   // ⬅️ usa este
+import security.billing.GooglePlayBillingService            // ⬅️ NUEVO
 
 // Recibimos los repos por parámetro para no crearlos aquí
 fun Application.configureRouting(
@@ -34,7 +37,8 @@ fun Application.configureRouting(
     // Instancias de repos
     val users = UserRepository()
     val profiles = ProfileRepository()
-    val consentRepo = ConsentimientoRepository() 
+    val consentRepo = ConsentimientoRepository()
+    val suscripcionRepo = SuscripcionRepository()          // ⬅️ NUEVO
    
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -49,6 +53,16 @@ fun Application.configureRouting(
     // ⬇⬇⬇ toma también la config de Google desde Settings
     val s = settings()
 
+    // Servicio de Billing (Google Play) usando los repos ya creados
+    val billingService = GooglePlayBillingService(
+        userRepo = users,
+        suscripcionRepo = suscripcionRepo,
+        packageName = s.googlePlayPackage,
+        serviceAccountJsonBase64 = s.googlePlayServiceJsonBase64,
+        useMock = s.googlePlayBillingMock
+    )
+
+
     routing {
         // Healthcheck
         get("/health") { call.respondText("OK") }
@@ -60,6 +74,12 @@ fun Application.configureRouting(
         googleAuthRoutes(
             repo = UsuariosOAuthRepositoryImpl(),
             verifier = GoogleTokenVerifier(s.googleClientId)
+        )
+
+        // Billing (Google Play)
+        billingRoutes(
+            billingService = billingService,
+            suscripcionRepo = suscripcionRepo
         )
 
         // /me y /me/perfil (GET/PUT)
@@ -75,7 +95,7 @@ fun Application.configureRouting(
         pruebaRoutes()
 
         // Admin: banco de preguntas
-        AdminPreguntaCreateRoute(preguntaRepo)
+        adminPreguntaRoutes(preguntaRepo)
 
         // Admin: crear usuarios (incluye admins)
         AdminUserCreateRoutes(adminUserRepo)

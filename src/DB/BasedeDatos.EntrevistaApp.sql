@@ -73,9 +73,9 @@ CREATE TABLE consentimiento (
 CREATE TABLE suscripcion (
     suscripcion_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id       UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
-    plan             VARCHAR(10)  NOT NULL DEFAULT 'free',
-    proveedor        VARCHAR(20),
-    estado           VARCHAR(12)  NOT NULL DEFAULT 'inactiva',
+    plan             VARCHAR(100)  NOT NULL DEFAULT 'free',
+    proveedor        VARCHAR(50),
+    estado           VARCHAR(20)  NOT NULL DEFAULT 'inactiva',
     fecha_inicio     TIMESTAMPTZ  NOT NULL DEFAULT now(),
     fecha_renovacion TIMESTAMPTZ,
     fecha_expiracion TIMESTAMPTZ,

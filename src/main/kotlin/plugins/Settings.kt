@@ -14,7 +14,10 @@ data class Settings(
     val jwtSecret: String,
     val googleClientId: String, 
     val googleClientSecret: String, 
-    val googleRedirectUri: String
+    val googleRedirectUri: String,
+    val googlePlayPackage: String,
+    val googlePlayServiceJsonBase64: String,
+    val googlePlayBillingMock: Boolean
 )
 
 // Cache en attributes para no releer en cada uso
@@ -42,11 +45,18 @@ private fun loadSettings(envApp: ApplicationEnvironment): Settings {
         ignoreIfMissing = true   // en CI/Prod puedes no tener .env
     }
 
+    fun readOrNull(key: String, path: String): String? =
+        env[key]
+            ?: System.getenv(key)
+            ?: cfg.propertyOrNull(path)?.getString()
+
     fun read(key: String, path: String): String =
-        env[key]                                   // 1) .env
-        ?: System.getenv(key)                      // 2) variables de entorno del SO
-        ?: cfg.propertyOrNull(path)?.getString()   // 3) application.yaml
-        ?: error("Falta config: $key / $path")
+        readOrNull(key, path) ?: error("Falta config: $key / $path")
+
+    fun readBool(key: String, path: String, default: Boolean = false): Boolean =
+        readOrNull(key, path)?.lowercase()?.let { value ->
+            value == "true" || value == "1" || value == "yes"
+        } ?: default
 
     return Settings(
         dbUrl       = read("DB_URL", "db.url"),
@@ -58,5 +68,8 @@ private fun loadSettings(envApp: ApplicationEnvironment): Settings {
         googleClientId    = read("GOOGLE_CLIENT_ID", "google.clientId"),
         googleClientSecret= read("GOOGLE_CLIENT_SECRET", "google.clientSecret"),
         googleRedirectUri = read("GOOGLE_REDIRECT_URI", "google.redirectUri"),
+        googlePlayPackage = read("GOOGLE_PLAY_PACKAGE", "google.play.package"),
+        googlePlayServiceJsonBase64 = read("GOOGLE_PLAY_SERVICE_JSON_B64", "google.play.serviceJsonB64"),
+        googlePlayBillingMock = readBool("GOOGLE_PLAY_BILLING_MOCK", "google.play.billingMock", default = false),
     )
 }
