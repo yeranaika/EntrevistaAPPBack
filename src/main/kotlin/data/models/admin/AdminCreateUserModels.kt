@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AdminCreateUserReq(
     val correo: String,
-    val password: String,
+    val contrasena: String,
     val nombre: String? = null,
     val idioma: String? = "es",
     val rol: String = "user" // "user" | "admin"

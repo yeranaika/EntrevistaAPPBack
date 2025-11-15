@@ -6,7 +6,8 @@ import com.example.data.tables.RespuestaPruebaTable
 import com.example.data.tables.PreguntaMostradaTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import plugins.DatabaseFactory
 import java.time.Instant
 import java.util.UUID
 
@@ -15,7 +16,7 @@ object IntentoPruebaRepository {
     // ============================================
     // CREAR INTENTO
     // ============================================
-    suspend fun crearIntento(usuarioId: UUID, pruebaId: UUID): IntentoPrueba = transaction {
+    suspend fun crearIntento(usuarioId: UUID, pruebaId: UUID): IntentoPrueba = newSuspendedTransaction(db = DatabaseFactory.db) {
         val now = Instant.now().toString()
         val intentoId = UUID.randomUUID()
 
@@ -46,7 +47,7 @@ object IntentoPruebaRepository {
     // ============================================
     // OBTENER INTENTO
     // ============================================
-    suspend fun obtenerIntento(intentoId: UUID): IntentoPrueba? = transaction {
+    suspend fun obtenerIntento(intentoId: UUID): IntentoPrueba? = newSuspendedTransaction(db = DatabaseFactory.db) {
         IntentoPruebaTable
             .selectAll()
             .where { IntentoPruebaTable.intentoId eq intentoId }
@@ -57,7 +58,7 @@ object IntentoPruebaRepository {
     // ============================================
     // OBTENER SIGUIENTE PREGUNTA (placeholder)
     // ============================================
-    suspend fun obtenerSiguientePregunta(intentoId: UUID): PreguntaConOrden? = transaction {
+    suspend fun obtenerSiguientePregunta(intentoId: UUID): PreguntaConOrden? = newSuspendedTransaction(db = DatabaseFactory.db) {
         // TODO: Implementar segun tu modelo de preguntas
         // Por ahora retorna null
         null
@@ -68,38 +69,29 @@ object IntentoPruebaRepository {
     // ============================================
     suspend fun guardarRespuesta(
         intentoId: UUID,
-        preguntaId: UUID,
+        pruebaPreguntaId: UUID,
         respuestaUsuario: String,
         esCorrecta: Boolean? = null,
-        puntajeObtenido: Int = 0,
-        tiempoRespuestaSegundos: Int? = null,
-        orden: Int
-    ): RespuestaPrueba = transaction {
-        val now = Instant.now().toString()
+        feedbackInspecl: String? = null
+    ): RespuestaPrueba = newSuspendedTransaction(db = DatabaseFactory.db) {
         val respuestaId = UUID.randomUUID()
 
         RespuestaPruebaTable.insert {
             it[this.respuestaId] = respuestaId
             it[this.intentoId] = intentoId
-            it[this.preguntaId] = preguntaId
+            it[this.preguntaId] = pruebaPreguntaId
             it[this.respuestaUsuario] = respuestaUsuario
             it[this.esCorrecta] = esCorrecta
-            it[this.puntajeObtenido] = puntajeObtenido
-            it[this.tiempoRespuestaSegundos] = tiempoRespuestaSegundos
-            it[this.orden] = orden
-            it[creadoEn] = now
+            it[this.feedbackInspecl] = feedbackInspecl
         }
 
         RespuestaPrueba(
             respuestaId = respuestaId.toString(),
             intentoId = intentoId.toString(),
-            preguntaId = preguntaId.toString(),
+            preguntaId = pruebaPreguntaId.toString(),
             respuestaUsuario = respuestaUsuario,
             esCorrecta = esCorrecta,
-            puntajeObtenido = puntajeObtenido,
-            tiempoRespuestaSegundos = tiempoRespuestaSegundos,
-            orden = orden,
-            creadoEn = now
+            feedbackInspecl = feedbackInspecl
         )
     }
 
@@ -109,7 +101,7 @@ object IntentoPruebaRepository {
     suspend fun verificarRespuesta(
         preguntaId: UUID,
         respuestaUsuario: String
-    ): Boolean = transaction {
+    ): Boolean = newSuspendedTransaction(db = DatabaseFactory.db) {
         // TODO: Implementar verificacion segun tu modelo de preguntas
         // Por ahora retorna false
         false
@@ -118,7 +110,7 @@ object IntentoPruebaRepository {
     // ============================================
     // CONTAR RESPUESTAS DEL INTENTO
     // ============================================
-    suspend fun contarRespuestas(intentoId: UUID): Int = transaction {
+    suspend fun contarRespuestas(intentoId: UUID): Int = newSuspendedTransaction(db = DatabaseFactory.db) {
         RespuestaPruebaTable
             .selectAll()
             .where { RespuestaPruebaTable.intentoId eq intentoId }
@@ -127,12 +119,34 @@ object IntentoPruebaRepository {
     }
 
     // ============================================
+    // ACTUALIZAR PUNTAJE EN TIEMPO REAL
+    // ============================================
+    suspend fun actualizarPuntaje(intentoId: UUID): Int = newSuspendedTransaction(db = DatabaseFactory.db) {
+        val now = Instant.now().toString()
+
+        // Calcular puntaje actual
+        val respuestasCorrectas = RespuestaPruebaTable
+            .selectAll()
+            .where { RespuestaPruebaTable.intentoId eq intentoId }
+            .count { it[RespuestaPruebaTable.esCorrecta] == true }
+            .toInt()
+
+        // Actualizar puntaje_total en intento_prueba
+        IntentoPruebaTable.update({ IntentoPruebaTable.intentoId eq intentoId }) {
+            it[puntajeTotal] = respuestasCorrectas
+            it[actualizadoEn] = now
+        }
+
+        respuestasCorrectas
+    }
+
+    // ============================================
     // FINALIZAR INTENTO
     // ============================================
     suspend fun finalizarIntento(
         intentoId: UUID,
         abandonado: Boolean = false
-    ): FinalizarIntentoResponse = transaction {
+    ): FinalizarIntentoResponse = newSuspendedTransaction(db = DatabaseFactory.db) {
         val now = Instant.now().toString()
         
         // Obtener intento
@@ -149,7 +163,8 @@ object IntentoPruebaRepository {
 
         val totalPreguntas = respuestas.size
         val respuestasCorrectas = respuestas.count { it[RespuestaPruebaTable.esCorrecta] == true }
-        val puntajeTotal = respuestas.sumOf { it[RespuestaPruebaTable.puntajeObtenido] }
+        // Calculamos puntaje basado en respuestas correctas (cada pregunta vale 1 punto)
+        val puntajeTotal = respuestasCorrectas
         
         // Calcular tiempo total
         val fechaInicio = Instant.parse(intento[IntentoPruebaTable.fechaInicio])
@@ -186,7 +201,7 @@ object IntentoPruebaRepository {
     // ============================================
     // OBTENER PROGRESO
     // ============================================
-    suspend fun obtenerProgreso(intentoId: UUID, totalPreguntas: Int): ProgresoIntento = transaction {
+    suspend fun obtenerProgreso(intentoId: UUID, totalPreguntas: Int): ProgresoIntento = newSuspendedTransaction(db = DatabaseFactory.db) {
         val respondidas = RespuestaPruebaTable
             .selectAll()
             .where { RespuestaPruebaTable.intentoId eq intentoId }
@@ -207,7 +222,7 @@ object IntentoPruebaRepository {
     // ============================================
     // OBTENER INTENTOS POR USUARIO
     // ============================================
-    suspend fun obtenerIntentosPorUsuario(usuarioId: UUID): List<IntentoPrueba> = transaction {
+    suspend fun obtenerIntentosPorUsuario(usuarioId: UUID): List<IntentoPrueba> = newSuspendedTransaction(db = DatabaseFactory.db) {
         IntentoPruebaTable
             .selectAll()
             .where { IntentoPruebaTable.usuarioId eq usuarioId }
@@ -218,12 +233,12 @@ object IntentoPruebaRepository {
     // ============================================
     // OBTENER ESTADISTICAS (simplificado)
     // ============================================
-    suspend fun obtenerEstadisticas(intentoId: UUID): EstadisticasIntento? = transaction {
+    suspend fun obtenerEstadisticas(intentoId: UUID): EstadisticasIntento? = newSuspendedTransaction(db = DatabaseFactory.db) {
         val intento = IntentoPruebaTable
             .selectAll()
             .where { IntentoPruebaTable.intentoId eq intentoId }
             .map { rowToIntento(it) }
-            .singleOrNull() ?: return@transaction null
+            .singleOrNull() ?: return@newSuspendedTransaction null
         
         val respuestas = RespuestaPruebaTable
             .selectAll()

@@ -2,6 +2,7 @@ package com.example.routes
 
 import com.example.data.models.*
 import com.example.data.repository.IntentoPruebaRepository
+import data.repository.cuestionario.PruebaCuestionarioRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -9,6 +10,8 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.json.Json
+import plugins.DatabaseFactory
 import java.util.UUID
 
 fun Route.intentosRoutes() {
@@ -172,47 +175,49 @@ fun Route.intentosRoutes() {
                     )
                 }
 
-                val preguntaUUID = try {
-                    UUID.fromString(request.preguntaId)
+                val pruebaPreguntaUUID = try {
+                    UUID.fromString(request.pruebaPreguntaId)
                 } catch (e: Exception) {
-                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "preguntaId invalido"))
+                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "pruebaPreguntaId invalido"))
                 }
 
-                // Verificar si la respuesta es correcta
-                val esCorrecta = IntentoPruebaRepository.verificarRespuesta(
-                    preguntaUUID,
-                    request.respuestaUsuario
-                )
+                // Buscar la asignación prueba_pregunta para obtener clave_correcta
+                val repo = PruebaCuestionarioRepository(DatabaseFactory.db, Json { ignoreUnknownKeys = true })
+                val asignacion = repo.obtenerAsignacionPorId(pruebaPreguntaUUID)
+                    ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "La pregunta no existe"))
 
-                // Calcular puntaje (ejemplo: 10 puntos por respuesta correcta)
-                val puntaje = if (esCorrecta) 10 else 0
+                // Evaluación automática si tiene clave_correcta
+                val esCorrecta = asignacion.claveCorrecta
+                    ?.let { clave -> clave.equals(request.respuestaUsuario.trim(), ignoreCase = true) }
 
-                // Calcular orden (numero de respuestas ya guardadas + 1)
-                val orden = IntentoPruebaRepository.contarRespuestas(intentoUUID) + 1
+                // TODO: Generar feedback con IA (InspecL) si es necesario
+                val feedbackInspecl: String? = null
 
                 // Guardar respuesta
                 val respuesta = IntentoPruebaRepository.guardarRespuesta(
                     intentoId = intentoUUID,
-                    preguntaId = preguntaUUID,
+                    pruebaPreguntaId = pruebaPreguntaUUID,
                     respuestaUsuario = request.respuestaUsuario,
                     esCorrecta = esCorrecta,
-                    puntajeObtenido = puntaje,
-                    tiempoRespuestaSegundos = request.tiempoRespuestaSegundos,
-                    orden = orden
+                    feedbackInspecl = feedbackInspecl
                 )
+
+                // Actualizar puntaje en tiempo real
+                val puntajeActual = IntentoPruebaRepository.actualizarPuntaje(intentoUUID)
 
                 // Obtener siguiente pregunta
                 val siguientePregunta = IntentoPruebaRepository.obtenerSiguientePregunta(intentoUUID)
 
-                val mensaje = when {
-                    esCorrecta -> "Correcto!"
-                    else -> "Incorrecto"
+                val mensaje = when (esCorrecta) {
+                    true -> "Correcto!"
+                    false -> "Incorrecto"
+                    null -> "Respuesta registrada"
                 }
 
                 val response = ResponderItemResponse(
                     respuestaId = respuesta.respuestaId,
                     esCorrecta = esCorrecta,
-                    puntajeObtenido = puntaje,
+                    feedbackInspecl = feedbackInspecl,
                     mensaje = mensaje,
                     siguientePregunta = siguientePregunta
                 )

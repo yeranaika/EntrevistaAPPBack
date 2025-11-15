@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
 import java.util.UUID
 
-object PreguntaTable : Table("pregunta") {
+object PreguntaTable : Table("app.pregunta") {
     val id           = uuid("pregunta_id")                  // PK UUID “a mano”
     val tipoBanco    = varchar("tipo_banco", 5)
     val nivel        = varchar("nivel", 3)
