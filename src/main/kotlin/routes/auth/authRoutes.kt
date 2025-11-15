@@ -13,4 +13,6 @@ fun Route.authRoutes(
     loginRoutes(issuer, audience, algorithm)
     resetRoutes()
     refreshRoutes(issuer, audience, algorithm)
+    logoutRoutes()
 }
+

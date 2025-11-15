@@ -18,6 +18,17 @@ class ConsentimientoRepository {
         version: String,
         alcances: Map<String, Boolean>
     ): ResultRow = tx {
+        // Primero, revocar cualquier consentimiento activo previo
+        ConsentimientoTable.update(
+            where = {
+                (ConsentimientoTable.usuarioId eq usuarioId) and
+                ConsentimientoTable.fechaRevocado.isNull()
+            }
+        ) {
+            it[fechaRevocado] = Instant.now()
+        }
+
+        // Crear el nuevo consentimiento
         ConsentimientoTable.insert {
             it[ConsentimientoTable.usuarioId] = usuarioId
             it[ConsentimientoTable.version]   = version

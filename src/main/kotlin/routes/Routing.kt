@@ -18,7 +18,9 @@ import routes.me.meRoutes
 import routes.consent.ConsentRoutes
 import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminUserCreateRoutes
+import routes.admin.adminRoutes
 import com.example.routes.intentosRoutes
+import routes.cuestionario.prueba.pruebaRoutes
 import routes.billing.billingRoutes                          // ⬅️ NUEVO
 
 import plugins.settings   // ⬅ importante
@@ -86,13 +88,19 @@ fun Application.configureRouting(
         // Consentimientos
         ConsentRoutes(consentRepo)
         
-        // Intentos de prueba  ⬅️ AGREGAR ESTE COMENTARIO Y LA LÍNEA DE ABAJO
+        // Intentos de prueba
         intentosRoutes()
+
+        // Rutas de cuestionario (pruebas, asociar preguntas, responder)
+        pruebaRoutes()
 
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
 
         // Admin: crear usuarios (incluye admins)
         AdminUserCreateRoutes(adminUserRepo)
+
+        // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
+        adminRoutes(adminUserRepo)
     }
 }

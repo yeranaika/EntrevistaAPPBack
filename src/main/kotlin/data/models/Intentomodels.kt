@@ -34,12 +34,9 @@ data class RespuestaPrueba(
     val respuestaId: String,
     val intentoId: String,
     val preguntaId: String,
-    val respuestaUsuario: String,
+    val respuestaUsuario: String? = null,
     val esCorrecta: Boolean? = null,
-    val puntajeObtenido: Int = 0,
-    val tiempoRespuestaSegundos: Int? = null,
-    val orden: Int,
-    val creadoEn: String
+    val feedbackInspecl: String? = null
 )
 
 @Serializable
@@ -86,16 +83,15 @@ data class OpcionRespuesta(
 
 @Serializable
 data class ResponderItemRequest(
-    val preguntaId: String,
-    val respuestaUsuario: String,
-    val tiempoRespuestaSegundos: Int? = null
+    val pruebaPreguntaId: String,
+    val respuestaUsuario: String
 )
 
 @Serializable
 data class ResponderItemResponse(
     val respuestaId: String,
     val esCorrecta: Boolean? = null, // null si no se califica inmediatamente
-    val puntajeObtenido: Int,
+    val feedbackInspecl: String? = null,
     val mensaje: String? = null,
     val siguientePregunta: PreguntaConOrden? = null
 )

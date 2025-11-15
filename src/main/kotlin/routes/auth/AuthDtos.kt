@@ -29,3 +29,5 @@ data class RegisterReq(
 
 @Serializable data class RefreshReq(val refreshToken: String)
 @Serializable data class RefreshOk(val accessToken: String, val refreshToken: String)
+
+@Serializable data class LogoutReq(val refreshToken: String)
