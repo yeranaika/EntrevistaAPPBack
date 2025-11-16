@@ -69,6 +69,17 @@ CREATE TABLE consentimiento (
     fecha_revocado    TIMESTAMPTZ
 );
 
+CREATE TABLE consentimiento_texto (
+    version           VARCHAR(20) PRIMARY KEY,
+    titulo            TEXT        NOT NULL,
+    cuerpo            TEXT        NOT NULL,
+    fecha_publicacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    vigente           BOOLEAN     NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX idx_consentimiento_texto_vigente
+    ON consentimiento_texto (vigente);
+
 -- 2) Suscripciones y pagos
 CREATE TABLE suscripcion (
     suscripcion_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),

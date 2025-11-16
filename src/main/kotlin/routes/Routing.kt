@@ -4,9 +4,12 @@ import data.repository.admin.PreguntaRepository
 import data.repository.admin.AdminUserRepository
 import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
-import data.repository.usuarios.ConsentimientoRepository
+
 import data.repository.usuarios.UsuariosOAuthRepositoryImpl
 import data.repository.billing.SuscripcionRepository          // ⬅️ NUEVO
+
+import data.repository.usuarios.ConsentTextRepository
+import data.repository.usuarios.ConsentimientoRepository
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -15,7 +18,10 @@ import io.ktor.server.routing.*
 import routes.auth.authRoutes
 import routes.auth.googleAuthRoutes
 import routes.me.meRoutes
+
 import routes.consent.ConsentRoutes
+
+
 import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminUserCreateRoutes
 import com.example.routes.intentosRoutes
@@ -84,8 +90,11 @@ fun Application.configureRouting(
         meRoutes(users, profiles)
 
         // Consentimientos
-        ConsentRoutes(consentRepo)
-        
+        ConsentRoutes(
+            consentRepo = ConsentimientoRepository(),
+            consentTextRepo = ConsentTextRepository()
+        )
+            
         // Intentos de prueba  ⬅️ AGREGAR ESTE COMENTARIO Y LA LÍNEA DE ABAJO
         intentosRoutes()
 
