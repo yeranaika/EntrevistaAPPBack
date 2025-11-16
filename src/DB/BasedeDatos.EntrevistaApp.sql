@@ -38,7 +38,7 @@ CREATE TABLE perfil_usuario (
     nota_objetivos      TEXT,
     pais                VARCHAR(2),
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+    );
 
 CREATE TABLE oauth_account (
     oauth_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
