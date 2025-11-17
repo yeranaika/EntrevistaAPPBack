@@ -6,7 +6,7 @@ import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
 
 import data.repository.usuarios.UsuariosOAuthRepositoryImpl
-import data.repository.billing.SuscripcionRepository          // ⬅️ NUEVO
+import data.repository.billing.SuscripcionRepository
 
 import data.repository.usuarios.ConsentTextRepository
 import data.repository.usuarios.ConsentimientoRepository
@@ -18,22 +18,19 @@ import io.ktor.server.routing.*
 import routes.auth.authRoutes
 import routes.auth.googleAuthRoutes
 import routes.me.meRoutes
-
 import routes.consent.ConsentRoutes
-
 
 import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminUserCreateRoutes
 import com.example.routes.intentosRoutes
-import routes.billing.billingRoutes                          // ⬅️ NUEVO
+import routes.billing.billingRoutes
 
-import plugins.settings   // ⬅ importante
+import plugins.settings   // config de tu app
 import security.AuthCtx
 import security.AuthCtxKey
-import security.auth.GoogleTokenVerifier   // ⬅️ usa este
-import security.billing.GooglePlayBillingService            // ⬅️ NUEVO
+import security.auth.GoogleTokenVerifier
+import security.billing.GooglePlayBillingService
 
-// Recibimos los repos por parámetro para no crearlos aquí
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository
@@ -42,20 +39,24 @@ fun Application.configureRouting(
     val users = UserRepository()
     val profiles = ProfileRepository()
     val consentRepo = ConsentimientoRepository()
-    val suscripcionRepo = SuscripcionRepository()          // ⬅️ NUEVO
-   
+    val suscripcionRepo = SuscripcionRepository()
+
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
         attributes[AuthCtxKey]
     } else {
-        // Si llegas aquí, aún no se ejecutó configureSecurity()
         throw IllegalStateException(
             "AuthCtx no disponible. Asegúrate de llamar primero a security.configureSecurity() en Application.module()."
         )
     }
 
-    // ⬇⬇⬇ toma también la config de Google desde Settings
+    // Config general de la app (ya la usas para Billing)
     val s = settings()
+
+    // 👉 Repositorio OAuth para Google (el que pegaste tú: UsuariosOAuthRepositoryImpl)
+    val usuariosOAuthRepository = UsuariosOAuthRepositoryImpl()
+
+    val googleTokenVerifier = GoogleTokenVerifier(s.googleClientId)
 
     // Servicio de Billing (Google Play) usando los repos ya creados
     val billingService = GooglePlayBillingService(
@@ -66,7 +67,6 @@ fun Application.configureRouting(
         useMock = s.googlePlayBillingMock
     )
 
-
     routing {
         // Healthcheck
         get("/health") { call.respondText("OK") }
@@ -74,10 +74,10 @@ fun Application.configureRouting(
         // Auth (register/login/refresh/reset)
         authRoutes(ctx.issuer, ctx.audience, ctx.algorithm)
 
-        // Google OAuth2
+        // 🔹 Google OAuth2 (web + móvil)
         googleAuthRoutes(
-            repo = UsuariosOAuthRepositoryImpl(),
-            verifier = GoogleTokenVerifier(s.googleClientId)
+            repo = usuariosOAuthRepository,
+            verifier = googleTokenVerifier
         )
 
         // Billing (Google Play)
@@ -91,11 +91,11 @@ fun Application.configureRouting(
 
         // Consentimientos
         ConsentRoutes(
-            consentRepo = ConsentimientoRepository(),
+            consentRepo = consentRepo,
             consentTextRepo = ConsentTextRepository()
         )
-            
-        // Intentos de prueba  ⬅️ AGREGAR ESTE COMENTARIO Y LA LÍNEA DE ABAJO
+
+        // Intentos de prueba
         intentosRoutes()
 
         // Admin: banco de preguntas

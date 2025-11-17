@@ -29,3 +29,9 @@ data class RegisterReq(
 
 @Serializable data class RefreshReq(val refreshToken: String)
 @Serializable data class RefreshOk(val accessToken: String, val refreshToken: String)
+
+// 👇 DTO que usa la APP ANDROID (idToken de Google)
+@Serializable
+data class GoogleLoginReq(
+    val idToken: String
+)
