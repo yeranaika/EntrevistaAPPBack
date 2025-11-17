@@ -7,6 +7,7 @@ import com.example.configureMonitoring
 import plugins.configureSerialization
 import plugins.configureStatusPages
 import plugins.configureDatabase
+import plugins.configureCORS
 import plugins.DatabaseFactory
 
 import security.configureSecurity
@@ -21,6 +22,7 @@ fun main(args: Array<String>) = EngineMain.main(args)
 fun Application.module() {
     // Orden importante: security primero para que ponga AuthCtx en attributes
     // (en la práctica: antes de montar las rutas; mantenemos security antes de configureRouting)
+    configureCORS()                           // ← configurar CORS antes que todo
     configureSerialization()
     configureStatusPages()
     configureDatabase()                       // ← inicializa DatabaseFactory.db

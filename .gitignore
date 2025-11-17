@@ -48,3 +48,11 @@ out/
 ### Docker / PostgreSQL ###
 *.sql~      
 docker-compose.override.yml
+
+### Kiro & Claude ###
+.kiro/
+.claude/
+
+### Archivos temporales ###
+nul
+*.zip

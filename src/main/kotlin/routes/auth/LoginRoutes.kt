@@ -21,12 +21,22 @@ fun Route.loginRoutes(
             val req = call.receive<LoginReq>()
             val email = req.email.trim().lowercase()
 
-            val user = AuthDeps.users.findByEmail(email)
-                ?: return@post call.respond(HttpStatusCode.Unauthorized, ErrorRes("bad_credentials"))
+            call.application.environment.log.info("Login attempt for email: $email")
 
-            if (!verifyPassword(req.password, user.hash)) {
+            val user = AuthDeps.users.findByEmail(email)
+            if (user == null) {
+                call.application.environment.log.warn("User not found for email: $email")
                 return@post call.respond(HttpStatusCode.Unauthorized, ErrorRes("bad_credentials"))
             }
+
+            call.application.environment.log.info("User found: ${user.id}, checking password...")
+
+            if (!verifyPassword(req.password, user.hash)) {
+                call.application.environment.log.warn("Password verification failed for user: ${user.id}")
+                return@post call.respond(HttpStatusCode.Unauthorized, ErrorRes("bad_credentials"))
+            }
+
+            call.application.environment.log.info("Password verified successfully for user: ${user.id}")
 
             val access = issueAccessToken(
                 subject = user.id.toString(),

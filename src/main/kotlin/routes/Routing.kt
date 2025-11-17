@@ -4,10 +4,8 @@ import data.repository.admin.PreguntaRepository
 import data.repository.admin.AdminUserRepository
 import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
-
 import data.repository.usuarios.UsuariosOAuthRepositoryImpl
 import data.repository.billing.SuscripcionRepository
-
 import data.repository.usuarios.ConsentTextRepository
 import data.repository.usuarios.ConsentimientoRepository
 
@@ -22,8 +20,10 @@ import routes.consent.ConsentRoutes
 
 import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminUserCreateRoutes
+import routes.admin.adminRoutes
 import com.example.routes.intentosRoutes
-import routes.billing.billingRoutes
+import routes.cuestionario.prueba.pruebaRoutes
+import routes.billing.billingRoutes   // solo UNA import
 
 import plugins.settings   // config de tu app
 import security.AuthCtx
@@ -53,7 +53,7 @@ fun Application.configureRouting(
     // Config general de la app (ya la usas para Billing)
     val s = settings()
 
-    // 👉 Repositorio OAuth para Google (el que pegaste tú: UsuariosOAuthRepositoryImpl)
+    // 👉 Repositorio OAuth para Google
     val usuariosOAuthRepository = UsuariosOAuthRepositoryImpl()
 
     val googleTokenVerifier = GoogleTokenVerifier(s.googleClientId)
@@ -89,7 +89,7 @@ fun Application.configureRouting(
         // /me y /me/perfil (GET/PUT)
         meRoutes(users, profiles)
 
-        // Consentimientos
+        // Consentimientos  👉 versión que tú tenías funcionando
         ConsentRoutes(
             consentRepo = consentRepo,
             consentTextRepo = ConsentTextRepository()
@@ -98,10 +98,16 @@ fun Application.configureRouting(
         // Intentos de prueba
         intentosRoutes()
 
+        // Rutas de cuestionario (pruebas, asociar preguntas, responder)
+        pruebaRoutes()
+
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
 
         // Admin: crear usuarios (incluye admins)
         AdminUserCreateRoutes(adminUserRepo)
+
+        // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
+        adminRoutes(adminUserRepo)
     }
 }

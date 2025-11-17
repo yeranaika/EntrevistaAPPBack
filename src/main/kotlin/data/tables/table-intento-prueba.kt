@@ -2,8 +2,8 @@ package com.example.data.tables
 
 import org.jetbrains.exposed.sql.Table
 
-object IntentoPruebaTable : Table("intento_prueba") {
-    val intentoId = uuid("intento_id").autoGenerate()
+object IntentoPruebaTable : Table("app.intento_prueba") {  
+    val intentoId = uuid("intento_id")  
     val usuarioId = uuid("usuario_id")
     val pruebaId = uuid("prueba_id")
     val fechaInicio = varchar("fecha_inicio", 50)

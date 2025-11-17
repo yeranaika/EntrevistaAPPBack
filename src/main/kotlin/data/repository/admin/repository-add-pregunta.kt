@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq   // <-- IMPORT NECESAR
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import tables.cuestionario.preguntas.PreguntaTable
+import java.time.OffsetDateTime
 import java.util.UUID
 
 private fun lower(expr: Expression<String>): Expression<String> =
@@ -27,14 +28,15 @@ class PreguntaRepository(
         val newId = UUID.randomUUID()
 
         PreguntaTable.insert { st ->
-            st[PreguntaTable.id]        = newId
-            st[PreguntaTable.tipoBanco] = req.tipoBanco.name
-            st[PreguntaTable.nivel]     = req.nivel.name
-            st[PreguntaTable.sector]    = req.sector
-            st[PreguntaTable.texto]     = req.texto
-            st[PreguntaTable.pistas]    = req.pistas?.let(json::encodeToString)
-            st[PreguntaTable.historica] = req.historica?.let(json::encodeToString)
-            st[PreguntaTable.activa]    = req.activa
+            st[PreguntaTable.id]             = newId
+            st[PreguntaTable.tipoBanco]      = req.tipoBanco.name
+            st[PreguntaTable.nivel]          = req.nivel.name
+            st[PreguntaTable.sector]         = req.sector
+            st[PreguntaTable.texto]          = req.texto
+            st[PreguntaTable.pistas]         = req.pistas?.let(json::encodeToString)
+            st[PreguntaTable.historica]      = req.historica?.let(json::encodeToString)
+            st[PreguntaTable.activa]         = req.activa
+            st[PreguntaTable.fechaCreacion]  = OffsetDateTime.now()
         }
 
         // ✅ DSL nuevo, sin método deprecado
@@ -77,3 +79,4 @@ class PreguntaRepository(
             items to total
         }
 }
+
