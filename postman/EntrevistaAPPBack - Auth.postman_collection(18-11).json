@@ -1,0 +1,812 @@
+{
+	"info": {
+		"_postman_id": "578f86a7-e4dc-4a76-bad8-23248a229c2d",
+		"name": "EntrevistaAPPBack - Auth",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "39039898"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "Google API",
+					"item": [
+						{
+							"name": "Login con Google",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"201 Created\", function () {",
+											"  pm.response.to.have.status(201);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": "http://127.0.0.1:8080/auth/google/start"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"201 Created\", function () {",
+									"  pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admmin@correo.com\",\n  \"password\": \"123456789\",\n  \"nombre\": \"admin\",\n  \"idioma\": \"es\",\n  \"nivelExperiencia\": \"jr\",\n  \"area\": \"tec\",\n  \"pais\": \"CL\",\n  \"notaObjetivos\": \"Mejorar entrevistas técnicas\",\n  \"flagsAccesibilidad\": { \"tts\": true, \"altoContraste\": false }\n}\n"
+						},
+						"url": "http://127.0.0.1:8080/auth/register"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"200 OK\", function () {",
+									"  pm.response.to.have.status(200);",
+									"});",
+									"const data = pm.response.json();",
+									"if (data && data.accessToken) {",
+									"  pm.environment.set('accessToken', data.accessToken);",
+									"  console.log('accessToken guardado en variable de entorno');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admmin@correo.com\",\n  \"password\": \"123456789\"\n}"
+						},
+						"url": "http://127.0.0.1:8080/auth/login"
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"201 Created\", function () {",
+									"  pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"demo1@correo.com\"\n}"
+						},
+						"url": "http://127.0.0.1:8080/auth/request-reset"
+					},
+					"response": []
+				},
+				{
+					"name": "refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"201 Created\", function () {",
+									"  pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"fUFcrL7cNQrafxYSWiMnVr-_uDGVTKFH5-7FjU2P7y8\"\n}"
+						},
+						"url": "http://127.0.0.1:8080/auth/refresh"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "perfil",
+			"item": [
+				{
+					"name": "perfil datos",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/me/perfil"
+					},
+					"response": []
+				},
+				{
+					"name": "perfil datos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMTI5OCwiZXhwIjoxNzYyMDMyMTk4fQ.UhhfuiWwmeBUmtVNl3lEQKRohlCzBsf0n5bctxKJyqYo-cwqO11lVvBG1B1TLNXXB2Bn8qaAqpsiWOVp6VmAeg"
+							}
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nivelExperiencia\": \"Junior\",\r\n  \"area\": \"Backend\",\r\n  \"pais\": \"CL\",\r\n  \"notaObjetivos\": \"Buscar primera experiencia\",\r\n  \"flagsAccesibilidad\": { \"altoContraste\": true, \"subtitulos\": false }\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/me/perfil"
+					},
+					"response": []
+				},
+				{
+					"name": "Me (protegido)",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "{{accessToken}}"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAyMDExNywiZXhwIjoxNzYyMDIxMDE3fQ.SnP5MgOdLksxuMqgM8xrgXBO1TdNBEQ4CG_3fJGneoA9JIz5SFkCGBNp2GFBNgFvrqAN-KOa6saaOZ-N_4SERw",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/me"
+					},
+					"response": []
+				},
+				{
+					"name": "Me actualizar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
+							}
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nombre\": \"Nuevo Nombre\",\r\n  \"idioma\": \"cl\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/me"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "concentimiento",
+			"item": [
+				{
+					"name": "concentimiento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q"
+							}
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"version\": \"v1.0\", \"alcances\": { \"analytics\": true, \"marketing\": false } }\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/me/consent"
+					},
+					"response": []
+				},
+				{
+					"name": "revocacion concentimiento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMzE3NCwiZXhwIjoxNzYyMDM0MDc0fQ.iXOnOB9-fJksMvjWOKHReH2dImWa7SNxM_fGDgnp7yDGzKo7bEUJVgUo_xJ_u777gSJNIzZVnHO0JFCWxqGZvw"
+							}
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"version\": \"v1.0\", \"alcances\": { \"analytics\": true, \"marketing\": false } }\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/me/consent/revoke"
+					},
+					"response": []
+				},
+				{
+					"name": "ultimo concentimiento orotgado",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q"
+							}
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/me/consent/latest"
+					},
+					"response": []
+				},
+				{
+					"name": "ultimo concentimiento tetxo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMzE3NCwiZXhwIjoxNzYyMDM0MDc0fQ.iXOnOB9-fJksMvjWOKHReH2dImWa7SNxM_fGDgnp7yDGzKo7bEUJVgUo_xJ_u777gSJNIzZVnHO0JFCWxqGZvw"
+							}
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/consent/current"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "test",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://127.0.0.1:8080/health"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "intentos",
+			"item": [
+				{
+					"name": "GET Mis Intentos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjMxMDU1MCwiZXhwIjoxNzYyMzExNDUwfQ.gVvPRM4xJxeckpXetlGxloomNp42FJ-tNxb6oxqOX1rC2IFqJS0xthYxjpSSn1dRTv55ogPkk5RXZuTCLQkd1Q",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/intentos/mis-intentos"
+					},
+					"response": []
+				}
+			],
+			"description": "Method: POST  \nURL: [http://127.0.0.1:8080/pruebas/{{pruebaId}}/intentos](http://127.0.0.1:8080/pruebas/%7B%7BpruebaId%7D%7D/intentos)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\nBody (ninguno)\n\n```\n---\n### **2️⃣ GET - Siguiente Pregunta**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/siguiente](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/siguiente)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\n```\n---\n### **3️⃣ POST - Responder Pregunta**\n\n ```\n\nMethod: POST  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/respuestas](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/respuestas)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}  \nContent-Type: application/json\n\nBody (JSON):  \n{  \n\"preguntaId\": \"uuid-de-pregunta\",  \n\"respuestaUsuario\": \"A\",  \n\"tiempoRespuestaSegundos\": 30  \n}\n\n```\n---\n### **4️⃣ POST - Finalizar Intento**\n\n ```\n\nMethod: POST  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/finalizar](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/finalizar)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}  \nContent-Type: application/json\n\nBody (JSON):  \n{  \n\"abandonado\": false  \n}\n\n```\n---\n### **5️⃣ GET - Mis Intentos**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/mis-intentos](http://127.0.0.1:8080/intentos/mis-intentos)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\n```\n---\n### **6️⃣ GET - Estadísticas de Intento**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/estadisticas](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/estadisticas)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}"
+		},
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "usuarios",
+					"item": [
+						{
+							"name": "Login admin",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var json = pm.response.json();",
+											"pm.environment.set('token', json.accessToken);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"addmm@correo.com\",\n  \"password\": \"AdminSegura123\"\n}"
+								},
+								"url": "http://127.0.0.1:8080/auth/login"
+							},
+							"response": []
+						},
+						{
+							"name": "Crear usuario",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMjU4MywiZXhwIjoxNzYzMjMzNDgzLCJyb2xlIjoiYWRtaW4ifQ.Onz_Srfxiwyi-_pdMwIgu_u2MyNDAshO0P4oyyg28pn14_M7PrcKQC8-_KDG-BV_JW7vXoSzInceNIfnqfLPPQ"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"newsuer2@correo.com\",\n  \"password\": \"User222Seguro123\",\n  \"nombre\": \"Nuevo User\",\n  \"idioma\": \"es\",\n  \"rol\": \"user22\"\n}"
+								},
+								"url": "http://127.0.0.1:8080/admin/users"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "cuestionario",
+					"item": [
+						{
+							"name": "Crear pregunta (estructura completa)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjgxYjcxNzY4LTYwZGItNDNjZi05ODE1LTI3ODg4ZjE0OWJhZiIsImlhdCI6MTc2MzAwNTAyOSwiZXhwIjoxNzYzMDA1OTI5LCJyb2xlIjoiYWRtaW4ifQ.MSBJgH8bTGai1fp-WJOCW29dXO0ArvSQs0tG_JAStsFpP1XUcDdN2xWHUSVLnWrQ1wl8Y-nsNH-vm36V0Gtrew"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"tipoBanco\": \"tec\",\n  \"nivel\": \"jr\",\n  \"texto\": \"¿Qué es una corutina en Kotlin y cuándo usarla?\"\n}\n"
+								},
+								"url": "http://127.0.0.1:8080/admin/preguntas"
+							},
+							"response": []
+						},
+						{
+							"name": "Mostrar pregunta",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjgxYjcxNzY4LTYwZGItNDNjZi05ODE1LTI3ODg4ZjE0OWJhZiIsImlhdCI6MTc2MzAwNTAyOSwiZXhwIjoxNzYzMDA1OTI5LCJyb2xlIjoiYWRtaW4ifQ.MSBJgH8bTGai1fp-WJOCW29dXO0ArvSQs0tG_JAStsFpP1XUcDdN2xWHUSVLnWrQ1wl8Y-nsNH-vm36V0Gtrew"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"tipoBanco\": \"tec\",\n  \"nivel\": \"jr\",\n  \"texto\": \"¿Qué es una corutina en Kotlin y cuándo usarla?\"\n}\n"
+								},
+								"url": "http://127.0.0.1:8080/admin/preguntas"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "concentimiento",
+					"item": [
+						{
+							"name": "agregar concentimientos DB",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"version\": \"v1.0\",\n  \"title\": \"Consentimiento de uso de datos\",\n  \"body\": \"Texto completo del consentimiento que verán los usuarios.\"\n}\n"
+								},
+								"url": "http://127.0.0.1:8080/admin/consent/text"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Onboard",
+			"item": [
+				{
+					"name": "planesParaUsuarios en DB",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzQzMzcyMSwiZXhwIjoxNzYzNDM0NjIxLCJyb2xlIjoiYWRtaW4ifQ.iCnIF0Vble1XSA8yS9HTpl22jKV7iVi6T7Vnmq_jMaRb3prWz_fP6LSv_LJFR_vd0yyMolkN7TPxlk39f3m9Pw"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": "http://127.0.0.1:8080/plan-practica"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "GOOGLE",
+			"item": [
+				{
+					"name": "http://127.0.0.1:8080/auth/google/callback",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://127.0.0.1:8080/auth/google/callback"
+					},
+					"response": []
+				},
+				{
+					"name": "http://localhost:8080/billing/google/verify",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer <JWT>"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/billing/google/verify",
+						"description": "Generated from cURL: curl -X POST http://localhost:8080/billing/google/verify \\\r\n  -H \"Authorization: Bearer <JWT>\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }'\r\n"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "billing",
+			"item": [
+				{
+					"name": "http://localhost:8080/billing/google/verify",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer <JWT>"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/billing/google/verify",
+						"description": "Generated from cURL: curl -X POST http://localhost:8080/billing/google/verify \\\r\n  -H \"Authorization: Bearer <JWT>\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }'\r\n"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		}
+	]
+}

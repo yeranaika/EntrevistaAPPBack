@@ -20,12 +20,15 @@ import routes.auth.googleAuthRoutes
 import routes.auth.passwordRecoveryRoutes
 import routes.me.meRoutes
 import routes.consent.ConsentRoutes
+import routes.auth.profileRoutes
+import data.repository.AppAndroid.OnboardingRepository
 import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminPruebaRoutes
 import routes.admin.AdminUserCreateRoutes
 import routes.admin.adminRoutes
 import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
+import routes.admin.adminPlanRoutes
 import routes.billing.billingRoutes   // solo UNA import
 
 import plugins.settings   // config de tu app
@@ -50,7 +53,8 @@ fun Application.configureRouting(
     val consentRepo = ConsentimientoRepository()
     val pruebaRepo = PruebaRepository(DatabaseFactory.db)
     val suscripcionRepo = SuscripcionRepository()
-
+    val onboardingRepo = OnboardingRepository()
+    
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
         attributes[AuthCtxKey]
@@ -108,6 +112,9 @@ fun Application.configureRouting(
             consentTextRepo = ConsentTextRepository()
         )
 
+        profileRoutes(onboardingRepo)
+        adminPlanRoutes(onboardingRepo)
+        
         // Intentos de prueba
         intentosRoutes()
 
