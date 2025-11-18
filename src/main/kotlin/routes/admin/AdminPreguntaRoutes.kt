@@ -16,28 +16,82 @@ import io.ktor.server.routing.*
 import security.isAdmin
 import java.util.UUID
 
-// Esta es la ruta correcta para crear preguntas (NO users)
-fun Route.AdminPreguntaCreateRoute(repo: PreguntaRepository) {
+// Ruta admin para preguntas: crea y lista
+fun Route.adminPreguntaRoutes(repo: PreguntaRepository) {
+
     authenticate("auth-jwt") {
-        post("/admin/preguntas") {
-            val principal = call.principal<JWTPrincipal>()
-                ?: return@post call.respond(HttpStatusCode.Unauthorized)
+        route("/admin/preguntas") {
 
-            if (!principal.isAdmin())
-                return@post call.respond(HttpStatusCode.Forbidden, "Solo admin")
+            // ---------- POST /admin/preguntas (crear) ----------
+            post {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized)
 
-            val body = runCatching { call.receive<CreatePreguntaReq>() }
-                .getOrElse { return@post call.respond(HttpStatusCode.BadRequest, "JSON inválido") }
+                if (!principal.isAdmin())
+                    return@post call.respond(HttpStatusCode.Forbidden, "Solo admin")
 
-            if (body.texto.isBlank())
-                return@post call.respond(HttpStatusCode.BadRequest, "texto requerido")
+                val body = runCatching { call.receive<CreatePreguntaReq>() }
+                    .getOrElse {
+                        return@post call.respond(
+                            HttpStatusCode.BadRequest,
+                            "JSON inválido"
+                        )
+                    }
 
-            val created = runCatching { repo.create(body) }
-                .getOrElse { ex ->
-                    return@post call.respond(HttpStatusCode.InternalServerError, ex.message ?: "Error creando pregunta")
-                }
+                if (body.texto.isBlank())
+                    return@post call.respond(HttpStatusCode.BadRequest, "texto requerido")
 
-            call.respond(HttpStatusCode.Created, created)
+                val created = runCatching { repo.create(body) }
+                    .getOrElse { ex ->
+                        return@post call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ex.message ?: "Error creando pregunta"
+                        )
+                    }
+
+                call.respond(HttpStatusCode.Created, created)
+            }
+
+            // ---------- GET /admin/preguntas (listar con filtros) ----------
+            get {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+
+                if (!principal.isAdmin())
+                    return@get call.respond(HttpStatusCode.Forbidden, "Solo admin")
+
+                // Helper para enums case-insensitive
+                fun <E : Enum<E>> parseEnum(param: String?, values: Array<E>): E? =
+                    param?.let { p -> values.firstOrNull { it.name.equals(p, ignoreCase = true) } }
+
+                val activa = call.request.queryParameters["activa"]?.toBooleanStrictOrNull()
+                val nivel  = parseEnum(call.request.queryParameters["nivel"], Nivel.values())
+                val tipo   = parseEnum(call.request.queryParameters["tipoBanco"], TipoBanco.values())
+                val q      = call.request.queryParameters["q"]
+
+                val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
+                val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 20
+
+                val (items, total) = repo.list(
+                    PreguntaRepository.ListParams(
+                        activa    = activa,
+                        nivel     = nivel,
+                        tipoBanco = tipo,
+                        q         = q,
+                        page      = page,
+                        size      = size
+                    )
+                )
+
+                val res = PagedPreguntasRes(
+                    items = items,
+                    page  = page,
+                    size  = size,
+                    total = total
+                )
+
+                call.respond(res)
+            }
         }
 
         get("/admin/preguntas") {

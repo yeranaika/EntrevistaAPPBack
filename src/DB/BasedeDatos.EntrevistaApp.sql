@@ -38,7 +38,7 @@ CREATE TABLE perfil_usuario (
     nota_objetivos      TEXT,
     pais                VARCHAR(2),
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+    );
 
 CREATE TABLE oauth_account (
     oauth_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -69,13 +69,24 @@ CREATE TABLE consentimiento (
     fecha_revocado    TIMESTAMPTZ
 );
 
+CREATE TABLE consentimiento_texto (
+    version           VARCHAR(20) PRIMARY KEY,
+    titulo            TEXT        NOT NULL,
+    cuerpo            TEXT        NOT NULL,
+    fecha_publicacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    vigente           BOOLEAN     NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX idx_consentimiento_texto_vigente
+    ON consentimiento_texto (vigente);
+
 -- 2) Suscripciones y pagos
 CREATE TABLE suscripcion (
     suscripcion_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id       UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
-    plan             VARCHAR(10)  NOT NULL DEFAULT 'free',
-    proveedor        VARCHAR(20),
-    estado           VARCHAR(12)  NOT NULL DEFAULT 'inactiva',
+    plan             VARCHAR(100)  NOT NULL DEFAULT 'free',
+    proveedor        VARCHAR(50),
+    estado           VARCHAR(20)  NOT NULL DEFAULT 'inactiva',
     fecha_inicio     TIMESTAMPTZ  NOT NULL DEFAULT now(),
     fecha_renovacion TIMESTAMPTZ,
     fecha_expiracion TIMESTAMPTZ,
@@ -91,6 +102,29 @@ CREATE TABLE pago (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_monto_positivo CHECK (monto_clp > 0),
     CONSTRAINT chk_estado_pago CHECK (estado IN ('pendiente','aprobado','fallido','reembolso'))
+);
+
+-- Tabla principal del plan de práctica por usuario
+CREATE TABLE plan_practica (
+    plan_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id     UUID NOT NULL REFERENCES app.usuario(usuario_id) ON DELETE CASCADE,
+    area           VARCHAR(10),
+    meta_cargo     VARCHAR(120),
+    nivel          VARCHAR(20),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    activo         BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Detalle del plan: pasos / módulos
+CREATE TABLE plan_practica_paso (
+    paso_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    plan_id            UUID NOT NULL REFERENCES plan_practica(plan_id) ON DELETE CASCADE,
+    orden              INT NOT NULL,
+    titulo             TEXT NOT NULL,
+    descripcion        TEXT,
+    sesiones_por_semana INT,
+    CONSTRAINT chk_orden_positivo CHECK (orden > 0),
+    CONSTRAINT uq_plan_paso_orden UNIQUE (plan_id, orden)
 );
 
 -- 3) Contenidos: objetivos/cargos y banco de preguntas
