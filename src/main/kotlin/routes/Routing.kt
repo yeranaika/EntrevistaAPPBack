@@ -1,7 +1,9 @@
 package routes
 
 import data.repository.admin.PreguntaRepository
+import data.repository.admin.PruebaRepository
 import data.repository.admin.AdminUserRepository
+import data.repository.auth.RecoveryCodeRepository
 import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
 import data.repository.usuarios.UsuariosOAuthRepositoryImpl
@@ -15,10 +17,11 @@ import io.ktor.server.routing.*
 
 import routes.auth.authRoutes
 import routes.auth.googleAuthRoutes
+import routes.auth.passwordRecoveryRoutes
 import routes.me.meRoutes
 import routes.consent.ConsentRoutes
-
 import routes.admin.adminPreguntaRoutes
+import routes.admin.AdminPruebaRoutes
 import routes.admin.AdminUserCreateRoutes
 import routes.admin.adminRoutes
 import com.example.routes.intentosRoutes
@@ -26,19 +29,26 @@ import routes.cuestionario.prueba.pruebaRoutes
 import routes.billing.billingRoutes   // solo UNA import
 
 import plugins.settings   // config de tu app
+import plugins.DatabaseFactory
 import security.AuthCtx
 import security.AuthCtxKey
 import security.auth.GoogleTokenVerifier
 import security.billing.GooglePlayBillingService
+import services.EmailService
+import org.jetbrains.exposed.sql.Database
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
-    adminUserRepo: AdminUserRepository
+    adminUserRepo: AdminUserRepository,
+    recoveryCodeRepo: RecoveryCodeRepository,
+    emailService: EmailService,
+    db: Database
 ) {
     // Instancias de repos
     val users = UserRepository()
     val profiles = ProfileRepository()
     val consentRepo = ConsentimientoRepository()
+    val pruebaRepo = PruebaRepository(DatabaseFactory.db)
     val suscripcionRepo = SuscripcionRepository()
 
     // El contexto JWT debe haber sido cargado por configureSecurity()
@@ -86,6 +96,9 @@ fun Application.configureRouting(
             suscripcionRepo = suscripcionRepo
         )
 
+        // Password Recovery (forgot-password, reset-password)
+        passwordRecoveryRoutes(recoveryCodeRepo, emailService, db)
+
         // /me y /me/perfil (GET/PUT)
         meRoutes(users, profiles)
 
@@ -103,6 +116,9 @@ fun Application.configureRouting(
 
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
+
+        // Admin: crear pruebas
+        AdminPruebaRoutes(pruebaRepo)
 
         // Admin: crear usuarios (incluye admins)
         AdminUserCreateRoutes(adminUserRepo)
