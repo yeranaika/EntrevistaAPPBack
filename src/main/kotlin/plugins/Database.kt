@@ -3,6 +3,8 @@ package plugins
 
 import data.tables.usuarios.UsuarioTable
 import data.tables.usuarios.ConsentimientoTable
+import data.tables.usuarios.ProfileTable
+import data.tables.auth.RecoveryCodeTable
 import io.ktor.server.application.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -34,7 +36,9 @@ fun Application.configureDatabase() {
             transaction(db) {
                 SchemaUtils.createMissingTablesAndColumns(
                     UsuarioTable,
-                    ConsentimientoTable // agrega el resto de tus tablas aquí
+                    ConsentimientoTable,
+                    ProfileTable, // ← Tabla de perfil de usuario
+                    RecoveryCodeTable // ← Tabla de códigos de recuperación
                 )
             }
             log.info("✅ DB conectada en intento ${attempt + 1}")

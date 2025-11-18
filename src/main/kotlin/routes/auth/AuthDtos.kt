@@ -18,14 +18,65 @@ data class RegisterReq(
     val flagsAccesibilidad: JsonElement? = null
 )
 
-@Serializable data class LoginReq(val email: String, val password: String)
-@Serializable data class LoginOk(val accessToken: String, val refreshToken: String? = null)
-@Serializable data class ErrorRes(val error: String)
+@Serializable
+data class LoginReq(
+    val email: String,
+    val password: String
+)
 
-@Serializable data class RequestResetReq(val email: String)
-@Serializable data class RequestResetOk(val ok: Boolean = true, val token: String, val code: String)
-@Serializable data class ConfirmResetReq(val token: String, val code: String, val newPassword: String)
-@Serializable data class OkRes(val ok: Boolean = true)
+@Serializable
+data class LoginOk(
+    val accessToken: String,
+    val refreshToken: String? = null
+)
 
-@Serializable data class RefreshReq(val refreshToken: String)
-@Serializable data class RefreshOk(val accessToken: String, val refreshToken: String)
+@Serializable
+data class ErrorRes(
+    val error: String
+)
+
+@Serializable
+data class RequestResetReq(
+    val email: String
+)
+
+@Serializable
+data class RequestResetOk(
+    val ok: Boolean = true,
+    val token: String,
+    val code: String
+)
+
+@Serializable
+data class ConfirmResetReq(
+    val token: String,
+    val code: String,
+    val newPassword: String
+)
+
+@Serializable
+data class OkRes(
+    val ok: Boolean = true
+)
+
+@Serializable
+data class RefreshReq(
+    val refreshToken: String
+)
+
+@Serializable
+data class RefreshOk(
+    val accessToken: String,
+    val refreshToken: String
+)
+
+// 👇 DTO que usa la APP ANDROID (idToken de Google)
+@Serializable
+data class GoogleLoginReq(
+    val idToken: String
+)
+
+@Serializable
+data class LogoutReq(
+    val refreshToken: String
+)

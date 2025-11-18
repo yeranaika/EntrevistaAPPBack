@@ -3,16 +3,25 @@ package tables.cuestionario.preguntas
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
+import org.jetbrains.exposed.sql.TextColumnType
+import org.jetbrains.exposed.sql.Column
 import java.util.UUID
 
-object PreguntaTable : Table("pregunta") {
-    val id           = uuid("pregunta_id")                  // PK UUID “a mano”
+// Custom column type for PostgreSQL JSON
+class JsonColumnType : TextColumnType() {
+    override fun sqlType(): String = "JSON"
+}
+
+fun Table.jsonText(name: String): Column<String> = registerColumn(name, JsonColumnType())
+
+object PreguntaTable : Table("app.pregunta") {
+    val id           = uuid("pregunta_id")                  // PK UUID "a mano"
     val tipoBanco    = varchar("tipo_banco", 5)
     val nivel        = varchar("nivel", 3)
     val sector       = varchar("sector", 80).nullable()
     val texto        = text("texto")
-    val pistas       = text("pistas").nullable()            // guardas JSON como TEXT
-    val historica    = text("historica").nullable()         // idem
+    val pistas       = jsonText("pistas").nullable()        // JSON column
+    val historica    = jsonText("historica").nullable()     // JSON column
     val activa       = bool("activa").default(true)
     val fechaCreacion= timestampWithTimeZone("fecha_creacion")
 

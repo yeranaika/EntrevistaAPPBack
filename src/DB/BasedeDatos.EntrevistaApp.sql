@@ -33,7 +33,7 @@ CREATE TABLE perfil_usuario (
     perfil_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id          UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
     nivel_experiencia   VARCHAR(40),
-    area                VARCHAR(10),
+    area                VARCHAR(50),
     flags_accesibilidad JSON,
     nota_objetivos      TEXT,
     pais                VARCHAR(2),
@@ -69,6 +69,17 @@ CREATE TABLE consentimiento (
     fecha_revocado    TIMESTAMPTZ
 );
 
+CREATE TABLE consentimiento_texto (
+    version           VARCHAR(20) PRIMARY KEY,
+    titulo            TEXT        NOT NULL,
+    cuerpo            TEXT        NOT NULL,
+    fecha_publicacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    vigente           BOOLEAN     NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX idx_consentimiento_texto_vigente
+    ON consentimiento_texto (vigente);
+
 -- 2) Suscripciones y pagos
 CREATE TABLE suscripcion (
     suscripcion_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -93,12 +104,44 @@ CREATE TABLE pago (
     CONSTRAINT chk_estado_pago CHECK (estado IN ('pendiente','aprobado','fallido','reembolso'))
 );
 
+-- Tabla principal del plan de práctica por usuario
+CREATE TABLE plan_practica (
+    plan_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id     UUID NOT NULL REFERENCES app.usuario(usuario_id) ON DELETE CASCADE,
+    area           VARCHAR(10),
+    meta_cargo     VARCHAR(120),
+    nivel          VARCHAR(20),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    activo         BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Detalle del plan: pasos / módulos
+CREATE TABLE plan_practica_paso (
+    paso_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    plan_id            UUID NOT NULL REFERENCES plan_practica(plan_id) ON DELETE CASCADE,
+    orden              INT NOT NULL,
+    titulo             TEXT NOT NULL,
+    descripcion        TEXT,
+    sesiones_por_semana INT,
+    CONSTRAINT chk_orden_positivo CHECK (orden > 0),
+    CONSTRAINT uq_plan_paso_orden UNIQUE (plan_id, orden)
+);
+
+CREATE TABLE recordatorio_preferencia (
+    usuario_id UUID PRIMARY KEY
+        REFERENCES usuario(usuario_id) ON DELETE CASCADE,
+    dias_semana VARCHAR(50) NOT NULL,      -- Ej: 'LUNES,MARTES,VIERNES'
+    hora        VARCHAR(5)  NOT NULL,      -- Formato 'HH:MM'
+    tipo_practica VARCHAR(32) NOT NULL,    -- Ej: 'TEST', 'ENTREVISTA', 'REPASO'
+    habilitado  BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 -- 3) Contenidos: objetivos/cargos y banco de preguntas
 CREATE TABLE objetivo_carrera (
     objetivo_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id      UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
     nombre_cargo    VARCHAR(120) NOT NULL,
-    sector          VARCHAR(10),
+    sector          VARCHAR(50),
     skills_enfoque  JSON,
     activo          BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_creacion  TIMESTAMPTZ NOT NULL DEFAULT now()

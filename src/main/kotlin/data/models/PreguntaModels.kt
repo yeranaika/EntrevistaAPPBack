@@ -39,3 +39,12 @@ data class PagedPreguntasRes(
     val size: Int,
     val total: Long
 )
+
+@Serializable
+data class ActualizarPreguntaReq(
+    val texto: String? = null,
+    val sector: String? = null,
+    val activa: Boolean? = null,
+    val pistas: Map<String, String>? = null,
+    val historica: Map<String, String>? = null
+)

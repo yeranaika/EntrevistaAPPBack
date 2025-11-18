@@ -50,6 +50,63 @@ data class PutPerfilReq(
 @Serializable data class OkRes(val ok: Boolean = true)
 @Serializable data class ErrorRes(val error: String)
 
+// ---------- Validaciones ----------
+// ---------- Validaciones ----------
+object Validaciones {
+
+    // Niveles que puede mandar la APP (textos de la UI)
+    private val NIVELES_APP = setOf(
+        "Estoy empezando en este tema",
+        "Tengo experiencia intermedia",
+        "Tengo mucha experiencia"
+    )
+
+    // Códigos antiguos que ya usábamos
+    private val NIVELES_CODIGO = setOf("jr", "mid", "sr", "otro")
+
+    // Áreas que puede mandar la APP (textos de la UI)
+    private val AREAS_APP = setOf(
+        "TI",
+        "Ventas / Comercial",
+        "Finanzas",
+        "RRHH / Personas",
+        "Diseño / UX",
+        "Operaciones / Logística",
+        "Otra área"
+    )
+
+    // Códigos antiguos
+    private val AREAS_CODIGO = setOf("tec", "soft", "mix", "_")
+
+    val IDIOMAS = setOf("es", "en", "pt", "fr", "de")
+
+    fun validarNivelExperiencia(nivel: String?): String? {
+        if (nivel == null) return null
+
+        val ok = nivel in NIVELES_APP || nivel in NIVELES_CODIGO
+        return if (ok) null else "nivel_experiencia_invalido"
+    }
+
+    fun validarArea(area: String?): String? {
+        if (area == null) return null
+
+        val ok = area in AREAS_APP || area in AREAS_CODIGO
+        return if (ok) null else "area_invalida"
+    }
+
+    fun validarPais(pais: String?): String? {
+        if (pais == null) return null
+        // ISO 3166-1 alpha-2 (2 letras mayúsculas)
+        return if (pais.matches(Regex("^[A-Z]{2}$"))) null else "pais_invalido"
+    }
+
+    fun validarIdioma(idioma: String?): String? {
+        if (idioma == null) return null
+        return if (idioma in IDIOMAS) null else "idioma_invalido"
+    }
+}
+
+
 // ---------- Helper ----------
 private fun ApplicationCall.userIdFromJwt(): UUID {
     val principal = this.principal<JWTPrincipal>() ?: error("No principal")
@@ -102,6 +159,12 @@ fun Route.meRoutes(
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("invalid_json"))
                 }
 
+                // Validar idioma si está presente
+                val errorIdioma = Validaciones.validarIdioma(req.idioma)
+                if (errorIdioma != null) {
+                    return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorIdioma))
+                }
+
                 var touched = 0
                 if (req.nombre != null) touched += users.updateNombre(uid, req.nombre)
                 if (req.idioma  != null) touched += users.updateIdioma(uid, req.idioma)
@@ -134,28 +197,32 @@ fun Route.meRoutes(
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("invalid_json"))
                 }
 
-                val existing = profiles.findByUser(uid)
-                if (existing != null) {
-                    // ✅ actualiza por perfilId (firma real del repo)
-                    profiles.updatePartial(
-                        perfilId = existing.perfilId,
-                        nivelExperiencia   = req.nivelExperiencia,
-                        area               = req.area,
-                        pais               = req.pais,
-                        notaObjetivos      = req.notaObjetivos,
-                        flagsAccesibilidad = req.flagsAccesibilidad
-                    )
-                } else {
-                    // ✅ crea por userId (firma real del repo)
-                    profiles.create(
-                        userId             = uid,
-                        nivelExperiencia   = req.nivelExperiencia,
-                        area               = req.area,
-                        pais               = req.pais,
-                        notaObjetivos      = req.notaObjetivos,
-                        flagsAccesibilidad = req.flagsAccesibilidad
-                    )
+                // Validar campos antes de guardar
+                val errorNivel = Validaciones.validarNivelExperiencia(req.nivelExperiencia)
+                if (errorNivel != null) {
+                    return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorNivel))
                 }
+
+                val errorArea = Validaciones.validarArea(req.area)
+                if (errorArea != null) {
+                    return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorArea))
+                }
+
+                val errorPais = Validaciones.validarPais(req.pais)
+                if (errorPais != null) {
+                    return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorPais))
+                }
+
+                // Upsert: crea o actualiza en una sola operación
+                profiles.upsert(
+                    userId             = uid,
+                    nivelExperiencia   = req.nivelExperiencia,
+                    area               = req.area,
+                    pais               = req.pais,
+                    notaObjetivos      = req.notaObjetivos,
+                    flagsAccesibilidad = req.flagsAccesibilidad
+                )
+
                 call.respond(OkRes())
             }
         }

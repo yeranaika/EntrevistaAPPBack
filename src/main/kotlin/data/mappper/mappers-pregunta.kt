@@ -7,14 +7,23 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.ResultRow
 import tables.cuestionario.preguntas.PreguntaTable
 
-fun ResultRow.toPreguntaRes(json: Json) = PreguntaRes(
-    id            = this[PreguntaTable.id].toString(),
-    tipoBanco     = TipoBanco.valueOf(this[PreguntaTable.tipoBanco]),
-    nivel         = Nivel.valueOf(this[PreguntaTable.nivel]),
-    sector        = this[PreguntaTable.sector],
-    texto         = this[PreguntaTable.texto],
-    pistas        = this[PreguntaTable.pistas]?.let { json.decodeFromString<Map<String, String>>(it) },
-    historica     = this[PreguntaTable.historica]?.let { json.decodeFromString<Map<String, String>>(it) },
-    activa        = this[PreguntaTable.activa],
-    fechaCreacion = this[PreguntaTable.fechaCreacion].toString()
-)
+fun ResultRow.toPreguntaRes(json: Json): PreguntaRes {
+    val tipoBancoStr = this[PreguntaTable.tipoBanco]
+    val nivelStr = this[PreguntaTable.nivel]
+
+    return PreguntaRes(
+        id            = this[PreguntaTable.id].toString(),
+        tipoBanco     = runCatching { TipoBanco.valueOf(tipoBancoStr) }.getOrElse { TipoBanco.tec },
+        nivel         = runCatching { Nivel.valueOf(nivelStr) }.getOrElse { Nivel.jr },
+        sector        = this[PreguntaTable.sector],
+        texto         = this[PreguntaTable.texto],
+        pistas        = this[PreguntaTable.pistas]?.let {
+            runCatching { json.decodeFromString<Map<String, String>>(it) }.getOrNull()
+        },
+        historica     = this[PreguntaTable.historica]?.let {
+            runCatching { json.decodeFromString<Map<String, String>>(it) }.getOrNull()
+        },
+        activa        = this[PreguntaTable.activa],
+        fechaCreacion = this[PreguntaTable.fechaCreacion].toString()
+    )
+}

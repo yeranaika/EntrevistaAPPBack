@@ -41,6 +41,7 @@ class ProfileRepository {
         flagsAccesibilidad: JsonElement? = null
     ): UUID = dbTx {
         val pid = UUID.randomUUID()
+        val now = java.time.OffsetDateTime.now()
         ProfileTable.insert {
             it[perfilId]                 = pid
             it[usuarioId]                = userId
@@ -49,6 +50,7 @@ class ProfileRepository {
             it[ProfileTable.pais]        = pais
             it[ProfileTable.notaObjetivos] = notaObjetivos
             it[ProfileTable.flagsAccesibilidad] = flagsAccesibilidad   // ← JsonElement directo
+            it[fechaActualizacion]       = now
         }
         pid
     }
@@ -61,12 +63,60 @@ class ProfileRepository {
         notaObjetivos: String? = null,
         flagsAccesibilidad: JsonElement? = null
     ): Int = dbTx {
+        val now = java.time.OffsetDateTime.now()
         ProfileTable.update({ ProfileTable.perfilId eq perfilId }) {
             if (nivelExperiencia != null) it[ProfileTable.nivelExperiencia] = nivelExperiencia
             if (area != null)             it[ProfileTable.area]             = area
             if (pais != null)             it[ProfileTable.pais]             = pais
             if (notaObjetivos != null)    it[ProfileTable.notaObjetivos]    = notaObjetivos
             if (flagsAccesibilidad != null) it[ProfileTable.flagsAccesibilidad] = flagsAccesibilidad // ← JsonElement
+            it[fechaActualizacion] = now
+        }
+    }
+
+    /**
+     * Upsert: crea el perfil si no existe, o actualiza el existente
+     * @return el perfilId (nuevo o existente)
+     */
+    suspend fun upsert(
+        userId: UUID,
+        nivelExperiencia: String? = null,
+        area: String? = null,
+        pais: String? = null,
+        notaObjetivos: String? = null,
+        flagsAccesibilidad: JsonElement? = null
+    ): UUID = dbTx {
+        val existing = ProfileTable
+            .selectAll()
+            .where { ProfileTable.usuarioId eq userId }
+            .limit(1)
+            .firstOrNull()
+
+        val now = java.time.OffsetDateTime.now()
+        if (existing != null) {
+            val pid = existing[ProfileTable.perfilId]
+            ProfileTable.update({ ProfileTable.perfilId eq pid }) {
+                if (nivelExperiencia != null) it[ProfileTable.nivelExperiencia] = nivelExperiencia
+                if (area != null)             it[ProfileTable.area]             = area
+                if (pais != null)             it[ProfileTable.pais]             = pais
+                if (notaObjetivos != null)    it[ProfileTable.notaObjetivos]    = notaObjetivos
+                if (flagsAccesibilidad != null) it[ProfileTable.flagsAccesibilidad] = flagsAccesibilidad
+                it[fechaActualizacion] = now
+            }
+            pid
+        } else {
+            val pid = UUID.randomUUID()
+            ProfileTable.insert {
+                it[perfilId]                 = pid
+                it[usuarioId]                = userId
+                it[ProfileTable.nivelExperiencia] = nivelExperiencia
+                it[ProfileTable.area]        = area
+                it[ProfileTable.pais]        = pais
+                it[ProfileTable.notaObjetivos] = notaObjetivos
+                it[ProfileTable.flagsAccesibilidad] = flagsAccesibilidad
+                it[fechaActualizacion]       = now
+            }
+            pid
         }
     }
 
