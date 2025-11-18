@@ -31,6 +31,9 @@ import routes.cuestionario.prueba.pruebaRoutes
 import routes.admin.adminPlanRoutes
 import routes.billing.billingRoutes   // solo UNA import
 
+import data.repository.usuarios.RecordatorioPreferenciaRepository
+import routes.usuario.recordatorios.recordatorioRoutes
+
 import plugins.settings   // config de tu app
 import plugins.DatabaseFactory
 import security.AuthCtx
@@ -54,6 +57,7 @@ fun Application.configureRouting(
     val pruebaRepo = PruebaRepository(DatabaseFactory.db)
     val suscripcionRepo = SuscripcionRepository()
     val onboardingRepo = OnboardingRepository()
+    val recordatorioRepo = RecordatorioPreferenciaRepository()
     
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -123,6 +127,8 @@ fun Application.configureRouting(
 
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
+
+        recordatorioRoutes(recordatorioRepo)
 
         // Admin: crear pruebas
         AdminPruebaRoutes(pruebaRepo)

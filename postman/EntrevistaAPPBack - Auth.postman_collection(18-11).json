@@ -190,49 +190,146 @@
 			]
 		},
 		{
-			"name": "perfil",
+			"name": "usuario",
 			"item": [
 				{
-					"name": "perfil datos",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": {
-								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
-							}
+					"name": "perfil",
+					"item": [
+						{
+							"name": "perfil datos",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
+									}
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://127.0.0.1:8080/me/perfil"
+							},
+							"response": []
 						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
+						{
+							"name": "perfil datos",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzQ5MzgzNiwiZXhwIjoxNzYzNDk0NzM2LCJyb2xlIjoiYWRtaW4ifQ.pgMpRplvLDMxPGVn-omfbroO6zxjOmDWlYez1agTrJ35UynCSar_7HQjATGwU7SGVMwP-VDepap99xlca-mNvg",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"nivelExperiencia\": \"jr\",    // en vez de \"Junior\"\r\n  \"area\": \"tec\",               // en vez de \"Backend\"\r\n  \"pais\": \"CL\",\r\n  \"notaObjetivos\": \"Buscar primera experiencia\",\r\n  \"flagsAccesibilidad\": { \"altoContraste\": true, \"subtitulos\": false }\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://127.0.0.1:8080/me/perfil"
+							},
+							"response": []
 						},
-						"url": "http://127.0.0.1:8080/me/perfil"
-					},
-					"response": []
+						{
+							"name": "Me (protegido)",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "{{accessToken}}"
+									}
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAyMDExNywiZXhwIjoxNzYyMDIxMDE3fQ.SnP5MgOdLksxuMqgM8xrgXBO1TdNBEQ4CG_3fJGneoA9JIz5SFkCGBNp2GFBNgFvrqAN-KOa6saaOZ-N_4SERw",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://127.0.0.1:8080/me"
+							},
+							"response": []
+						},
+						{
+							"name": "Me actualizar",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": {
+										"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
+									}
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"nombre\": \"Nuevo Nombre\",\r\n  \"idioma\": \"cl\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://127.0.0.1:8080/me"
+							},
+							"response": []
+						}
+					]
 				},
 				{
-					"name": "perfil datos",
+					"name": "agregar recordatorio notificacion",
 					"request": {
 						"auth": {
-							"type": "bearer",
-							"bearer": {
-								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMTI5OCwiZXhwIjoxNzYyMDMyMTk4fQ.UhhfuiWwmeBUmtVNl3lEQKRohlCzBsf0n5bctxKJyqYo-cwqO11lVvBG1B1TLNXXB2Bn8qaAqpsiWOVp6VmAeg"
-							}
+							"type": "noauth"
 						},
 						"method": "PUT",
 						"header": [
@@ -240,81 +337,23 @@
 								"key": "Content-Type",
 								"value": "application/json",
 								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"nivelExperiencia\": \"Junior\",\r\n  \"area\": \"Backend\",\r\n  \"pais\": \"CL\",\r\n  \"notaObjetivos\": \"Buscar primera experiencia\",\r\n  \"flagsAccesibilidad\": { \"altoContraste\": true, \"subtitulos\": false }\r\n}\r\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": "http://127.0.0.1:8080/me/perfil"
-					},
-					"response": []
-				},
-				{
-					"name": "Me (protegido)",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": {
-								"token": "{{accessToken}}"
-							}
-						},
-						"method": "GET",
-						"header": [
+							},
 							{
 								"key": "Authorization",
-								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAyMDExNywiZXhwIjoxNzYyMDIxMDE3fQ.SnP5MgOdLksxuMqgM8xrgXBO1TdNBEQ4CG_3fJGneoA9JIz5SFkCGBNp2GFBNgFvrqAN-KOa6saaOZ-N_4SERw",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzQ3MTY4MywiZXhwIjoxNzYzNDcyNTgzLCJyb2xlIjoiYWRtaW4ifQ.8Y3C01j4LK5lYW7nlJCGTWzryo53dIPpZowsBENb9BTKEjzMD33N6GA0ectUKC2M9I8tuIwnMbWTyYbimigjRg",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "",
+							"raw": "{\r\n  \"diasSemana\": [\"LUNES\", \"MIERCOLES\", \"VIERNES\"],\r\n  \"hora\": \"20:00\",\r\n  \"tipoPractica\": \"ENTREVISTA\",\r\n  \"habilitado\": true\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/me"
-					},
-					"response": []
-				},
-				{
-					"name": "Me actualizar",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": {
-								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
-							}
-						},
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n  \"nombre\": \"Nuevo Nombre\",\r\n  \"idioma\": \"cl\"\r\n}\r\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": "http://127.0.0.1:8080/me"
+						"url": "http://127.0.0.1:8080/recordatorios/preferencias"
 					},
 					"response": []
 				}
@@ -546,6 +585,78 @@
 						"url": "http://127.0.0.1:8080/intentos/mis-intentos"
 					},
 					"response": []
+				},
+				{
+					"name": "Crear Intento",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIwOWYwNDYxMS1lMjgzLTQzNTctYjBkOC02MDk4YTJkN2Q4MTAiLCJpYXQiOjE3NjMxNjY2NDcsImV4cCI6MTc2MzE2NzU0Nywicm9sZSI6InVzZXIifQ.D5soTPVz97kJ6Iq4dZXYPAiblJYxovaqdo8tesLKXiv9kOBOUci684CRH_aC9lVYDNMCU-Qg8YeS-BOQXUEC8w",
+								"type": "text"
+							}
+						],
+						"url": "http://127.0.0.1:8080/cuestionario/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/intentos"
+					},
+					"response": []
+				},
+				{
+					"name": "Siguiente Pregunta",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIwOWYwNDYxMS1lMjgzLTQzNTctYjBkOC02MDk4YTJkN2Q4MTAiLCJpYXQiOjE3NjMxNjUwOTMsImV4cCI6MTc2MzE2NTk5Mywicm9sZSI6InVzZXIifQ.BSTSY-AL5J93yBC8oa9wGxeEkTVFZxHJnOxSBDwVuFThmWg6OhWADEOi9NP2FI8Q9VTdU_6ozYH9efOmGpiPIw",
+								"type": "text"
+							}
+						],
+						"url": "http://127.0.0.1:8080/cuestionario/intentos/859117b9-05cb-446f-9688-ef8e7c437f52/siguiente"
+					},
+					"response": []
+				},
+				{
+					"name": "Responder pregunta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIwOWYwNDYxMS1lMjgzLTQzNTctYjBkOC02MDk4YTJkN2Q4MTAiLCJpYXQiOjE3NjMxNjY2NDcsImV4cCI6MTc2MzE2NzU0Nywicm9sZSI6InVzZXIifQ.D5soTPVz97kJ6Iq4dZXYPAiblJYxovaqdo8tesLKXiv9kOBOUci684CRH_aC9lVYDNMCU-Qg8YeS-BOQXUEC8w",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"preguntaId\": \"3a47795a-6dec-4266-9194-8dfbfa2191f9\",\r\n  \"respuestaUsuario\": \"Las corutinas permiten ejecución asíncrona en Kotlin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:8080/cuestionario/intentos/48e98587-0250-42cb-841a-15a8a0d6e754/respuestas"
+					},
+					"response": []
+				},
+				{
+					"name": "Finzalizar Pregunta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiIwOWYwNDYxMS1lMjgzLTQzNTctYjBkOC02MDk4YTJkN2Q4MTAiLCJpYXQiOjE3NjMxNjQ2OTcsImV4cCI6MTc2MzE2NTU5Nywicm9sZSI6InVzZXIifQ.7ertdLjwqjWOo44kj3c8WZ8pxZt9Z1iY0h6W057bE5wymoIFrlVC31LXSCwCCQ5j-GwnikSDmtujp90IV5WzeA",
+								"type": "text"
+							}
+						],
+						"url": "http://127.0.0.1:8080/cuestionario/intentos/859117b9-05cb-446f-9688-ef8e7c437f52/finalizar"
+					},
+					"response": []
 				}
 			],
 			"description": "Method: POST  \nURL: [http://127.0.0.1:8080/pruebas/{{pruebaId}}/intentos](http://127.0.0.1:8080/pruebas/%7B%7BpruebaId%7D%7D/intentos)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\nBody (ninguno)\n\n```\n---\n### **2️⃣ GET - Siguiente Pregunta**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/siguiente](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/siguiente)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\n```\n---\n### **3️⃣ POST - Responder Pregunta**\n\n ```\n\nMethod: POST  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/respuestas](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/respuestas)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}  \nContent-Type: application/json\n\nBody (JSON):  \n{  \n\"preguntaId\": \"uuid-de-pregunta\",  \n\"respuestaUsuario\": \"A\",  \n\"tiempoRespuestaSegundos\": 30  \n}\n\n```\n---\n### **4️⃣ POST - Finalizar Intento**\n\n ```\n\nMethod: POST  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/finalizar](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/finalizar)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}  \nContent-Type: application/json\n\nBody (JSON):  \n{  \n\"abandonado\": false  \n}\n\n```\n---\n### **5️⃣ GET - Mis Intentos**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/mis-intentos](http://127.0.0.1:8080/intentos/mis-intentos)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}\n\n```\n---\n### **6️⃣ GET - Estadísticas de Intento**\n\n ```\n\nMethod: GET  \nURL: [http://127.0.0.1:8080/intentos/{{intentoId}}/estadisticas](http://127.0.0.1:8080/intentos/%7B%7BintentoId%7D%7D/estadisticas)\n\nHeaders:  \nAuthorization: Bearer {{accessToken}}"
@@ -638,6 +749,28 @@
 							"response": []
 						},
 						{
+							"name": "generar plan de practica sugerido Copy",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzQzMzcyMSwiZXhwIjoxNzYzNDM0NjIxLCJyb2xlIjoiYWRtaW4ifQ.iCnIF0Vble1XSA8yS9HTpl22jKV7iVi6T7Vnmq_jMaRb3prWz_fP6LSv_LJFR_vd0yyMolkN7TPxlk39f3m9Pw"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"area\": \"TI\",\r\n  \"metaCargo\": \"Desarrollador Android Jr\",\r\n  \"nivel\": \"jr\",\r\n  \"pasos\": [\r\n    {\r\n      \"titulo\": \"Repasar fundamentos de Kotlin\",\r\n      \"descripcion\": \"Variables, funciones, colecciones, corrutinas básicas.\",\r\n      \"sesionesPorSemana\": 3\r\n    },\r\n    {\r\n      \"titulo\": \"Practicar entrevistas de Android\",\r\n      \"descripcion\": \"Ciclo de vida, ViewModel, arquitectura MVVM.\",\r\n      \"sesionesPorSemana\": 2\r\n    },\r\n    {\r\n      \"titulo\": \"Entrevistas simuladas\",\r\n      \"descripcion\": \"Simular entrevistas de 30-45 minutos respondiendo en voz alta.\",\r\n      \"sesionesPorSemana\": 1\r\n    }\r\n  ]\r\n}\r\n"
+								},
+								"url": "http://127.0.0.1:8080/admin/usuarios/30c96614-5836-4432-b376-972b4ebebaed/plan-practica"
+							},
+							"response": []
+						},
+						{
 							"name": "Mostrar pregunta",
 							"protocolProfileBehavior": {
 								"disableBodyPruning": true
@@ -659,6 +792,103 @@
 									"raw": "{\n  \"tipoBanco\": \"tec\",\n  \"nivel\": \"jr\",\n  \"texto\": \"¿Qué es una corutina en Kotlin y cuándo usarla?\"\n}\n"
 								},
 								"url": "http://127.0.0.1:8080/admin/preguntas"
+							},
+							"response": []
+						},
+						{
+							"name": "Asociar preguntas a Prueba",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiJmZjFkNWM3OC1mMTAxLTQ5YjktODFiMC1iZmI2ZTExMmJhMjkiLCJpYXQiOjE3NjMwMjgyNTEsImV4cCI6MTc2MzAyOTE1MSwicm9sZSI6ImFkbWluIn0.7QqGOC1LdPP1YOr9YbbFiKytpoBpql5vxqzdONX-UsDFP8nsrDX_jo6fuzFucLx3UI83dUEcevFYXlaq8sqDHA",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"preguntaId\": \"c51b4dbd-b6d6-431a-8166-fa0aa34841d4\",\r\n  \"orden\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://127.0.0.1:8080/cuestionario/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/preguntas"
+							},
+							"response": []
+						},
+						{
+							"name": "Listar Preguntas",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiJkMzBhMjljMy02MDI4LTRkODUtODllYi03ZmVhMTgyYWMzNzIiLCJpYXQiOjE3NjMzMjY4NzksImV4cCI6MTc2MzMyNzc3OSwicm9sZSI6ImFkbWluIn0.jnh4CNkPICiMAdO04rweD2XKKM7Ul7Zu3q3eSciS4Juxd7OEK8xz7LlB8DfSdzs-LQIAkK4-XQ5fUugMaAkhMQ",
+										"type": "text"
+									}
+								],
+								"url": "http://localhost:8080/admin/preguntas"
+							},
+							"response": []
+						},
+						{
+							"name": "Actualizar Preguntas",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiJkMzBhMjljMy02MDI4LTRkODUtODllYi03ZmVhMTgyYWMzNzIiLCJpYXQiOjE3NjMzMjgyNTksImV4cCI6MTc2MzMyOTE1OSwicm9sZSI6ImFkbWluIn0.uvyKBys8pMP7-YiMCGgwzguThwWJ27H11k941HlTh1gfC-xBaX-SkLVX5zqP9kdkNTlhRdIsgDjn-vcI21hLjg",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pistas\": {\r\n    \"pista1\": \"Esta es la primera pista\",\r\n    \"pista2\": \"Esta es la segunda pista\"\r\n  }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/admin/preguntas/91da30db-8833-48a2-a5d3-7755e8d7d482"
+							},
+							"response": []
+						},
+						{
+							"name": "Crear Prueba",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiJkMzBhMjljMy02MDI4LTRkODUtODllYi03ZmVhMTgyYWMzNzIiLCJpYXQiOjE3NjMzMjQwNDIsImV4cCI6MTc2MzMyNDk0Miwicm9sZSI6ImFkbWluIn0.aP0Gg5g-MQTFJjMsKNuRikOaqnOc8FHXz3bol274qZFJdIHpa0DDHeLPowPD1zp3k5ibLiIP8SZ_GO3Q61wsYQ",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"tipoPrueba\": \"aprendiz\",\r\n  \"area\": \"tec\",\r\n  \"nivel\": \"jr\",\r\n  \"metadata\": {}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "http://localhost:8080/admin/pruebas"
 							},
 							"response": []
 						}
@@ -720,12 +950,58 @@
 						"url": "http://127.0.0.1:8080/plan-practica"
 					},
 					"response": []
+				},
+				{
+					"name": "Guardar área / cargo / nivel",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzQzMzcyMSwiZXhwIjoxNzYzNDM0NjIxLCJyb2xlIjoiYWRtaW4ifQ.iCnIF0Vble1XSA8yS9HTpl22jKV7iVi6T7Vnmq_jMaRb3prWz_fP6LSv_LJFR_vd0yyMolkN7TPxlk39f3m9Pw"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"area\": \"TI\",\r\n  \"metaCargo\": \"Desarrollador Android Jr\",\r\n  \"nivel\": \"jr\"\r\n}\r\n"
+						},
+						"url": "http://127.0.0.1:8080/perfil/objetivo"
+					},
+					"response": []
 				}
 			]
 		},
 		{
 			"name": "GOOGLE",
 			"item": [
+				{
+					"name": "forgot-password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\r\n     \"correo\": \"nvicencio33@gmail.com\"\r\n   }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/auth/forgot-password"
+					},
+					"response": []
+				},
 				{
 					"name": "http://127.0.0.1:8080/auth/google/callback",
 					"request": {
@@ -736,30 +1012,35 @@
 					"response": []
 				},
 				{
-					"name": "http://localhost:8080/billing/google/verify",
+					"name": "reset-password",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
 					"request": {
-						"method": "POST",
+						"method": "GET",
 						"header": [
 							{
-								"key": "Authorization",
-								"value": "Bearer <JWT>"
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
 							},
 							{
-								"key": "Content-Type",
-								"value": "application/json"
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }",
+							"raw": "{\r\n  \"correo\": \"nvicencio33@gmail.com\",\r\n  \"codigo\": \"157730\",\r\n  \"nuevaContrasena\": \"TestPassword123\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
 						},
-						"url": "http://localhost:8080/billing/google/verify",
-						"description": "Generated from cURL: curl -X POST http://localhost:8080/billing/google/verify \\\r\n  -H \"Authorization: Bearer <JWT>\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }'\r\n"
+						"url": "http://localhost:8080/auth/reset-password"
 					},
 					"response": []
 				}
@@ -774,17 +1055,17 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "Authorization",
-								"value": "Bearer <JWT>"
-							},
-							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzQ3Mzk2MywiZXhwIjoxNzYzNDc0ODYzLCJyb2xlIjoiYWRtaW4ifQ.QvDPDAMlmb4-9rEdukHFfFs5YzBCL4GcSlgOwvWgh-WOKCC_O8rWoCGyLMhRo8CwJZoCqrfzNOSQREwiyfoc3w"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }",
+							"raw": "{\r\n\"product_id\": \"tu.suscripcion.id\",\r\n\"purchase_token\": \"token-generado-por-play\",\r\n\"purchase_time\": 1731212345678\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -793,6 +1074,35 @@
 						},
 						"url": "http://localhost:8080/billing/google/verify",
 						"description": "Generated from cURL: curl -X POST http://localhost:8080/billing/google/verify \\\r\n  -H \"Authorization: Bearer <JWT>\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }'\r\n"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tickets",
+			"item": [
+				{
+					"name": "Crear Ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvIiwiYXVkIjoiYXBwLWVudHJldmlzdGEiLCJzdWIiOiJkMzBhMjljMy02MDI4LTRkODUtODllYi03ZmVhMTgyYWMzNzIiLCJpYXQiOjE3NjM0MzM5NzMsImV4cCI6MTc2MzQzNDg3Mywicm9sZSI6ImFkbWluIn0.-wGfZrK-tbYYxZJ6GabgbgqfNg9BE9nKFdTq1zXvJPCG0nRtKm_YBESzKUk4Z8rv3NL9QwingwEcxWuQAojhag",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"mensaje\": \"La app se cierra al guardar\",\r\n  \"categoria\": \"bug\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:8080/soporte/tickets"
 					},
 					"response": []
 				}

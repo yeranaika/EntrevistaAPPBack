@@ -51,24 +51,52 @@ data class PutPerfilReq(
 @Serializable data class ErrorRes(val error: String)
 
 // ---------- Validaciones ----------
+// ---------- Validaciones ----------
 object Validaciones {
-    val NIVELES_EXPERIENCIA = setOf("jr", "mid", "sr", "otro")
-    val AREAS = setOf("tec", "soft", "mix", "_")
+
+    // Niveles que puede mandar la APP (textos de la UI)
+    private val NIVELES_APP = setOf(
+        "Estoy empezando en este tema",
+        "Tengo experiencia intermedia",
+        "Tengo mucha experiencia"
+    )
+
+    // Códigos antiguos que ya usábamos
+    private val NIVELES_CODIGO = setOf("jr", "mid", "sr", "otro")
+
+    // Áreas que puede mandar la APP (textos de la UI)
+    private val AREAS_APP = setOf(
+        "TI",
+        "Ventas / Comercial",
+        "Finanzas",
+        "RRHH / Personas",
+        "Diseño / UX",
+        "Operaciones / Logística",
+        "Otra área"
+    )
+
+    // Códigos antiguos
+    private val AREAS_CODIGO = setOf("tec", "soft", "mix", "_")
+
     val IDIOMAS = setOf("es", "en", "pt", "fr", "de")
 
     fun validarNivelExperiencia(nivel: String?): String? {
         if (nivel == null) return null
-        return if (nivel in NIVELES_EXPERIENCIA) null else "nivel_experiencia_invalido"
+
+        val ok = nivel in NIVELES_APP || nivel in NIVELES_CODIGO
+        return if (ok) null else "nivel_experiencia_invalido"
     }
 
     fun validarArea(area: String?): String? {
         if (area == null) return null
-        return if (area in AREAS) null else "area_invalida"
+
+        val ok = area in AREAS_APP || area in AREAS_CODIGO
+        return if (ok) null else "area_invalida"
     }
 
     fun validarPais(pais: String?): String? {
         if (pais == null) return null
-        // Validar formato ISO 3166-1 alpha-2 (2 letras mayúsculas)
+        // ISO 3166-1 alpha-2 (2 letras mayúsculas)
         return if (pais.matches(Regex("^[A-Z]{2}$"))) null else "pais_invalido"
     }
 
@@ -77,6 +105,7 @@ object Validaciones {
         return if (idioma in IDIOMAS) null else "idioma_invalido"
     }
 }
+
 
 // ---------- Helper ----------
 private fun ApplicationCall.userIdFromJwt(): UUID {
