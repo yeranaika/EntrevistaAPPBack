@@ -1,6 +1,5 @@
 package routes.auth
 
-import at.favre.lib.crypto.bcrypt.BCrypt
 import data.models.auth.ForgotPasswordReq
 import data.models.auth.ForgotPasswordRes
 import data.models.auth.ResetPasswordReq
@@ -13,8 +12,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import security.hashPassword
 import services.EmailService
 
 fun Route.passwordRecoveryRoutes(
@@ -22,7 +23,9 @@ fun Route.passwordRecoveryRoutes(
     emailService: EmailService,
     db: org.jetbrains.exposed.sql.Database
 ) {
+    // ============================
     // POST /auth/forgot-password
+    // ============================
     post("/auth/forgot-password") {
         val body = runCatching { call.receive<ForgotPasswordReq>() }
             .getOrElse {
@@ -83,7 +86,9 @@ fun Route.passwordRecoveryRoutes(
         }
     }
 
+    // ============================
     // POST /auth/reset-password
+    // ============================
     post("/auth/reset-password") {
         val body = runCatching { call.receive<ResetPasswordReq>() }
             .getOrElse {
@@ -120,7 +125,7 @@ fun Route.passwordRecoveryRoutes(
         }
 
         try {
-            // Validar código
+            // Validar código → devuelve usuarioId o null
             val usuarioId = recoveryCodeRepo.validateCode(correo, codigo)
 
             if (usuarioId == null) {
@@ -130,12 +135,13 @@ fun Route.passwordRecoveryRoutes(
                 )
             }
 
-            // Hash de la nueva contraseña
-            val hashedPassword = BCrypt.withDefaults().hashToString(12, nuevaContrasena.toCharArray())
+            // Hash de la nueva contraseña usando el mismo helper que /auth/register
+            val hashedPassword = hashPassword(nuevaContrasena)
 
             // Actualizar contraseña en la base de datos
             val updated = newSuspendedTransaction(db = db) {
                 UsuarioTable.update({ UsuarioTable.usuarioId eq usuarioId }) { st ->
+                    // Asegúrate de que esta sea la MISMA columna que usa login
                     st[UsuarioTable.contrasenaHash] = hashedPassword
                 }
             }
