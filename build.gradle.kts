@@ -54,6 +54,7 @@ dependencies {
 
     // Opción A (simple, recomendada por Google) para validar ID tokens:
     implementation("com.google.api-client:google-api-client:2.+")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.23.0")
 
 
     // Tests
