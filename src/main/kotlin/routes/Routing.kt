@@ -8,6 +8,7 @@ import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
 import data.repository.usuarios.ConsentimientoRepository
 import data.repository.usuarios.UsuariosOAuthRepositoryImpl
+import data.repository.soporte.TicketRepositoryImpl
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -24,6 +25,7 @@ import routes.admin.AdminUserCreateRoutes
 import routes.admin.adminRoutes
 import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
+import routes.soporte.ticketRoutes
 
 import plugins.settings   // ⬅ importante
 import plugins.DatabaseFactory
@@ -45,7 +47,8 @@ fun Application.configureRouting(
     val users = UserRepository()
     val profiles = ProfileRepository()
     val consentRepo = ConsentimientoRepository()
-    val pruebaRepo = PruebaRepository(DatabaseFactory.db) 
+    val pruebaRepo = PruebaRepository(DatabaseFactory.db)
+    val ticketRepo = TicketRepositoryImpl(db) 
    
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -99,5 +102,8 @@ fun Application.configureRouting(
 
         // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
         adminRoutes(adminUserRepo)
+
+        // Soporte: tickets de usuarios
+        ticketRoutes(ticketRepo)
     }
 }
