@@ -104,6 +104,29 @@ CREATE TABLE pago (
     CONSTRAINT chk_estado_pago CHECK (estado IN ('pendiente','aprobado','fallido','reembolso'))
 );
 
+-- Tabla principal del plan de práctica por usuario
+CREATE TABLE plan_practica (
+    plan_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id     UUID NOT NULL REFERENCES app.usuario(usuario_id) ON DELETE CASCADE,
+    area           VARCHAR(10),
+    meta_cargo     VARCHAR(120),
+    nivel          VARCHAR(20),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    activo         BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Detalle del plan: pasos / módulos
+CREATE TABLE plan_practica_paso (
+    paso_id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    plan_id            UUID NOT NULL REFERENCES plan_practica(plan_id) ON DELETE CASCADE,
+    orden              INT NOT NULL,
+    titulo             TEXT NOT NULL,
+    descripcion        TEXT,
+    sesiones_por_semana INT,
+    CONSTRAINT chk_orden_positivo CHECK (orden > 0),
+    CONSTRAINT uq_plan_paso_orden UNIQUE (plan_id, orden)
+);
+
 -- 3) Contenidos: objetivos/cargos y banco de preguntas
 CREATE TABLE objetivo_carrera (
     objetivo_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
