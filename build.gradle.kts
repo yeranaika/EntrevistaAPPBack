@@ -90,4 +90,9 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages-jvm:3.0.0")
     implementation("io.ktor:ktor-server-auth-jvm:3.0.0")
     implementation("io.ktor:ktor-server-auth-jwt-jvm:3.0.0")
+
+    // Email (Jakarta Mail para envío de correos)
+    implementation("com.sun.mail:jakarta.mail:2.0.1")
+    implementation("jakarta.activation:jakarta.activation-api:2.1.0")
+    implementation("org.eclipse.angus:angus-activation:2.0.1")
 }

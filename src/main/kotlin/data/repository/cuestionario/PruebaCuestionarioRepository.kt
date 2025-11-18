@@ -33,18 +33,18 @@ class PruebaCuestionarioRepository(
     suspend fun asociarPregunta(
         pruebaId: UUID,
         preguntaId: UUID,
-        payload: AsociarPreguntaRequest
+        payload: AsociarPreguntaRequest,
+        validarConsistencia: Boolean = true
     ): PreguntaAsignadaResponse = newSuspendedTransaction(db = db) {
         require(payload.orden > 0) { "El orden debe ser mayor a 0" }
 
-        val preguntaExiste = !PreguntaTable
+        // Verificar que la pregunta existe y obtener sus datos
+        val preguntaRow = PreguntaTable
             .selectAll()
             .where { PreguntaTable.id eq preguntaId }
             .limit(1)
-            .empty()
-        if (!preguntaExiste) {
-            throw IllegalArgumentException("Pregunta no encontrada")
-        }
+            .singleOrNull()
+            ?: throw IllegalArgumentException("Pregunta no encontrada")
 
         val ordenOcupado = !PruebaPreguntaTable
             .selectAll()
@@ -53,6 +53,37 @@ class PruebaCuestionarioRepository(
             .empty()
         if (ordenOcupado) {
             throw IllegalStateException("El orden ${payload.orden} ya esta en uso para esta prueba")
+        }
+
+        // Validaciones de consistencia BLOQUEANTES
+        if (validarConsistencia) {
+            // Obtener datos de la prueba para validar consistencia
+            val pruebaRow = tables.cuestionario.prueba.PruebaTable
+                .selectAll()
+                .where { tables.cuestionario.prueba.PruebaTable.id eq pruebaId }
+                .limit(1)
+                .singleOrNull()
+                ?: throw IllegalArgumentException("Prueba no encontrada")
+
+            val nivelPrueba = pruebaRow[tables.cuestionario.prueba.PruebaTable.nivel]
+            val areaPrueba = pruebaRow[tables.cuestionario.prueba.PruebaTable.area]
+
+            val nivelPregunta = preguntaRow[PreguntaTable.nivel]
+            val tipoPregunta = preguntaRow[PreguntaTable.tipoBanco]
+
+            // VALIDACIÓN BLOQUEANTE: Nivel de pregunta debe coincidir con nivel de prueba
+            if (nivelPrueba != null && nivelPregunta != nivelPrueba) {
+                throw IllegalArgumentException(
+                    "Inconsistencia de nivel: La pregunta tiene nivel '$nivelPregunta' pero la prueba requiere nivel '$nivelPrueba'"
+                )
+            }
+
+            // VALIDACIÓN BLOQUEANTE: Tipo de pregunta debe ser compatible con área de prueba
+            if (areaPrueba != null && tipoPregunta != areaPrueba) {
+                throw IllegalArgumentException(
+                    "Inconsistencia de área: La pregunta es tipo '$tipoPregunta' pero la prueba es área '$areaPrueba'"
+                )
+            }
         }
 
         val newId = UUID.randomUUID()

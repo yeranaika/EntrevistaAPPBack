@@ -106,6 +106,25 @@ class AdminUserRepository(
             }
         }
 
+    suspend fun obtenerDashboardCounts(): DashboardUserCounts =
+        newSuspendedTransaction(db = db) {
+            val total = UsuarioTable.selectAll().count()
+            val admins = UsuarioTable
+                .selectAll()
+                .where { UsuarioTable.rol eq "admin" }
+                .count()
+            val regulares = UsuarioTable
+                .selectAll()
+                .where { UsuarioTable.rol eq "user" }
+                .count()
+
+            DashboardUserCounts(
+                total = total,
+                admins = admins,
+                regulares = regulares
+            )
+        }
+
     // Mapper para AdminUserRow
     private fun ResultRow.toAdminUserRow() = AdminUserRow(
         usuarioId = this[UsuarioTable.usuarioId],
@@ -127,4 +146,10 @@ data class AdminUserRow(
     val estado: String,
     val idioma: String,
     val fechaCreacion: LocalDateTime
+)
+
+data class DashboardUserCounts(
+    val total: Long,
+    val admins: Long,
+    val regulares: Long
 )

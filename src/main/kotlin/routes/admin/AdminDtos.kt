@@ -1,5 +1,6 @@
 package routes.admin
 
+import data.models.PreguntaRes
 import kotlinx.serialization.Serializable
 
 // ============================================
@@ -39,4 +40,24 @@ data class ErrorResponse(
 @Serializable
 data class SuccessResponse(
     val message: String
+)
+
+@Serializable
+data class DashboardStatsResponse(
+    val usuarios: UsuariosDashboardStats,
+    val preguntas: PreguntasDashboardStats
+)
+
+@Serializable
+data class UsuariosDashboardStats(
+    val total: Long,
+    val administradores: Long,
+    val regulares: Long
+)
+
+@Serializable
+data class PreguntasDashboardStats(
+    val total: Long,
+    val activas: Long,
+    val recientes: List<PreguntaRes>
 )
