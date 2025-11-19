@@ -18,6 +18,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+// Rutas existentes
 import routes.auth.authRoutes
 import routes.auth.googleAuthRoutes
 import routes.auth.passwordRecoveryRoutes
@@ -45,6 +46,17 @@ import security.auth.GoogleTokenVerifier
 import security.billing.GooglePlayBillingService
 import services.EmailService
 import org.jetbrains.exposed.sql.Database
+
+// 👉 Cliente HTTP para servicios externos
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
+
+// API JOB (JSearch)
+import routes.jobs.jobsRoutes
+import services.JSearchService
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -88,6 +100,36 @@ fun Application.configureRouting(
         packageName = s.googlePlayPackage,
         serviceAccountJsonBase64 = s.googlePlayServiceJsonBase64,
         useMock = s.googlePlayBillingMock
+    )
+
+    // ============================
+    //   CLIENTE HTTP + JSEARCH
+    // ============================
+    val httpClient = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                    prettyPrint = false
+                }
+            )
+        }
+        expectSuccess = true
+    }
+
+    // ⚠ Importante: tus variables en .env:
+    // x-rapidapi-key=...
+    // x-rapidapi-host=jsearch.p.rapidapi.com
+    // Idealmente en el futuro las cambias a JSEARCH_API_KEY / JSEARCH_API_HOST,
+    // pero por ahora respetamos tus nombres.
+val jsearchApiKey = "3bf6de7241msh9e394682a82eee9p10f101jsn88882206f731"
+val jsearchHost = "jsearch.p.rapidapi.com"
+
+    val jSearchService = JSearchService(
+        httpClient = httpClient,
+        apiKey = jsearchApiKey,
+        apiHost = jsearchHost
     )
 
     routing {
@@ -135,6 +177,7 @@ fun Application.configureRouting(
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
 
+        // Recordatorios
         recordatorioRoutes(recordatorioRepo)
 
         // Admin: crear pruebas
@@ -145,5 +188,12 @@ fun Application.configureRouting(
 
         // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
         adminRoutes(adminUserRepo)
+
+        // ============================
+        //   RUTAS DE JOBS (JSEARCH)
+        // ============================
+        // Ejemplo:
+        // GET /jobs/search?q=enfermera chile&country=cl
+        jobsRoutes(jSearchService)
     }
 }
