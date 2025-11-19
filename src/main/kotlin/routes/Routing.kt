@@ -59,7 +59,6 @@ import services.InterviewQuestionService
 
 // ⚠️ PON AQUÍ TUS KEYS REALES (NO SUBIR ESTO A GITHUB PÚBLICO)
 
-
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository,
