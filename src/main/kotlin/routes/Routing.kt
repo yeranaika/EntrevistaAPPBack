@@ -3,7 +3,10 @@ package routes
 import data.repository.admin.PreguntaRepository
 import data.repository.admin.PruebaRepository
 import data.repository.admin.AdminUserRepository
-import data.repository.auth.RecoveryCodeRepository
+// ❌ Antes: import data.repository.auth.RecoveryCodeRepository
+// ✅ Ahora:
+import data.repository.usuarios.PasswordResetRepository
+
 import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
 import data.repository.usuarios.UsuariosOAuthRepositoryImpl
@@ -46,7 +49,9 @@ import org.jetbrains.exposed.sql.Database
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository,
-    recoveryCodeRepo: RecoveryCodeRepository,
+    // ❌ Antes: recoveryCodeRepo: RecoveryCodeRepository,
+    // ✅ Ahora: mismo nombre, pero TIPO nuevo
+    recoveryCodeRepo: PasswordResetRepository,
     emailService: EmailService,
     db: Database
 ) {
@@ -105,12 +110,14 @@ fun Application.configureRouting(
         )
 
         // Password Recovery (forgot-password, reset-password)
+        // recoveryCodeRepo ahora es de tipo PasswordResetRepository, pero
+        // como es argumento posicional, no hay que cambiar esta línea.
         passwordRecoveryRoutes(recoveryCodeRepo, emailService, db)
 
         // /me y /me/perfil (GET/PUT)
         meRoutes(users, profiles)
 
-        // Consentimientos  👉 versión que tú tenías funcionando
+        // Consentimientos
         ConsentRoutes(
             consentRepo = consentRepo,
             consentTextRepo = ConsentTextRepository()

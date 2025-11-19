@@ -16,20 +16,23 @@ import routes.configureRouting
 import kotlinx.serialization.json.Json
 import data.repository.admin.PreguntaRepository
 import data.repository.admin.AdminUserRepository
-import data.repository.auth.RecoveryCodeRepository
+// ❌ Antes:
+// import data.repository.auth.RecoveryCodeRepository
+// ✅ Ahora:
+import data.repository.usuarios.PasswordResetRepository
+
 import services.EmailService
 import io.github.cdimascio.dotenv.dotenv
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
 fun Application.module() {
-    // Orden importante: security primero para que ponga AuthCtx en attributes
-    // (en la práctica: antes de montar las rutas; mantenemos security antes de configureRouting)
-    configureCORS()                           // ← configurar CORS antes que todo
+    // Orden importante
+    configureCORS()
     configureSerialization()
     configureStatusPages()
-    configureDatabase()                       // ← inicializa DatabaseFactory.db
-    configureSecurity()                       // ← esto debe poblar AuthCtxKey
+    configureDatabase()
+    configureSecurity()   // esto inicializa AuthCtx
 
     // --- crea repos (UNA sola vez) y pásalos al routing ---
     val db = DatabaseFactory.db
@@ -37,7 +40,11 @@ fun Application.module() {
 
     val preguntaRepo  = PreguntaRepository(db, json)
     val adminUserRepo = AdminUserRepository(db)
-    val recoveryCodeRepo = RecoveryCodeRepository(db)
+
+    // ❌ Antes:
+    // val recoveryCodeRepo = RecoveryCodeRepository(db)
+    // ✅ Ahora usamos el repo nuevo de reset de contraseña:
+    val recoveryCodeRepo = PasswordResetRepository()
 
     // Configurar EmailService con variables de entorno
     val dotenv = dotenv {
@@ -52,6 +59,14 @@ fun Application.module() {
         fromEmail = dotenv["GMAIL_USER"] ?: throw RuntimeException("GMAIL_USER no configurado")
     )
 
-    configureRouting(preguntaRepo, adminUserRepo, recoveryCodeRepo, emailService, db)
+    // 👇 ahora configureRouting recibe PasswordResetRepository
+    configureRouting(
+        preguntaRepo = preguntaRepo,
+        adminUserRepo = adminUserRepo,
+        recoveryCodeRepo = recoveryCodeRepo,
+        emailService = emailService,
+        db = db
+    )
+
     configureMonitoring()
 }
