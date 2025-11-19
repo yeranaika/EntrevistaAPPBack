@@ -36,6 +36,7 @@ import routes.billing.billingRoutes   // solo UNA import
 
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
+import routes.sesiones.sesionesRoutes
 
 import plugins.settings   // config de tu app
 import plugins.DatabaseFactory
@@ -136,6 +137,9 @@ fun Application.configureRouting(
         adminPreguntaRoutes(preguntaRepo)
 
         recordatorioRoutes(recordatorioRepo)
+
+        // Sesiones de entrevista tipo chat
+        sesionesRoutes()
 
         // Admin: crear pruebas
         AdminPruebaRoutes(pruebaRepo)
