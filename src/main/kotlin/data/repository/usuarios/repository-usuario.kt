@@ -121,6 +121,11 @@ class UserRepository {
             .any()
     }
 
+    /** Elimina al usuario y devuelve true si existía. */
+    suspend fun deleteById(userId: UUID): Boolean = dbTx {
+        UsuarioTable.deleteWhere { UsuarioTable.usuarioId eq userId } > 0
+    }
+
     // ---------- Mapper ----------
     private fun ResultRow.toUserRow() = UserRow(
         id     = this[UsuarioTable.usuarioId],
