@@ -33,7 +33,7 @@ CREATE TABLE perfil_usuario (
     perfil_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id          UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
     nivel_experiencia   VARCHAR(40),
-    area                VARCHAR(10),
+    area                VARCHAR(50),
     flags_accesibilidad JSON,
     nota_objetivos      TEXT,
     pais                VARCHAR(2),
@@ -127,12 +127,21 @@ CREATE TABLE plan_practica_paso (
     CONSTRAINT uq_plan_paso_orden UNIQUE (plan_id, orden)
 );
 
+CREATE TABLE recordatorio_preferencia (
+    usuario_id UUID PRIMARY KEY
+        REFERENCES usuario(usuario_id) ON DELETE CASCADE,
+    dias_semana VARCHAR(50) NOT NULL,      -- Ej: 'LUNES,MARTES,VIERNES'
+    hora        VARCHAR(5)  NOT NULL,      -- Formato 'HH:MM'
+    tipo_practica VARCHAR(32) NOT NULL,    -- Ej: 'TEST', 'ENTREVISTA', 'REPASO'
+    habilitado  BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 -- 3) Contenidos: objetivos/cargos y banco de preguntas
 CREATE TABLE objetivo_carrera (
     objetivo_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id      UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
     nombre_cargo    VARCHAR(120) NOT NULL,
-    sector          VARCHAR(10),
+    sector          VARCHAR(50),
     skills_enfoque  JSON,
     activo          BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_creacion  TIMESTAMPTZ NOT NULL DEFAULT now()

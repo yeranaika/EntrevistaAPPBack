@@ -11,15 +11,15 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.time.OffsetDateTime      // 👈 IMPORT CORRECTO
+import java.time.ZoneOffset         // 👈 IMPORT PARA UTC
 import java.util.UUID
 
-// ✅ Helper local de transacción suspendida
+// Helper de transacción suspendida
 private suspend fun <T> tx(block: suspend () -> T): T =
     newSuspendedTransaction(Dispatchers.IO) { block() }
 
-/**
- * Datos mínimos para generar/mostrar resumen de objetivo.
- */
+/** Datos mínimos que usamos en Android para decidir onboarding. */
 data class OnboardingData(
     val area: String,
     val metaCargo: String,
@@ -32,41 +32,53 @@ class OnboardingRepository {
     // 1) OBJETIVO / PERFIL
     // ==========================
 
-    /**
-     * Solo ACTUALIZA datos existentes:
-     *  - profile.area
-     *  - profile.nivel_experiencia
-     *  - objetivo_carrera activo (nombre_cargo, sector)
-     *
-     * No crea filas nuevas. Si no existe perfil u objetivo,
-     * simplemente no actualiza nada.
-     */
     suspend fun guardarObjetivo(
         usuarioId: UUID,
         area: String,
         metaCargo: String,
         nivel: String
     ) = tx {
-        // PERFIL_USUARIO: solo update, sin insert
-        ProfileTable.update({ ProfileTable.usuarioId eq usuarioId }) {
+        // 👇 Momento actual para fecha_actualizacion (tipo OffsetDateTime)
+        val ahora = OffsetDateTime.now(ZoneOffset.UTC)
+
+        // ---- PERFIL_USUARIO: UPDATE, si no existe → INSERT ----
+        val filasPerfil = ProfileTable.update({
+            ProfileTable.usuarioId eq usuarioId
+        }) {
             it[ProfileTable.area] = area
             it[ProfileTable.nivelExperiencia] = nivel
+            it[ProfileTable.fechaActualizacion] = ahora   // ✅ tipo correcto
         }
 
-        // OBJETIVO_CARRERA: solo update del objetivo activo, sin crear nuevo
-        ObjetivoCarreraTable.update({
+        if (filasPerfil == 0) {
+            ProfileTable.insert {
+                it[ProfileTable.perfilId] = UUID.randomUUID()
+                it[ProfileTable.usuarioId] = usuarioId
+                it[ProfileTable.area] = area
+                it[ProfileTable.nivelExperiencia] = nivel
+                it[ProfileTable.fechaActualizacion] = ahora   // ✅ también aquí
+            }
+        }
+
+        // ---- OBJETIVO_CARRERA: UPDATE, si no existe → INSERT ----
+        val filasObjetivo = ObjetivoCarreraTable.update({
             (ObjetivoCarreraTable.usuarioId eq usuarioId) and
-            (ObjetivoCarreraTable.activo eq true)
+                    (ObjetivoCarreraTable.activo eq true)
         }) {
             it[ObjetivoCarreraTable.nombreCargo] = metaCargo
             it[ObjetivoCarreraTable.sector] = area
         }
+
+        if (filasObjetivo == 0) {
+            ObjetivoCarreraTable.insert {
+                it[ObjetivoCarreraTable.usuarioId] = usuarioId
+                it[ObjetivoCarreraTable.nombreCargo] = metaCargo
+                it[ObjetivoCarreraTable.sector] = area
+                // activo usa el default true de la BD
+            }
+        }
     }
 
-    /**
-     * Recupera área, metaCargo y nivel del usuario.
-     * Devuelve null si falta alguno (para responder 400).
-     */
     suspend fun obtenerOnboarding(usuarioId: UUID): OnboardingData? = tx {
         val perfil = ProfileTable
             .selectAll()
@@ -77,7 +89,7 @@ class OnboardingRepository {
             .selectAll()
             .where {
                 (ObjetivoCarreraTable.usuarioId eq usuarioId) and
-                (ObjetivoCarreraTable.activo eq true)
+                        (ObjetivoCarreraTable.activo eq true)
             }
             .singleOrNull()
 
@@ -95,29 +107,22 @@ class OnboardingRepository {
     }
 
     // ==========================
-    // 2) PLAN DE PRÁCTICA (ADMIN / USUARIO)
+    // 2) PLAN DE PRÁCTICA
     // ==========================
 
-    /**
-     * ADMIN:
-     * Guarda (o reemplaza) el plan de práctica completo de un usuario.
-     * - Desactiva planes activos anteriores (activo = false)
-     * - Inserta un nuevo plan + pasos
-     * - Devuelve el plan tal como quedó guardado (con id en pasos)
-     */
     suspend fun guardarPlanParaUsuario(
         usuarioId: UUID,
         req: PlanPracticaRes
     ): PlanPracticaRes = tx {
-        // 1) Desactivar planes activos anteriores de ese usuario
+        // Desactivar planes anteriores
         PlanPracticaTable.update({
             (PlanPracticaTable.usuarioId eq usuarioId) and
-            (PlanPracticaTable.activo eq true)
+                    (PlanPracticaTable.activo eq true)
         }) {
             it[activo] = false
         }
 
-        // 2) Crear el nuevo plan
+        // Crear nuevo plan
         val planIdEntity = PlanPracticaTable.insertAndGetId {
             it[PlanPracticaTable.usuarioId] = usuarioId
             it[area] = req.area
@@ -126,7 +131,7 @@ class OnboardingRepository {
             it[activo] = true
         }
 
-        // 3) Insertar los pasos en orden
+        // Insertar pasos
         val pasosConIds = req.pasos.mapIndexed { index, paso ->
             val pasoIdEntity = PlanPracticaPasoTable.insertAndGetId {
                 it[planId] = planIdEntity
@@ -139,7 +144,6 @@ class OnboardingRepository {
             paso.copy(id = pasoIdEntity.value.toString())
         }
 
-        // 4) Devolver el plan tal como quedó guardado
         PlanPracticaRes(
             area = req.area,
             metaCargo = req.metaCargo,
@@ -148,17 +152,12 @@ class OnboardingRepository {
         )
     }
 
-    /**
-     * USUARIO:
-     * Obtiene el plan activo del usuario (si existe) con sus pasos.
-     * Devuelve null si aún no tiene plan.
-     */
     suspend fun obtenerPlanUsuario(usuarioId: UUID): PlanPracticaRes? = tx {
         val planRow = PlanPracticaTable
             .selectAll()
             .where {
                 (PlanPracticaTable.usuarioId eq usuarioId) and
-                (PlanPracticaTable.activo eq true)
+                        (PlanPracticaTable.activo eq true)
             }
             .singleOrNull() ?: return@tx null
 
