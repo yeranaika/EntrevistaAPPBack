@@ -57,8 +57,6 @@ import routes.jobs.jobsRoutes
 import services.JSearchService
 import services.InterviewQuestionService
 
-// ⚠️ PON AQUÍ TUS KEYS REALES (NO SUBIR ESTO A GITHUB PÚBLICO)
-
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository,
@@ -122,13 +120,13 @@ fun Application.configureRouting(
     // ============================
     val jSearchService = JSearchService(
         httpClient = httpClient,
-        apiKey = JSEARCH_API_KEY,
-        apiHost = JSEARCH_HOST
+        apiKey = s.jSearchApiKey,
+        apiHost = s.jSearchApiHost,
     )
 
     val interviewQuestionService = InterviewQuestionService(
         httpClient = httpClient,
-        apiKey = OPENAI_API_KEY
+        apiKey = s.openAiApiKey,
     )
 
     routing {
@@ -189,8 +187,6 @@ fun Application.configureRouting(
         // ============================
         //   RUTAS DE JOBS (JSEARCH + OPENAI)
         // ============================
-        // GET /jobs/search
-        // GET /jobs/search-with-questions
         jobsRoutes(
             jSearchService = jSearchService,
             interviewQuestionService = interviewQuestionService
