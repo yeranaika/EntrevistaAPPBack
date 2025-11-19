@@ -58,9 +58,7 @@ import services.JSearchService
 import services.InterviewQuestionService
 
 // ⚠️ PON AQUÍ TUS KEYS REALES (NO SUBIR ESTO A GITHUB PÚBLICO)
-private const val JSEARCH_API_KEY = "3bf6de7241msh9e394682a82eee9p10f101jsn88882206f731"
-private const val JSEARCH_HOST = "jsearch.p.rapidapi.com"
-private const val OPENAI_API_KEY = "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"
+
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
