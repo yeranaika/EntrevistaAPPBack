@@ -3,8 +3,6 @@ package routes
 import data.repository.admin.PreguntaRepository
 import data.repository.admin.PruebaRepository
 import data.repository.admin.AdminUserRepository
-// ❌ Antes: import data.repository.auth.RecoveryCodeRepository
-// ✅ Ahora:
 import data.repository.usuarios.PasswordResetRepository
 
 import data.repository.usuarios.ProfileRepository
@@ -33,12 +31,12 @@ import routes.admin.adminRoutes
 import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
 import routes.admin.adminPlanRoutes
-import routes.billing.billingRoutes   // solo UNA import
+import routes.billing.billingRoutes
 
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
 
-import plugins.settings   // config de tu app
+import plugins.settings
 import plugins.DatabaseFactory
 import security.AuthCtx
 import security.AuthCtxKey
@@ -54,15 +52,19 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
-// API JOB (JSearch)
+// API JOB (JSearch) + OpenAI
 import routes.jobs.jobsRoutes
 import services.JSearchService
+import services.InterviewQuestionService
+
+// ⚠️ PON AQUÍ TUS KEYS REALES (NO SUBIR ESTO A GITHUB PÚBLICO)
+private const val JSEARCH_API_KEY = "3bf6de7241msh9e394682a82eee9p10f101jsn88882206f731"
+private const val JSEARCH_HOST = "jsearch.p.rapidapi.com"
+private const val OPENAI_API_KEY = "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"
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository,
-    // ❌ Antes: recoveryCodeRepo: RecoveryCodeRepository,
-    // ✅ Ahora: mismo nombre, pero TIPO nuevo
     recoveryCodeRepo: PasswordResetRepository,
     emailService: EmailService,
     db: Database
@@ -103,7 +105,7 @@ fun Application.configureRouting(
     )
 
     // ============================
-    //   CLIENTE HTTP + JSEARCH
+    //   CLIENTE HTTP COMPARTIDO
     // ============================
     val httpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -118,18 +120,18 @@ fun Application.configureRouting(
         expectSuccess = true
     }
 
-    // ⚠ Importante: tus variables en .env:
-    // x-rapidapi-key=...
-    // x-rapidapi-host=jsearch.p.rapidapi.com
-    // Idealmente en el futuro las cambias a JSEARCH_API_KEY / JSEARCH_API_HOST,
-    // pero por ahora respetamos tus nombres.
-val jsearchApiKey = "3bf6de7241msh9e394682a82eee9p10f101jsn88882206f731"
-val jsearchHost = "jsearch.p.rapidapi.com"
-
+    // ============================
+    //   SERVICIOS EXTERNOS
+    // ============================
     val jSearchService = JSearchService(
         httpClient = httpClient,
-        apiKey = jsearchApiKey,
-        apiHost = jsearchHost
+        apiKey = JSEARCH_API_KEY,
+        apiHost = JSEARCH_HOST
+    )
+
+    val interviewQuestionService = InterviewQuestionService(
+        httpClient = httpClient,
+        apiKey = OPENAI_API_KEY
     )
 
     routing {
@@ -152,8 +154,6 @@ val jsearchHost = "jsearch.p.rapidapi.com"
         )
 
         // Password Recovery (forgot-password, reset-password)
-        // recoveryCodeRepo ahora es de tipo PasswordResetRepository, pero
-        // como es argumento posicional, no hay que cambiar esta línea.
         passwordRecoveryRoutes(recoveryCodeRepo, emailService, db)
 
         // /me y /me/perfil (GET/PUT)
@@ -190,10 +190,13 @@ val jsearchHost = "jsearch.p.rapidapi.com"
         adminRoutes(adminUserRepo)
 
         // ============================
-        //   RUTAS DE JOBS (JSEARCH)
+        //   RUTAS DE JOBS (JSEARCH + OPENAI)
         // ============================
-        // Ejemplo:
-        // GET /jobs/search?q=enfermera chile&country=cl
-        jobsRoutes(jSearchService)
+        // GET /jobs/search
+        // GET /jobs/search-with-questions
+        jobsRoutes(
+            jSearchService = jSearchService,
+            interviewQuestionService = interviewQuestionService
+        )
     }
 }

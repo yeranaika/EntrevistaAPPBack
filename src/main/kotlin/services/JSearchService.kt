@@ -101,4 +101,3 @@ class JSearchService(
         return response.data.map { it.toNormalized() }
     }
 }
-
