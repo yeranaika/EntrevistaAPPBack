@@ -65,10 +65,17 @@ class InterviewQuestionService(
                 OpenAIChatMessage(
                     role = "system",
                     content = """
-                        Eres un generador de preguntas de entrevista laboral.
-                        Dado un aviso de trabajo, genera exactamente $cantidad preguntas de entrevista
-                        en español, enfocadas en evaluar si la persona encaja con el rol descrito.
-                        Devuelve SOLO un JSON con esta estructura:
+                            Eres un generador de preguntas para ENTREVISTAS LABORALES.
+                            
+                            Tu objetivo es crear preguntas de entrevista en español, enfocadas en evaluar
+                            si la persona encaja con el cargo descrito en el aviso de trabajo.
+
+                            Reglas:
+                            - Genera exactamente $cantidad preguntas de entrevista laboral.
+                            - Las preguntas deben poder usarse en una entrevista real (no tipo prueba de alternativa).
+                            - Mezcla evaluación técnica y de experiencia/habilidades blandas, según el aviso.
+                            - No incluyas respuestas, solo las preguntas.
+                            - No expliques nada fuera del JSON.
 
                         {
                           "preguntas": [
@@ -86,6 +93,8 @@ class InterviewQuestionService(
             )
         )
 
+        println("🧠 Generando $cantidad preguntas para aviso: ${job.titulo} (${job.empresa ?: "N/A"})")
+
         val response: OpenAIChatResponse = httpClient.post(openAiUrl) {
             header(HttpHeaders.Authorization, "Bearer $apiKey")
             contentType(ContentType.Application.Json)
@@ -95,7 +104,11 @@ class InterviewQuestionService(
         val content = response.choices.firstOrNull()?.message?.content
             ?: return emptyList()
 
-        return parseQuestionsFromContent(content, cantidad)
+        val preguntas = parseQuestionsFromContent(content, cantidad)
+
+        println("✅ OpenAI devolvió ${preguntas.size} preguntas para '${job.titulo}'")
+
+        return preguntas
     }
 
     private fun buildPrompt(job: JobNormalizedDto, cantidad: Int): String =
@@ -114,9 +127,11 @@ class InterviewQuestionService(
         content: String,
         cantidad: Int
     ): List<String> {
-        // Esperamos algo como: {"preguntas":["...","...","..."]}
+        // A veces OpenAI responde con ```json ... ```
+        val cleaned = cleanJsonMarkdown(content)
+
         return try {
-            val root: JsonElement = json.parseToJsonElement(content)
+            val root: JsonElement = json.parseToJsonElement(cleaned)
             val preguntasJson = root.jsonObject["preguntas"]?.jsonArray
                 ?: return emptyList()
 
@@ -127,8 +142,24 @@ class InterviewQuestionService(
                 }
                 .take(cantidad)
         } catch (e: Exception) {
-            // Si no se puede parsear, devolvemos el texto completo como una sola "pregunta"
-            listOf(content)
+            println("⚠️ No se pudo parsear JSON de OpenAI, devolviendo texto completo como una sola pregunta")
+            listOf(cleaned)
         }
+    }
+
+    /**
+     * Limpia fences tipo ```json ... ``` para quedarnos solo con el JSON.
+     */
+    private fun cleanJsonMarkdown(text: String): String {
+        val trimmed = text.trim()
+        if (trimmed.startsWith("```")) {
+            return trimmed
+                .lineSequence()
+                .drop(1) // saltar la línea ```json o ```
+                .takeWhile { !it.startsWith("```") }
+                .joinToString("\n")
+                .trim()
+        }
+        return trimmed
     }
 }
