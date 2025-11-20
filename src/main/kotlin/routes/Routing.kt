@@ -3,8 +3,6 @@ package routes
 import data.repository.admin.PreguntaRepository
 import data.repository.admin.PruebaRepository
 import data.repository.admin.AdminUserRepository
-// ❌ Antes: import data.repository.auth.RecoveryCodeRepository
-// ✅ Ahora:
 import data.repository.usuarios.PasswordResetRepository
 
 import data.repository.usuarios.ProfileRepository
@@ -22,6 +20,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+// Rutas existentes
 import routes.auth.authRoutes
 import routes.auth.googleAuthRoutes
 import routes.auth.passwordRecoveryRoutes
@@ -37,7 +36,7 @@ import routes.admin.adminPreguntaNivelacionRoutes
 import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
 import routes.admin.adminPlanRoutes
-import routes.billing.billingRoutes   // solo UNA import
+import routes.billing.billingRoutes
 
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
@@ -45,7 +44,7 @@ import routes.sesiones.sesionesRoutes
 import routes.cuestionario.planPracticaRoutes
 import routes.nivelacion.testNivelacionRoutes
 
-import plugins.settings   // config de tu app
+import plugins.settings
 import plugins.DatabaseFactory
 import security.AuthCtx
 import security.AuthCtxKey
@@ -54,11 +53,22 @@ import security.billing.GooglePlayBillingService
 import services.EmailService
 import org.jetbrains.exposed.sql.Database
 
+// 👉 Cliente HTTP para servicios externos
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
+
+// API JOB (JSearch) + OpenAI
+import routes.jobs.jobsRoutes
+import services.JSearchService
+import services.InterviewQuestionService
+import routes.jobs.jobsGeneratorRoutes 
+
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository,
-    // ❌ Antes: recoveryCodeRepo: RecoveryCodeRepository,
-    // ✅ Ahora: mismo nombre, pero TIPO nuevo
     recoveryCodeRepo: PasswordResetRepository,
     emailService: EmailService,
     db: Database
@@ -102,6 +112,36 @@ fun Application.configureRouting(
         useMock = s.googlePlayBillingMock
     )
 
+    // ============================
+    //   CLIENTE HTTP COMPARTIDO
+    // ============================
+    val httpClient = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                    prettyPrint = false
+                }
+            )
+        }
+        expectSuccess = true
+    }
+
+    // ============================
+    //   SERVICIOS EXTERNOS
+    // ============================
+    val jSearchService = JSearchService(
+        httpClient = httpClient,
+        apiKey = s.jSearchApiKey,
+        apiHost = s.jSearchApiHost,
+    )
+
+    val interviewQuestionService = InterviewQuestionService(
+        httpClient = httpClient,
+        apiKey = s.openAiApiKey,
+    )
+
     routing {
         // Healthcheck
         get("/health") { call.respondText("OK") }
@@ -122,8 +162,6 @@ fun Application.configureRouting(
         )
 
         // Password Recovery (forgot-password, reset-password)
-        // recoveryCodeRepo ahora es de tipo PasswordResetRepository, pero
-        // como es argumento posicional, no hay que cambiar esta línea.
         passwordRecoveryRoutes(recoveryCodeRepo, emailService, db)
 
         // /me y /me/perfil (GET/PUT)
@@ -147,6 +185,7 @@ fun Application.configureRouting(
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
 
+        // Recordatorios
         recordatorioRoutes(recordatorioRepo)
 
         // Sesiones de entrevista tipo chat
@@ -160,6 +199,20 @@ fun Application.configureRouting(
 
         // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
         adminRoutes(adminUserRepo)
+
+        // ============================
+        //   RUTAS DE JOBS (JSEARCH + OPENAI)
+        // ============================
+        jobsRoutes(
+            jSearchService = jSearchService,
+            interviewQuestionService = interviewQuestionService
+        )
+
+        // Ruta independiente para generar y guardar preguntas en la tabla pregunta
+        jobsGeneratorRoutes(
+            jSearchService = jSearchService,
+            interviewQuestionService = interviewQuestionService
+        )
 
         // Plan de práctica
         planPracticaRoutes(planRepo, profiles, objetivos)
