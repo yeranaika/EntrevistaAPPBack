@@ -12,12 +12,17 @@ data class Settings(
     val jwtIssuer: String,
     val jwtAudience: String,
     val jwtSecret: String,
-    val googleClientId: String, 
-    val googleClientSecret: String, 
+    val googleClientId: String,
+    val googleClientSecret: String,
     val googleRedirectUri: String,
     val googlePlayPackage: String,
     val googlePlayServiceJsonBase64: String,
-    val googlePlayBillingMock: Boolean
+    val googlePlayBillingMock: Boolean,
+
+    // 🔹 Nuevos campos para servicios externos
+    val jSearchApiHost: String,
+    val jSearchApiKey: String,
+    val openAiApiKey: String,
 )
 
 // Cache en attributes para no releer en cada uso
@@ -29,7 +34,11 @@ fun Application.configureSettings() {
         val s = loadSettings(environment)
         attributes.put(SettingsKey, s)
         // Loguea solo lo no sensible
-        log.info("Settings loaded → dbUrl=${s.dbUrl}, dbUser=${s.dbUser}, jwtIssuer=${s.jwtIssuer}, jwtAudience=${s.jwtAudience}")
+        log.info(
+            "Settings loaded → dbUrl=${s.dbUrl}, dbUser=${s.dbUser}, " +
+                "jwtIssuer=${s.jwtIssuer}, jwtAudience=${s.jwtAudience}, " +
+                "jSearchHost=${s.jSearchApiHost}"
+        )
     }
 }
 
@@ -71,5 +80,10 @@ private fun loadSettings(envApp: ApplicationEnvironment): Settings {
         googlePlayPackage = read("GOOGLE_PLAY_PACKAGE", "google.play.package"),
         googlePlayServiceJsonBase64 = read("GOOGLE_PLAY_SERVICE_JSON_B64", "google.play.serviceJsonB64"),
         googlePlayBillingMock = readBool("GOOGLE_PLAY_BILLING_MOCK", "google.play.billingMock", default = false),
+
+        // 🔹 Nuevos: API JSearch (RapidAPI) + OpenAI
+        jSearchApiHost = read("JSEARCH_API_HOST", "jobs.jsearch.apiHost"),
+        jSearchApiKey  = read("JSEARCH_API_KEY",  "jobs.jsearch.apiKey"),
+        openAiApiKey   = read("OPENAI_API_KEY",   "openai.apiKey"),
     )
 }

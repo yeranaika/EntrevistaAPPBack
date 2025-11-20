@@ -5,24 +5,26 @@ import data.models.auth.ForgotPasswordReq
 import data.models.auth.ForgotPasswordRes
 import data.models.auth.ResetPasswordReq
 import data.models.auth.ResetPasswordRes
-import data.repository.auth.RecoveryCodeRepository
+import data.repository.usuarios.PasswordResetRepository
 import data.tables.usuarios.UsuarioTable
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.Database
 import services.EmailService
 
 fun Route.passwordRecoveryRoutes(
-    recoveryCodeRepo: RecoveryCodeRepository,
+    passwordResetRepo: PasswordResetRepository,
     emailService: EmailService,
-    db: org.jetbrains.exposed.sql.Database
+    db: Database
 ) {
+    // ============================
     // POST /auth/forgot-password
+    // ============================
     post("/auth/forgot-password") {
         val body = runCatching { call.receive<ForgotPasswordReq>() }
             .getOrElse {
@@ -32,7 +34,6 @@ fun Route.passwordRecoveryRoutes(
                 )
             }
 
-        // Validar formato de correo
         val correo = body.correo.trim().lowercase()
         if (correo.isBlank() || !correo.contains("@")) {
             return@post call.respond(
@@ -42,40 +43,47 @@ fun Route.passwordRecoveryRoutes(
         }
 
         try {
-            // Generar código (retorna null si el usuario no existe)
-            val codigo = recoveryCodeRepo.createRecoveryCode(correo)
+            // Crea registro solo si el usuario existe
+            val resetInfo = passwordResetRepo.createForEmail(correo)
 
-            // Si el código se generó exitosamente, enviar email
-            if (codigo != null) {
-                try {
-                    // Obtener nombre del usuario para personalizar el email
-                    val nombre = newSuspendedTransaction(db = db) {
-                        UsuarioTable
-                            .select(UsuarioTable.nombre)
-                            .where { UsuarioTable.correo eq correo }
-                            .limit(1)
-                            .singleOrNull()
-                            ?.get(UsuarioTable.nombre)
-                    }
-
-                    emailService.sendRecoveryCode(correo, codigo, nombre)
-                    call.application.environment.log.info("Código de recuperación enviado a: $correo")
-                } catch (emailEx: Exception) {
-                    call.application.environment.log.error("Error al enviar email a $correo: ${emailEx.message}")
-                    // No revelamos el error al cliente por seguridad
-                }
+            // ❌ Si no hay usuario con ese correo
+            if (resetInfo == null) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    ForgotPasswordRes(
+                        message = "No existe ningún usuario registrado con ese correo"
+                    )
+                )
             }
 
-            // SIEMPRE respondemos 200 OK, incluso si el correo no existe
-            // Esto previene ataques de enumeración de usuarios
+            // Enviar el código por correo
+            try {
+                // Ajusta a la firma real de tu EmailService
+                // Supongamos: fun sendRecoveryCode(toEmail: String, code: String)
+                emailService.sendRecoveryCode(
+                    resetInfo.code,
+                    correo
+                )
+
+                call.application.environment.log.info(
+                    "Código de recuperación enviado a: $correo"
+                )
+            } catch (emailEx: Exception) {
+                call.application.environment.log.error(
+                    "Error al enviar email a $correo: ${emailEx.message}"
+                )
+            }
+
             call.respond(
                 HttpStatusCode.OK,
                 ForgotPasswordRes(
-                    message = "Si el correo existe, recibirás un código de recuperación en breve"
+                    message = "Te enviamos un código a tu correo"
                 )
             )
         } catch (ex: Exception) {
-            call.application.environment.log.error("Error en forgot-password: ${ex.message}")
+            call.application.environment.log.error(
+                "Error en forgot-password: ${ex.message}"
+            )
             call.respond(
                 HttpStatusCode.InternalServerError,
                 mapOf("error" to "Error al procesar la solicitud")
@@ -83,7 +91,9 @@ fun Route.passwordRecoveryRoutes(
         }
     }
 
+    // ============================
     // POST /auth/reset-password
+    // ============================
     post("/auth/reset-password") {
         val body = runCatching { call.receive<ResetPasswordReq>() }
             .getOrElse {
@@ -93,7 +103,6 @@ fun Route.passwordRecoveryRoutes(
                 )
             }
 
-        // Validaciones
         val correo = body.correo.trim().lowercase()
         val codigo = body.codigo.trim()
         val nuevaContrasena = body.nuevaContrasena
@@ -120,23 +129,29 @@ fun Route.passwordRecoveryRoutes(
         }
 
         try {
-            // Validar código
-            val usuarioId = recoveryCodeRepo.validateCode(correo, codigo)
+            // Validar y consumir por correo + código
+            val usuarioId = passwordResetRepo.consumeByEmail(correo, codigo)
 
             if (usuarioId == null) {
                 return@post call.respond(
                     HttpStatusCode.BadRequest,
-                    mapOf("error" to "Código inválido o expirado")
+                    ResetPasswordRes(
+                        message = "Código inválido o expirado"
+                    )
                 )
             }
 
             // Hash de la nueva contraseña
-            val hashedPassword = BCrypt.withDefaults().hashToString(12, nuevaContrasena.toCharArray())
+            val hashedPassword = BCrypt
+                .withDefaults()
+                .hashToString(12, nuevaContrasena.toCharArray())
 
-            // Actualizar contraseña en la base de datos
+            // Actualizar contraseña en la tabla usuario
             val updated = newSuspendedTransaction(db = db) {
                 UsuarioTable.update({ UsuarioTable.usuarioId eq usuarioId }) { st ->
                     st[UsuarioTable.contrasenaHash] = hashedPassword
+                    // Si tienes columna updatedAt la pones aquí, si no, lo dejamos así
+                    // st[UsuarioTable.updatedAt] = Instant.now()
                 }
             }
 
@@ -147,17 +162,20 @@ fun Route.passwordRecoveryRoutes(
                 )
             }
 
-            // Marcar código como usado
-            recoveryCodeRepo.markCodeAsUsed(correo, codigo)
-
-            call.application.environment.log.info("Contraseña actualizada para usuario: $correo")
+            call.application.environment.log.info(
+                "Contraseña actualizada para usuario: $correo"
+            )
 
             call.respond(
                 HttpStatusCode.OK,
-                ResetPasswordRes(message = "Contraseña actualizada exitosamente")
+                ResetPasswordRes(
+                    message = "Contraseña actualizada exitosamente"
+                )
             )
         } catch (ex: Exception) {
-            call.application.environment.log.error("Error en reset-password: ${ex.message}")
+            call.application.environment.log.error(
+                "Error en reset-password: ${ex.message}"
+            )
             call.respond(
                 HttpStatusCode.InternalServerError,
                 mapOf("error" to "Error al procesar la solicitud")

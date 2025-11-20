@@ -80,3 +80,13 @@ data class GoogleLoginReq(
 data class LogoutReq(
     val refreshToken: String
 )
+
+@Serializable
+data class ConfirmarBorradoReq(
+    val confirmar: Boolean
+)
+
+@Serializable
+data class DeleteAccountOk(
+    val message: String
+)
