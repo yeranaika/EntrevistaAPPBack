@@ -56,3 +56,6 @@ docker-compose.override.yml
 ### Archivos temporales ###
 nul
 *.zip
+
+/estructura.py
+/estructura_front.txt
