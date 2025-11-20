@@ -41,7 +41,9 @@ fun Application.configureDatabase() {
                     RecoveryCodeTable, // ← Tabla de códigos de recuperación
                     data.tables.usuarios.ObjetivoCarreraTable,
                     data.tables.cuestionario.PlanPracticaTable,
-                    data.tables.cuestionario.PlanPracticaPasoTable
+                    data.tables.cuestionario.PlanPracticaPasoTable,
+                    data.tables.nivelacion.PreguntaNivelacionTable,  // ← Tests de nivelación
+                    data.tables.nivelacion.TestNivelacionTable       // ← Historial de tests
                 )
             }
             log.info("✅ DB conectada en intento ${attempt + 1}")

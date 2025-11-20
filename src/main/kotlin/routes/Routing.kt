@@ -15,6 +15,8 @@ import data.repository.usuarios.ConsentTextRepository
 import data.repository.usuarios.ConsentimientoRepository
 import data.repository.usuarios.ObjetivoCarreraRepository
 import data.repository.cuestionario.PlanPracticaRepository
+import data.repository.nivelacion.PreguntaNivelacionRepository
+import data.repository.nivelacion.TestNivelacionRepository
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -31,6 +33,7 @@ import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminPruebaRoutes
 import routes.admin.AdminUserCreateRoutes
 import routes.admin.adminRoutes
+import routes.admin.adminPreguntaNivelacionRoutes
 import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
 import routes.admin.adminPlanRoutes
@@ -40,6 +43,7 @@ import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
 import routes.sesiones.sesionesRoutes
 import routes.cuestionario.planPracticaRoutes
+import routes.nivelacion.testNivelacionRoutes
 
 import plugins.settings   // config de tu app
 import plugins.DatabaseFactory
@@ -69,7 +73,9 @@ fun Application.configureRouting(
     val recordatorioRepo = RecordatorioPreferenciaRepository()
     val objetivos = ObjetivoCarreraRepository()
     val planRepo = PlanPracticaRepository()
-    
+    val preguntaNivelacionRepo = PreguntaNivelacionRepository()
+    val testNivelacionRepo = TestNivelacionRepository()
+
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
         attributes[AuthCtxKey]
@@ -157,5 +163,11 @@ fun Application.configureRouting(
 
         // Plan de práctica
         planPracticaRoutes(planRepo, profiles, objetivos)
+
+        // Tests de nivelación
+        testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo)
+
+        // Admin: preguntas de nivelación
+        adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
     }
 }
