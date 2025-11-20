@@ -13,6 +13,8 @@ import data.repository.usuarios.UsuariosOAuthRepositoryImpl
 import data.repository.billing.SuscripcionRepository
 import data.repository.usuarios.ConsentTextRepository
 import data.repository.usuarios.ConsentimientoRepository
+import data.repository.usuarios.ObjetivoCarreraRepository
+import data.repository.cuestionario.PlanPracticaRepository
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -37,6 +39,7 @@ import routes.billing.billingRoutes   // solo UNA import
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
 import routes.sesiones.sesionesRoutes
+import routes.cuestionario.planPracticaRoutes
 
 import plugins.settings   // config de tu app
 import plugins.DatabaseFactory
@@ -64,6 +67,8 @@ fun Application.configureRouting(
     val suscripcionRepo = SuscripcionRepository()
     val onboardingRepo = OnboardingRepository()
     val recordatorioRepo = RecordatorioPreferenciaRepository()
+    val objetivos = ObjetivoCarreraRepository()
+    val planRepo = PlanPracticaRepository()
     
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -116,7 +121,7 @@ fun Application.configureRouting(
         passwordRecoveryRoutes(recoveryCodeRepo, emailService, db)
 
         // /me y /me/perfil (GET/PUT)
-        meRoutes(users, profiles)
+        meRoutes(users, profiles, objetivos)
 
         // Consentimientos
         ConsentRoutes(
@@ -149,5 +154,8 @@ fun Application.configureRouting(
 
         // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
         adminRoutes(adminUserRepo)
+
+        // Plan de práctica
+        planPracticaRoutes(planRepo, profiles, objetivos)
     }
 }

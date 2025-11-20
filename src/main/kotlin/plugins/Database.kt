@@ -38,7 +38,10 @@ fun Application.configureDatabase() {
                     UsuarioTable,
                     ConsentimientoTable,
                     ProfileTable, // ← Tabla de perfil de usuario
-                    RecoveryCodeTable // ← Tabla de códigos de recuperación
+                    RecoveryCodeTable, // ← Tabla de códigos de recuperación
+                    data.tables.usuarios.ObjetivoCarreraTable,
+                    data.tables.cuestionario.PlanPracticaTable,
+                    data.tables.cuestionario.PlanPracticaPasoTable
                 )
             }
             log.info("✅ DB conectada en intento ${attempt + 1}")
