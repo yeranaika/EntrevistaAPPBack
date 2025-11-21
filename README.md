@@ -23,6 +23,8 @@ Backend de práctica con **Ktor**.
 
 # combinacion de comando comun 
 ./gradlew --refresh-dependencies clean test run
+gradle --refresh-dependencies clean run
+
 ```
 
 En Windows usa `.\gradlew ...`.

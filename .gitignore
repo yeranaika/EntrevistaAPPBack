@@ -12,6 +12,7 @@ build/
 /src/main/resources/secrets.conf
 *.secrets.*
 .env
+.env(MV)
 .env.*
 
 ### STS ###

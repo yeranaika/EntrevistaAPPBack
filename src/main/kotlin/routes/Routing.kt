@@ -41,6 +41,7 @@ import routes.billing.billingRoutes
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
 import routes.sesiones.sesionesRoutes
+import routes.auth.deleteAccountRoute
 import routes.cuestionario.planPracticaRoutes
 import routes.nivelacion.testNivelacionRoutes
 import routes.historial.historialRoutes
@@ -65,7 +66,7 @@ import kotlinx.serialization.json.Json
 import routes.jobs.jobsRoutes
 import services.JSearchService
 import services.InterviewQuestionService
-import routes.jobs.jobsGeneratorRoutes 
+import routes.jobs.jobsGeneratorRoutes
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -176,7 +177,7 @@ fun Application.configureRouting(
 
         profileRoutes(onboardingRepo)
         adminPlanRoutes(onboardingRepo)
-        
+
         // Intentos de prueba
         intentosRoutes()
 
@@ -200,6 +201,9 @@ fun Application.configureRouting(
 
         // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
         adminRoutes(adminUserRepo)
+
+        // Eliminar cuenta (derecho al olvido)
+        deleteAccountRoute(users)
 
         // ============================
         //   RUTAS DE JOBS (JSEARCH + OPENAI)
