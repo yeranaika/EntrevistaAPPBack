@@ -1,4 +1,4 @@
-Estructura Front-OM-React:
+Estructura EntrevistaAPP:
 ================================
 
 ├── .env
@@ -24,6 +24,7 @@ Estructura Front-OM-React:
 ├── migrations
 │   ├── 003_create_ticket_table.sql
 │   ├── 004_add_cascade_delete.sql
+│   ├── 005_create_pregunta_table.sql
 ├── postman
 │   ├── EntrevistaAPPBack - Auth.postman_collection(08-11).json
 │   ├── EntrevistaAPPBack - Auth.postman_collection(12-11).json
@@ -61,6 +62,7 @@ Estructura Front-OM-React:
 │   │   │   │   ├── auth
 │   │   │   │   │   ├── AuthDeps.kt
 │   │   │   │   │   ├── AuthDtos.kt
+│   │   │   │   │   ├── AuthRoutes.kt
 │   │   │   │   │   ├── DeleteAccountRoute.kt
 │   │   │   │   │   ├── GoogleAuth.kt
 │   │   │   │   │   ├── LoginRoutes.kt
@@ -71,7 +73,6 @@ Estructura Front-OM-React:
 │   │   │   │   │   ├── RefreshSupport.kt
 │   │   │   │   │   ├── RegisterRoutes.kt
 │   │   │   │   │   ├── ResetRoutes.kt
-│   │   │   │   │   ├── authRoutes.kt
 │   │   │   │   │   ├── register-request.kt
 │   │   │   │   ├── billing
 │   │   │   │   │   ├── BillingRoutes.kt
@@ -83,6 +84,9 @@ Estructura Front-OM-React:
 │   │   │   │   ├── cuestionario
 │   │   │   │   │   ├── prueba
 │   │   │   │   │   │   ├── PruebaRoutes.kt
+│   │   │   │   ├── jobs
+│   │   │   │   │   ├── JobsGeneratorRoutes.kt
+│   │   │   │   │   ├── JobsRoutes.kt
 │   │   │   │   ├── me
 │   │   │   │   │   ├── MeRoutes.kt
 │   │   │   │   ├── soporte
@@ -105,6 +109,8 @@ Estructura Front-OM-React:
 │   │   │   │   │   ├── tokens.kt
 │   │   │   ├── services
 │   │   │   │   ├── EmailService.kt
+│   │   │   │   ├── InterviewQuestionService.kt
+│   │   │   │   ├── JSearchService.kt
 │   │   ├── resources
 │   │   │   ├── application.yaml
 │   │   │   ├── logback.xml

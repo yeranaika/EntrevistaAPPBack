@@ -35,6 +35,7 @@ import routes.billing.billingRoutes
 
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
+import routes.sesiones.sesionesRoutes
 
 import plugins.settings
 import plugins.DatabaseFactory
@@ -56,6 +57,7 @@ import kotlinx.serialization.json.Json
 import routes.jobs.jobsRoutes
 import services.JSearchService
 import services.InterviewQuestionService
+import routes.jobs.jobsGeneratorRoutes 
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -175,6 +177,9 @@ fun Application.configureRouting(
         // Recordatorios
         recordatorioRoutes(recordatorioRepo)
 
+        // Sesiones de entrevista tipo chat
+        sesionesRoutes()
+
         // Admin: crear pruebas
         AdminPruebaRoutes(pruebaRepo)
 
@@ -188,6 +193,12 @@ fun Application.configureRouting(
         //   RUTAS DE JOBS (JSEARCH + OPENAI)
         // ============================
         jobsRoutes(
+            jSearchService = jSearchService,
+            interviewQuestionService = interviewQuestionService
+        )
+
+        // Ruta independiente para generar y guardar preguntas en la tabla pregunta
+        jobsGeneratorRoutes(
             jSearchService = jSearchService,
             interviewQuestionService = interviewQuestionService
         )
