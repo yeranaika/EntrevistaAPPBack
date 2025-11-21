@@ -36,6 +36,7 @@ import routes.billing.billingRoutes
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
 import routes.sesiones.sesionesRoutes
+import routes.auth.deleteAccountRoute
 
 import plugins.settings
 import plugins.DatabaseFactory
@@ -186,8 +187,11 @@ fun Application.configureRouting(
         // Admin: crear usuarios (incluye admins)
         AdminUserCreateRoutes(adminUserRepo)
 
+
         // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
         adminRoutes(adminUserRepo)
+
+        deleteAccountRoute(users)
 
         // ============================
         //   RUTAS DE JOBS (JSEARCH + OPENAI)
