@@ -43,6 +43,7 @@ import routes.usuario.recordatorios.recordatorioRoutes
 import routes.sesiones.sesionesRoutes
 import routes.cuestionario.planPracticaRoutes
 import routes.nivelacion.testNivelacionRoutes
+import routes.historial.historialRoutes
 
 import plugins.settings
 import plugins.DatabaseFactory
@@ -222,5 +223,9 @@ fun Application.configureRouting(
 
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
+
+        // Historial unificado (Tests + Entrevistas)
+        val sesionRepo = data.repository.sesiones.SesionEntrevistaRepository()
+        historialRoutes(sesionRepo, testNivelacionRepo)
     }
 }

@@ -1,10 +1,7 @@
 > Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :processResources UP-TO-DATE
 
 > Task :compileKotlin FAILED
-e: file:///C:/Users/asus/Desktop/entrevistaApp/EntrevistaAPPBack/src/main/kotlin/data/repository/cuestionario/PlanPracticaRepository.kt:17:14 'fun FieldSet.select(where: SqlExpressionBuilder.() -> Op<Boolean>): Query' is deprecated. As part of SELECT DSL design changes, this will be removed in future releases.
-e: file:///C:/Users/asus/Desktop/entrevistaApp/EntrevistaAPPBack/src/main/kotlin/data/repository/cuestionario/PlanPracticaRepository.kt:24:14 'fun FieldSet.select(where: SqlExpressionBuilder.() -> Op<Boolean>): Query' is deprecated. As part of SELECT DSL design changes, this will be removed in future releases.
-e: file:///C:/Users/asus/Desktop/entrevistaApp/EntrevistaAPPBack/src/main/kotlin/data/repository/usuarios/repository-objetivo-carrera.kt:14:14 'fun FieldSet.select(where: SqlExpressionBuilder.() -> Op<Boolean>): Query' is deprecated. As part of SELECT DSL design changes, this will be removed in future releases.
+e: file:///C:/Users/asus/Desktop/entrevistaApp/EntrevistaAPPBack/src/main/kotlin/routes/Routing.kt:228:26 Unresolved reference 'historialRoutes'.
 
 FAILURE: Build failed with an exception.
 
@@ -20,4 +17,4 @@ Execution failed for task ':compileKotlin'.
 > Get more help at https://help.gradle.org.
 
 BUILD FAILED in 2s
-2 actionable tasks: 1 executed, 1 up-to-date
+1 actionable task: 1 executed

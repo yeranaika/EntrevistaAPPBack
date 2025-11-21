@@ -11,6 +11,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.UUID
+import plugins.settings
+import io.ktor.serialization.kotlinx.json.json
 
 fun Route.testNivelacionRoutes(
     preguntaRepo: PreguntaNivelacionRepository,
@@ -217,9 +219,74 @@ fun Route.testNivelacionRoutes(
 
                 call.respond(HttpStatusCode.OK, response)
             }
+
+            // POST /tests/nivelacion/generate-from-job
+            // Genera un test de nivelación basado en un aviso de trabajo
+            post("/generate-from-job") {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized)
+
+                val req = try {
+                    call.receive<GenerateFromJobReq>()
+                } catch (e: Exception) {
+                    return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Body inválido"))
+                }
+
+                val job = req.job
+                val cantidad = req.cantidad ?: 5
+                
+                // Usamos el ID externo del job como clave de habilidad
+                val habilidadKey = "JOB:${job.idExterno}"
+
+                // Verificar si ya existen preguntas para este job
+                val existentes = preguntaRepo.countByHabilidad(habilidadKey)
+                
+                if (existentes < cantidad) {
+                    // Generar nuevas preguntas con IA
+                    val generated = services.InterviewQuestionService(
+                        io.ktor.client.HttpClient { 
+                            install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+                                json(kotlinx.serialization.json.Json { ignoreUnknownKeys = true })
+                            }
+                        }, 
+                        application.settings().openAiApiKey
+                    ).generateMultipleChoiceQuestions(job, cantidad)
+
+                    // Guardar en BD
+                    generated.forEach { q ->
+                        preguntaRepo.create(
+                            habilidad = habilidadKey,
+                            dificultad = q.dificultad,
+                            enunciado = q.enunciado,
+                            opciones = q.opciones,
+                            respuestaCorrecta = q.respuestaCorrecta,
+                            explicacion = q.explicacion
+                        )
+                    }
+                }
+
+                call.respond(GenerateFromJobRes(
+                    message = "Test generado exitosamente",
+                    habilidad = habilidadKey,
+                    cantidadPreguntas = preguntaRepo.countByHabilidad(habilidadKey)
+                ))
+            }
         }
     }
 }
+
+@kotlinx.serialization.Serializable
+data class GenerateFromJobRes(
+    val message: String,
+    val habilidad: String,
+    val cantidadPreguntas: Long
+)
+
+@kotlinx.serialization.Serializable
+data class GenerateFromJobReq(
+    val job: services.JobNormalizedDto,
+    val cantidad: Int? = 5
+)
 
 // Función auxiliar para extraer userId del JWT
 private fun JWTPrincipal.userIdFromJwt(): UUID {
