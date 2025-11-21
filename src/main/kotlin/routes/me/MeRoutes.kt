@@ -2,6 +2,7 @@ package routes.me
 
 import data.repository.usuarios.ProfileRepository
 import data.repository.usuarios.UserRepository
+import data.repository.usuarios.ObjetivoCarreraRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -20,7 +21,8 @@ data class MeRes(
     val email: String,
     val nombre: String? = null,
     val idioma: String? = null,          // ← nullable, calza con UserRow.idioma
-    val perfil: PerfilRes? = null
+    val perfil: PerfilRes? = null,
+    val meta: String? = null
 )
 
 @Serializable
@@ -45,6 +47,19 @@ data class PutPerfilReq(
     val pais: String? = null,
     val notaObjetivos: String? = null,
     val flagsAccesibilidad: JsonElement? = null
+)
+
+@Serializable
+data class PutObjetivoReq(
+    val nombreCargo: String,
+    val sector: String? = null
+)
+
+@Serializable
+data class ObjetivoRes(
+    val id: String,
+    val nombreCargo: String,
+    val sector: String?
 )
 
 @Serializable data class OkRes(val ok: Boolean = true)
@@ -117,7 +132,8 @@ private fun ApplicationCall.userIdFromJwt(): UUID {
 // ---------- Routes ----------
 fun Route.meRoutes(
     users: UserRepository,
-    profiles: ProfileRepository
+    profiles: ProfileRepository,
+    objetivos: ObjetivoCarreraRepository
 ) {
     authenticate("auth-jwt") {
         route("/me") {
@@ -130,6 +146,7 @@ fun Route.meRoutes(
 
                 // ✅ usa el método real del repo
                 val p = profiles.findByUser(uid)
+                val obj = objetivos.findByUser(uid)
 
                 val perfilRes = p?.let {
                     PerfilRes(
@@ -147,7 +164,8 @@ fun Route.meRoutes(
                         email = u.email,
                         nombre = u.nombre,
                         idioma = u.idioma,
-                        perfil = perfilRes
+                        perfil = perfilRes,
+                        meta = obj?.nombreCargo
                     )
                 )
             }
@@ -222,6 +240,57 @@ fun Route.meRoutes(
                     notaObjetivos      = req.notaObjetivos,
                     flagsAccesibilidad = req.flagsAccesibilidad
                 )
+
+                call.respond(OkRes())
+            }
+
+            // GET /me/objetivo → obtener objetivo de carrera
+            get("/objetivo") {
+                val uid = call.userIdFromJwt()
+                val obj = objetivos.findByUser(uid)
+                    ?: return@get call.respond(HttpStatusCode.NotFound, ErrorRes("objetivo_not_found"))
+
+                call.respond(
+                    ObjetivoRes(
+                        id = obj.id.toString(),
+                        nombreCargo = obj.nombreCargo,
+                        sector = obj.sector
+                    )
+                )
+            }
+
+            // PUT /me/objetivo → crear/actualizar objetivo de carrera
+            put("/objetivo") {
+                val uid = call.userIdFromJwt()
+                val req = runCatching { call.receive<PutObjetivoReq>() }.getOrElse {
+                    return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("invalid_json"))
+                }
+
+                // Validar que nombreCargo no esté vacío
+                if (req.nombreCargo.isBlank()) {
+                    return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("nombre_cargo_requerido"))
+                }
+
+                // Crear o actualizar objetivo
+                val objetivoId = objetivos.upsert(uid, req.nombreCargo, req.sector)
+
+                call.respond(
+                    ObjetivoRes(
+                        id = objetivoId.toString(),
+                        nombreCargo = req.nombreCargo,
+                        sector = req.sector
+                    )
+                )
+            }
+
+            // DELETE /me/objetivo → eliminar (desactivar) objetivo de carrera
+            delete("/objetivo") {
+                val uid = call.userIdFromJwt()
+                val deleted = objetivos.delete(uid)
+
+                if (deleted == 0) {
+                    return@delete call.respond(HttpStatusCode.NotFound, ErrorRes("objetivo_not_found"))
+                }
 
                 call.respond(OkRes())
             }

@@ -1,6 +1,8 @@
 package com.example
 
 import io.ktor.server.application.*
+import io.ktor.server.routing.IgnoreTrailingSlash
+import io.ktor.server.application.install
 import io.ktor.server.netty.EngineMain
 import com.example.configureMonitoring
 
@@ -27,6 +29,7 @@ import io.github.cdimascio.dotenv.dotenv
 fun main(args: Array<String>) = EngineMain.main(args)
 
 fun Application.module() {
+    install(IgnoreTrailingSlash)
     // Orden importante
     configureCORS()
     configureSerialization()
