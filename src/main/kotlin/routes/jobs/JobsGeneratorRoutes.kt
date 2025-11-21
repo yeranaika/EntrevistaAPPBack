@@ -160,9 +160,10 @@ fun Route.jobsGeneratorRoutes(
                                 }
                             """.trimIndent().replace("\n", "")
 
+                            val newId = java.util.UUID.randomUUID()
                             val sql = """
-                                INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas)
-                                VALUES ('AUTO', '$safeSector', '$safeNivel', '$safeTexto', '$pistasJson'::json)
+                                INSERT INTO pregunta (pregunta_id, tipo_banco, sector, nivel, texto, pistas)
+                                VALUES ('$newId', 'AUTO', '$safeSector', '$safeNivel', '$safeTexto', '$pistasJson'::json)
                             """.trimIndent()
 
                             TransactionManager.current().exec(sql)

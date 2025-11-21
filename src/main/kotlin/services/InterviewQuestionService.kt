@@ -41,6 +41,15 @@ data class OpenAIChatResponse(
     val choices: List<OpenAIChoice>
 )
 
+@Serializable
+data class GeneratedQuestionDto(
+    val enunciado: String,
+    val opciones: List<String>,
+    val respuestaCorrecta: Int,
+    val explicacion: String,
+    val dificultad: Int
+)
+
 /**
  * Servicio que llama a la API de OpenAI para generar preguntas de entrevista
  * a partir de un aviso laboral (JobNormalizedDto).
@@ -148,18 +157,79 @@ class InterviewQuestionService(
     }
 
     /**
-     * Limpia fences tipo ```json ... ``` para quedarnos solo con el JSON.
+     * Limpia fences tipo ```json ... ``` y texto adicional para quedarnos solo con el JSON.
      */
     private fun cleanJsonMarkdown(text: String): String {
-        val trimmed = text.trim()
-        if (trimmed.startsWith("```")) {
-            return trimmed
-                .lineSequence()
-                .drop(1) // saltar la línea ```json o ```
-                .takeWhile { !it.startsWith("```") }
-                .joinToString("\n")
-                .trim()
+        val startIndex = text.indexOf('{')
+        val endIndex = text.lastIndexOf('}')
+
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+            return text.substring(startIndex, endIndex + 1)
         }
-        return trimmed
+        
+        return text.trim()
+    }
+
+    suspend fun generateMultipleChoiceQuestions(
+        job: JobNormalizedDto,
+        cantidad: Int = 5
+    ): List<GeneratedQuestionDto> {
+        val prompt = """
+            Genera $cantidad preguntas de selección múltiple (multiple choice) para una entrevista técnica basada en este aviso:
+            
+            Título: ${job.titulo}
+            Empresa: ${job.empresa ?: "N/A"}
+            Descripción: ${job.descripcion.take(1000)}... (truncado)
+
+            Formato JSON requerido:
+            {
+              "preguntas": [
+                {
+                  "enunciado": "¿Pregunta?",
+                  "opciones": ["Opción A", "Opción B", "Opción C", "Opción D"],
+                  "respuestaCorrecta": 0, // índice 0-based
+                  "explicacion": "Por qué es correcta...",
+                  "dificultad": 2 // 1=básico, 2=intermedio, 3=avanzado
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val requestBody = OpenAIChatRequest(
+            model = "gpt-4o-mini",
+            messages = listOf(
+                OpenAIChatMessage(role = "system", content = "Eres un experto técnico creando tests de nivelación."),
+                OpenAIChatMessage(role = "user", content = prompt)
+            ),
+            temperature = 0.7
+        )
+
+        val response: OpenAIChatResponse = httpClient.post(openAiUrl) {
+            header(HttpHeaders.Authorization, "Bearer $apiKey")
+            contentType(ContentType.Application.Json)
+            setBody(requestBody)
+        }.body()
+
+        val content = response.choices.firstOrNull()?.message?.content ?: return emptyList()
+        
+        println("🤖 OpenAI Raw Content: $content")
+        
+        return parseMultipleChoiceQuestions(content)
+    }
+
+    private fun parseMultipleChoiceQuestions(content: String): List<GeneratedQuestionDto> {
+        val cleaned = cleanJsonMarkdown(content)
+        return try {
+            val root = json.parseToJsonElement(cleaned).jsonObject
+            val preguntas = root["preguntas"]?.jsonArray ?: return emptyList()
+            
+            preguntas.map { 
+                json.decodeFromJsonElement(GeneratedQuestionDto.serializer(), it)
+            }
+        } catch (e: Exception) {
+            println("⚠️ Error parsing MC questions: ${e.message}")
+            println("⚠️ Cleaned content was: $cleaned")
+            emptyList()
+        }
     }
 }
