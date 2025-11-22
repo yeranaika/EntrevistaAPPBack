@@ -36,94 +36,101 @@ fun Route.planPracticaRoutes(
     objetivoRepo: ObjetivoCarreraRepository
 ) {
     authenticate("auth-jwt") {
-        route("/plan-practica") {
-            get {
-                try {
-                    val uid = call.userIdFromJwt()
-                    call.application.environment.log.info("Fetching plan for user: $uid")
 
-                    // 1. Buscar plan existente
-                    val existingPlan = planRepo.findPlanByUser(uid)
+        // SOLO consulta, no genera plan nuevo
+        get("/plan-practica") {
+            try {
+                val uid = call.userIdFromJwt()
+                call.application.environment.log.info("Fetching plan for user: $uid")
 
-                    if (existingPlan != null) {
-                        call.application.environment.log.info("Found existing plan: ${existingPlan.id}")
-                        val pasos = planRepo.findPasosByPlan(existingPlan.id)
-                        return@get call.respond(
-                            PlanPracticaRes(
-                                id = existingPlan.id.toString(),
-                                area = existingPlan.area,
-                                metaCargo = existingPlan.metaCargo,
-                                nivel = existingPlan.nivel,
-                                pasos = pasos.map {
-                                    PasoRes(
-                                        id = it.id.toString(),
-                                        orden = it.orden,
-                                        titulo = it.titulo,
-                                        descripcion = it.descripcion,
-                                        sesionesPorSemana = it.sesionesPorSemana
-                                    )
-                                }
-                            )
-                        )
-                    }
+                val existingPlan = planRepo.findPlanByUser(uid)
 
-                    // 2. Si no existe, generar uno nuevo
-                    call.application.environment.log.info("No existing plan found, generating new one")
-                    val perfil = profileRepo.findByUser(uid)
-                    val objetivo = objetivoRepo.findByUser(uid)
-
-                    val area = perfil?.area ?: "General"
-                    val nivel = perfil?.nivelExperiencia ?: "jr"
-                    val meta = objetivo?.nombreCargo ?: "Mejorar habilidades"
-
-                    call.application.environment.log.info("Plan params - area: $area, nivel: $nivel, meta: $meta")
-
-                    // Crear el plan
-                    val planId = planRepo.createPlan(uid, area, meta, nivel)
-                    call.application.environment.log.info("Created plan with ID: $planId")
-
-                    // Generar pasos (Lógica simple por ahora)
-                    val pasosGenerados = generarPasos(area, nivel, meta)
-                    call.application.environment.log.info("Generated ${pasosGenerados.size} steps")
-
-                    pasosGenerados.forEachIndexed { index, paso ->
-                        call.application.environment.log.info("Creating step ${index + 1}: ${paso.titulo}")
-                        planRepo.createPaso(
-                            planId = planId,
-                            orden = index + 1,
-                            titulo = paso.titulo,
-                            descripcion = paso.descripcion,
-                            sesiones = paso.sesiones
-                        )
-                    }
-
-                    // 3. Retornar el nuevo plan
-                    val pasosDb = planRepo.findPasosByPlan(planId)
-                    call.application.environment.log.info("Retrieved ${pasosDb.size} steps from DB")
-
-                    call.respond(
-                        PlanPracticaRes(
-                            id = planId.toString(),
-                            area = area,
-                            metaCargo = meta,
-                            nivel = nivel,
-                            pasos = pasosDb.map {
-                                PasoRes(
-                                    id = it.id.toString(),
-                                    orden = it.orden,
-                                    titulo = it.titulo,
-                                    descripcion = it.descripcion,
-                                    sesionesPorSemana = it.sesionesPorSemana
-                                )
-                            }
+                // ---> AQUÍ EL CAMBIO IMPORTANTE
+                if (existingPlan == null) {
+                    call.application.environment.log.info("No plan found for user: $uid")
+                    return@get call.respond(
+                        HttpStatusCode.NotFound,
+                        mapOf(
+                            "error" to "PLAN_NOT_FOUND",
+                            "message" to "No hay plan de práctica definido para este usuario."
                         )
                     )
-                } catch (e: Exception) {
-                    call.application.environment.log.error("Error generating plan", e)
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to (e.message ?: "Unknown error")))
                 }
+                // <--- FIN CAMBIO
+
+                // Si sí hay plan, lo devolvemos normalmente
+                val pasos = planRepo.findPasosByPlan(existingPlan.id)
+                call.respond(
+                    PlanPracticaRes(
+                        id = existingPlan.id.toString(),
+                        area = existingPlan.area,
+                        metaCargo = existingPlan.metaCargo,
+                        nivel = existingPlan.nivel,
+                        pasos = pasos.map {
+                            PasoRes(
+                                id = it.id.toString(),
+                                orden = it.orden,
+                                titulo = it.titulo,
+                                descripcion = it.descripcion,
+                                sesionesPorSemana = it.sesionesPorSemana
+                            )
+                        }
+                    )
+                )
+
+            } catch (e: Exception) {
+                call.application.environment.log.error("Error fetching plan", e)
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to (e.message ?: "Unknown error"))
+                )
             }
         }
+
+        // OPCIONAL: si quieres seguir teniendo la lógica de generación, la puedes colgar aquí:
+        /*
+        post("/plan-practica/generar") {
+            val uid = call.userIdFromJwt()
+            val perfil = profileRepo.findByUser(uid)
+            val objetivo = objetivoRepo.findByUser(uid)
+
+            val area = perfil?.area ?: "General"
+            val nivel = perfil?.nivelExperiencia ?: "jr"
+            val meta = objetivo?.nombreCargo ?: "Mejorar habilidades"
+
+            val planId = planRepo.createPlan(uid, area, meta, nivel)
+            val pasosGenerados = generarPasos(area, nivel, meta)
+
+            pasosGenerados.forEachIndexed { index, paso ->
+                planRepo.createPaso(
+                    planId = planId,
+                    orden = index + 1,
+                    titulo = paso.titulo,
+                    descripcion = paso.descripcion,
+                    sesiones = paso.sesiones
+                )
+            }
+
+            val pasosDb = planRepo.findPasosByPlan(planId)
+            call.respond(
+                PlanPracticaRes(
+                    id = planId.toString(),
+                    area = area,
+                    metaCargo = meta,
+                    nivel = nivel,
+                    pasos = pasosDb.map {
+                        PasoRes(
+                            id = it.id.toString(),
+                            orden = it.orden,
+                            titulo = it.titulo,
+                            descripcion = it.descripcion,
+                            sesionesPorSemana = it.sesionesPorSemana
+                        )
+                    }
+                )
+            )
+        }
+        */
     }
 }
 
@@ -134,39 +141,44 @@ private fun ApplicationCall.userIdFromJwt(): UUID {
     return UUID.fromString(sub)
 }
 
-// Lógica de generación de pasos
+// Lógica de generación de pasos (la dejo igual por si usas el POST /plan-practica/generar)
 data class PasoTemplate(val titulo: String, val descripcion: String, val sesiones: Int)
 
 fun generarPasos(area: String, nivel: String, meta: String): List<PasoTemplate> {
     val pasos = mutableListOf<PasoTemplate>()
 
-    // Paso 1: Fundamentos
-    pasos.add(PasoTemplate(
-        titulo = "Fundamentos de $area",
-        descripcion = "Repaso de conceptos clave para $nivel en $area.",
-        sesiones = 2
-    ))
+    pasos.add(
+        PasoTemplate(
+            titulo = "Fundamentos de $area",
+            descripcion = "Repaso de conceptos clave para $nivel en $area.",
+            sesiones = 2
+        )
+    )
 
-    // Paso 2: Práctica Específica
-    pasos.add(PasoTemplate(
-        titulo = "Práctica para $meta",
-        descripcion = "Ejercicios enfocados en alcanzar el rol de $meta.",
-        sesiones = 3
-    ))
+    pasos.add(
+        PasoTemplate(
+            titulo = "Práctica para $meta",
+            descripcion = "Ejercicios enfocados en alcanzar el rol de $meta.",
+            sesiones = 3
+        )
+    )
 
-    // Paso 3: Simulación
-    pasos.add(PasoTemplate(
-        titulo = "Simulación de Entrevista",
-        descripcion = "Prueba técnica simulada nivel $nivel.",
-        sesiones = 1
-    ))
+    pasos.add(
+        PasoTemplate(
+            titulo = "Simulación de Entrevista",
+            descripcion = "Prueba técnica simulada nivel $nivel.",
+            sesiones = 1
+        )
+    )
 
     if (nivel.contains("mid") || nivel.contains("sr") || nivel.contains("mucha")) {
-        pasos.add(PasoTemplate(
-            titulo = "Arquitectura y Diseño",
-            descripcion = "Diseño de sistemas y patrones avanzados.",
-            sesiones = 2
-        ))
+        pasos.add(
+            PasoTemplate(
+                titulo = "Arquitectura y Diseño",
+                descripcion = "Diseño de sistemas y patrones avanzados.",
+                sesiones = 2
+            )
+        )
     }
 
     return pasos
