@@ -41,6 +41,15 @@ data class OpenAIChatResponse(
     val choices: List<OpenAIChoice>
 )
 
+@Serializable
+data class GeneratedQuestionDto(
+    val enunciado: String,
+    val opciones: List<String>,
+    val respuestaCorrecta: Int,
+    val explicacion: String,
+    val dificultad: Int
+)
+
 /**
  * Servicio que llama a la API de OpenAI para generar preguntas de entrevista
  * a partir de un aviso laboral (JobNormalizedDto).
@@ -65,10 +74,17 @@ class InterviewQuestionService(
                 OpenAIChatMessage(
                     role = "system",
                     content = """
-                        Eres un generador de preguntas de entrevista laboral.
-                        Dado un aviso de trabajo, genera exactamente $cantidad preguntas de entrevista
-                        en español, enfocadas en evaluar si la persona encaja con el rol descrito.
-                        Devuelve SOLO un JSON con esta estructura:
+                            Eres un generador de preguntas para ENTREVISTAS LABORALES.
+                            
+                            Tu objetivo es crear preguntas de entrevista en español, enfocadas en evaluar
+                            si la persona encaja con el cargo descrito en el aviso de trabajo.
+
+                            Reglas:
+                            - Genera exactamente $cantidad preguntas de entrevista laboral.
+                            - Las preguntas deben poder usarse en una entrevista real (no tipo prueba de alternativa).
+                            - Mezcla evaluación técnica y de experiencia/habilidades blandas, según el aviso.
+                            - No incluyas respuestas, solo las preguntas.
+                            - No expliques nada fuera del JSON.
 
                         {
                           "preguntas": [
@@ -86,6 +102,8 @@ class InterviewQuestionService(
             )
         )
 
+        println("🧠 Generando $cantidad preguntas para aviso: ${job.titulo} (${job.empresa ?: "N/A"})")
+
         val response: OpenAIChatResponse = httpClient.post(openAiUrl) {
             header(HttpHeaders.Authorization, "Bearer $apiKey")
             contentType(ContentType.Application.Json)
@@ -95,7 +113,11 @@ class InterviewQuestionService(
         val content = response.choices.firstOrNull()?.message?.content
             ?: return emptyList()
 
-        return parseQuestionsFromContent(content, cantidad)
+        val preguntas = parseQuestionsFromContent(content, cantidad)
+
+        println("✅ OpenAI devolvió ${preguntas.size} preguntas para '${job.titulo}'")
+
+        return preguntas
     }
 
     private fun buildPrompt(job: JobNormalizedDto, cantidad: Int): String =
@@ -114,9 +136,11 @@ class InterviewQuestionService(
         content: String,
         cantidad: Int
     ): List<String> {
-        // Esperamos algo como: {"preguntas":["...","...","..."]}
+        // A veces OpenAI responde con ```json ... ```
+        val cleaned = cleanJsonMarkdown(content)
+
         return try {
-            val root: JsonElement = json.parseToJsonElement(content)
+            val root: JsonElement = json.parseToJsonElement(cleaned)
             val preguntasJson = root.jsonObject["preguntas"]?.jsonArray
                 ?: return emptyList()
 
@@ -127,8 +151,85 @@ class InterviewQuestionService(
                 }
                 .take(cantidad)
         } catch (e: Exception) {
-            // Si no se puede parsear, devolvemos el texto completo como una sola "pregunta"
-            listOf(content)
+            println("⚠️ No se pudo parsear JSON de OpenAI, devolviendo texto completo como una sola pregunta")
+            listOf(cleaned)
+        }
+    }
+
+    /**
+     * Limpia fences tipo ```json ... ``` y texto adicional para quedarnos solo con el JSON.
+     */
+    private fun cleanJsonMarkdown(text: String): String {
+        val startIndex = text.indexOf('{')
+        val endIndex = text.lastIndexOf('}')
+
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+            return text.substring(startIndex, endIndex + 1)
+        }
+        
+        return text.trim()
+    }
+
+    suspend fun generateMultipleChoiceQuestions(
+        job: JobNormalizedDto,
+        cantidad: Int = 5
+    ): List<GeneratedQuestionDto> {
+        val prompt = """
+            Genera $cantidad preguntas de selección múltiple (multiple choice) para una entrevista técnica basada en este aviso:
+            
+            Título: ${job.titulo}
+            Empresa: ${job.empresa ?: "N/A"}
+            Descripción: ${job.descripcion.take(1000)}... (truncado)
+
+            Formato JSON requerido:
+            {
+              "preguntas": [
+                {
+                  "enunciado": "¿Pregunta?",
+                  "opciones": ["Opción A", "Opción B", "Opción C", "Opción D"],
+                  "respuestaCorrecta": 0, // índice 0-based
+                  "explicacion": "Por qué es correcta...",
+                  "dificultad": 2 // 1=básico, 2=intermedio, 3=avanzado
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val requestBody = OpenAIChatRequest(
+            model = "gpt-4o-mini",
+            messages = listOf(
+                OpenAIChatMessage(role = "system", content = "Eres un experto técnico creando tests de nivelación."),
+                OpenAIChatMessage(role = "user", content = prompt)
+            ),
+            temperature = 0.7
+        )
+
+        val response: OpenAIChatResponse = httpClient.post(openAiUrl) {
+            header(HttpHeaders.Authorization, "Bearer $apiKey")
+            contentType(ContentType.Application.Json)
+            setBody(requestBody)
+        }.body()
+
+        val content = response.choices.firstOrNull()?.message?.content ?: return emptyList()
+        
+        println("🤖 OpenAI Raw Content: $content")
+        
+        return parseMultipleChoiceQuestions(content)
+    }
+
+    private fun parseMultipleChoiceQuestions(content: String): List<GeneratedQuestionDto> {
+        val cleaned = cleanJsonMarkdown(content)
+        return try {
+            val root = json.parseToJsonElement(cleaned).jsonObject
+            val preguntas = root["preguntas"]?.jsonArray ?: return emptyList()
+            
+            preguntas.map { 
+                json.decodeFromJsonElement(GeneratedQuestionDto.serializer(), it)
+            }
+        } catch (e: Exception) {
+            println("⚠️ Error parsing MC questions: ${e.message}")
+            println("⚠️ Cleaned content was: $cleaned")
+            emptyList()
         }
     }
 }

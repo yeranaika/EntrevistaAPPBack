@@ -10,6 +10,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.UUID
+import kotlinx.serialization.Serializable
+
 
 /**
  * Ruta para eliminar la cuenta del usuario autenticado.
@@ -17,7 +19,7 @@ import java.util.UUID
  *
  * Endpoint: DELETE /cuenta
  * Autenticación: JWT requerido
- * Body: { "confirmar": true }
+ * Body: { "confirmar": "eliminar" }
  *
  * Al eliminar un usuario, se borran automáticamente en cascada:
  * - Tokens de sesión (refresh_token, password_reset)
@@ -56,11 +58,11 @@ fun Route.deleteAccountRoute(usuarioRepo: UserRepository) {
                     )
                 }
 
-                // Verificar que el usuario confirme explícitamente el borrado
-                if (!body.confirmar) {
+                // Verificar que el usuario escriba explícitamente "eliminar"
+                if (body.confirmar.trim().lowercase() != "eliminar") {
                     return@delete call.respond(
                         HttpStatusCode.BadRequest,
-                        ErrorRes("must_confirm_deletion")
+                        ErrorRes("must_type_eliminar")
                     )
                 }
 

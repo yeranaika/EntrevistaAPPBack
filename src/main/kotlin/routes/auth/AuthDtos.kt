@@ -83,8 +83,9 @@ data class LogoutReq(
 
 @Serializable
 data class ConfirmarBorradoReq(
-    val confirmar: Boolean
+    val confirmar: String   
 )
+
 
 @Serializable
 data class DeleteAccountOk(

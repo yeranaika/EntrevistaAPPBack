@@ -11,6 +11,10 @@ import data.repository.usuarios.UsuariosOAuthRepositoryImpl
 import data.repository.billing.SuscripcionRepository
 import data.repository.usuarios.ConsentTextRepository
 import data.repository.usuarios.ConsentimientoRepository
+import data.repository.usuarios.ObjetivoCarreraRepository
+import data.repository.cuestionario.PlanPracticaRepository
+import data.repository.nivelacion.PreguntaNivelacionRepository
+import data.repository.nivelacion.TestNivelacionRepository
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -28,6 +32,7 @@ import routes.admin.adminPreguntaRoutes
 import routes.admin.AdminPruebaRoutes
 import routes.admin.AdminUserCreateRoutes
 import routes.admin.adminRoutes
+import routes.admin.adminPreguntaNivelacionRoutes
 import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
 import routes.admin.adminPlanRoutes
@@ -35,6 +40,11 @@ import routes.billing.billingRoutes
 
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
+import routes.sesiones.sesionesRoutes
+import routes.auth.deleteAccountRoute
+import routes.cuestionario.planPracticaRoutes
+import routes.nivelacion.testNivelacionRoutes
+import routes.historial.historialRoutes
 
 import plugins.settings
 import plugins.DatabaseFactory
@@ -56,6 +66,7 @@ import kotlinx.serialization.json.Json
 import routes.jobs.jobsRoutes
 import services.JSearchService
 import services.InterviewQuestionService
+import routes.jobs.jobsGeneratorRoutes
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -72,7 +83,11 @@ fun Application.configureRouting(
     val suscripcionRepo = SuscripcionRepository()
     val onboardingRepo = OnboardingRepository()
     val recordatorioRepo = RecordatorioPreferenciaRepository()
-    
+    val objetivos = ObjetivoCarreraRepository()
+    val planRepo = PlanPracticaRepository()
+    val preguntaNivelacionRepo = PreguntaNivelacionRepository()
+    val testNivelacionRepo = TestNivelacionRepository()
+
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
         attributes[AuthCtxKey]
@@ -152,7 +167,7 @@ fun Application.configureRouting(
         passwordRecoveryRoutes(recoveryCodeRepo, emailService, db)
 
         // /me y /me/perfil (GET/PUT)
-        meRoutes(users, profiles)
+        meRoutes(users, profiles, objetivos)
 
         // Consentimientos
         ConsentRoutes(
@@ -162,7 +177,7 @@ fun Application.configureRouting(
 
         profileRoutes(onboardingRepo)
         adminPlanRoutes(onboardingRepo)
-        
+
         // Intentos de prueba
         intentosRoutes()
 
@@ -175,6 +190,9 @@ fun Application.configureRouting(
         // Recordatorios
         recordatorioRoutes(recordatorioRepo)
 
+        // Sesiones de entrevista tipo chat
+        sesionesRoutes()
+
         // Admin: crear pruebas
         AdminPruebaRoutes(pruebaRepo)
 
@@ -184,6 +202,9 @@ fun Application.configureRouting(
         // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
         adminRoutes(adminUserRepo)
 
+        // Eliminar cuenta (derecho al olvido)
+        deleteAccountRoute(users)
+
         // ============================
         //   RUTAS DE JOBS (JSEARCH + OPENAI)
         // ============================
@@ -191,5 +212,24 @@ fun Application.configureRouting(
             jSearchService = jSearchService,
             interviewQuestionService = interviewQuestionService
         )
+
+        // Ruta independiente para generar y guardar preguntas en la tabla pregunta
+        jobsGeneratorRoutes(
+            jSearchService = jSearchService,
+            interviewQuestionService = interviewQuestionService
+        )
+
+        // Plan de práctica
+        planPracticaRoutes(planRepo, profiles, objetivos)
+
+        // Tests de nivelación
+        testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo)
+
+        // Admin: preguntas de nivelación
+        adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
+
+        // Historial unificado (Tests + Entrevistas)
+        val sesionRepo = data.repository.sesiones.SesionEntrevistaRepository()
+        historialRoutes(sesionRepo, testNivelacionRepo)
     }
 }
