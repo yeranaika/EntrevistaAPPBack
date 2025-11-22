@@ -158,6 +158,7 @@ CREATE TABLE pregunta (
     tipo_banco       VARCHAR(5),
     sector           VARCHAR(80),
     nivel            VARCHAR(3),
+    cargos           VARCHAR(80),
     texto            TEXT NOT NULL,
     pistas           JSONB,
     config_respuesta JSONB,
