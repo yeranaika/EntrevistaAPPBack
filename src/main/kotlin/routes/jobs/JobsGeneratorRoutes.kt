@@ -6,12 +6,12 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import services.JSearchService
 import services.InterviewQuestionService
 import services.JobNormalizedDto
+import services.MixedGeneratedQuestionDto
 
 // ===================== DTOs =====================
 
@@ -26,7 +26,7 @@ data class GenerateJobsRequest(
 @Serializable
 data class JobWithSavedQuestionsDto(
     val job: JobNormalizedDto,
-    val preguntas: List<String>
+    val preguntas: List<String> // solo devolvemos los enunciados al cliente
 )
 
 @Serializable
@@ -43,7 +43,8 @@ data class PreguntaDto(
     val sector: String?,
     val nivel: String?,
     val texto: String,
-    val pistas: String?,     // lo mandamos como JSON string (si quieres luego lo parseas en el front)
+    val pistas: String?,           // JSON como string
+    val configRespuesta: String?,  // JSON como string
     val activa: Boolean,
     val fechaCreacion: String
 )
@@ -51,16 +52,65 @@ data class PreguntaDto(
 // ===================== Helpers =====================
 
 /**
- * Determina el nivel (JR / SS / SR) en base al título del aviso.
+ * Determina el nivel (jr / medio / sr) en base al título del aviso.
  */
 private fun inferNivelFromTitle(titulo: String): String {
     val t = titulo.lowercase()
 
     return when {
-        "senior" in t || "sr " in t || " sr" in t -> "SR"
-        "semi" in t || "semisenior" in t || "ssr" in t -> "SS"
-        "junior" in t || " jr" in t || "jr " in t -> "JR"
-        else -> "JR" // si no sabemos, asumimos junior
+        "senior" in t || " sr" in t || "sr " in t -> "sr"
+        "semi" in t || "medio" in t || "middle" in t || "ssr" in t -> "mid"
+        "junior" in t || " jr" in t || "jr " in t || "trainee" in t -> "jr"
+        else -> "jr"
+    }
+}
+/**
+ * Convierte lista de pistas (List<String>) a JSON string seguro para insertar.
+ * Ej: ["a", "b"] -> ["a", "b"]
+ */
+private fun buildPistasJson(pistas: List<String>): String {
+    if (pistas.isEmpty()) return "[]"
+    val safeHints = pistas.map { it.replace("\"", "\\\"") }
+    val joined = safeHints.joinToString(
+        separator = "\", \"",
+        prefix = "[\"",
+        postfix = "\"]"
+    )
+    return joined
+}
+
+/**
+ * Construye el JSON de config_respuesta para una pregunta mixta.
+ */
+private fun buildConfigRespuestaJson(q: MixedGeneratedQuestionDto): String {
+    return if (q.tipo == "seleccion_unica") {
+        // Cerrada con alternativas
+        val safeOpciones = q.opciones.map { opt ->
+            val safeTexto = opt.texto.replace("\"", "\\\"")
+            """{"id":"${opt.id}","texto":"$safeTexto"}"""
+        }
+        val opcionesJoined = safeOpciones.joinToString(separator = ",", prefix = "[", postfix = "]")
+        val correct = q.respuesta_correcta ?: ""
+
+        """
+        {
+          "tipo": "seleccion_unica",
+          "opciones": $opcionesJoined,
+          "respuesta_correcta": "$correct"
+        }
+        """.trimIndent().replace("\n", "")
+    } else {
+        // Abierta
+        val min = q.min_caracteres ?: 20
+        val max = q.max_caracteres ?: 300
+
+        """
+        {
+          "tipo": "abierta_texto",
+          "min_caracteres": $min,
+          "max_caracteres": $max
+        }
+        """.trimIndent().replace("\n", "")
     }
 }
 
@@ -86,9 +136,9 @@ fun Route.jobsGeneratorRoutes(
          *
          * Flujo:
          *  - Busca avisos en la API de empleo (JSearch).
-         *  - Genera preguntas con OpenAI por cada aviso.
+         *  - Genera preguntas MIXTAS (cerradas + abiertas) con OpenAI por cada aviso.
          *  - Inserta cada pregunta en la tabla `pregunta`.
-         *  - Devuelve resumen + detalle (job + preguntas).
+         *  - Devuelve resumen + detalle (job + enunciados de preguntas).
          */
         post("/generate-and-save") {
 
@@ -127,59 +177,72 @@ fun Route.jobsGeneratorRoutes(
                 val result = mutableListOf<JobWithSavedQuestionsDto>()
 
                 for (job in subset) {
-                    val preguntas = interviewQuestionService.generateQuestionsForJob(
+                    // NUEVO: preguntas mixtas (cerradas + abiertas)
+                    val preguntasGeneradas = interviewQuestionService.generateMixedQuestionsForJob(
                         job = job,
                         cantidad = req.preguntasPorAviso
                     )
 
                     println("\n🎯 Aviso: ${job.titulo} (${job.empresa ?: "Sin empresa"})")
-                    preguntas.forEachIndexed { idx, p ->
-                        println("   ❓ [${idx + 1}] $p")
+                    preguntasGeneradas.forEachIndexed { idx, p ->
+                        println("   ❓ [${idx + 1}] (${p.tipo}) ${p.enunciado}")
                     }
 
-                    // Inferimos nivel (JR / SS / SR) desde el título del aviso
+                    // Inferimos nivel (jr / medio / sr) desde el título del aviso
                     val nivel = inferNivelFromTitle(job.titulo)
 
-                    // Guardar en BD con SQL directo
                     transaction {
-                        preguntas.forEach { textoPregunta ->
-                            val safeTexto = textoPregunta.replace("'", "''")
-                            val safeSector = (job.empresa ?: "GENERAL").replace("'", "''")
-                            val safeTitulo = job.titulo.replace("'", "''")
-                            val safeUbicacion = (job.ubicacion ?: "").replace("'", "''")
-                            val safeFuente = job.fuente.replace("'", "''")
-                            val safeIdExterno = job.idExterno.replace("'", "''")
-                            val safeNivel = nivel.replace("'", "''")
+                        preguntasGeneradas.forEach { q ->
+                            val safeTexto = q.enunciado.replace("'", "''")
+                            // sector = título del aviso (ej: "Desarrollador Backend")
+                            val safeSector = job.titulo.replace("'", "''")
+                            val rawNivel = q.nivel ?: nivel
+                            val safeNivel = when (rawNivel.lowercase()) {
+                                "medio", "intermedio", "semi", "ssr", "middle" -> "mid"
+                                "senior", "sr" -> "sr"
+                                else -> "jr"
+                            }.replace("'", "''")
 
-                            val pistasJson = """
-                                {
-                                  "fuente": "$safeFuente",
-                                  "idExterno": "$safeIdExterno",
-                                  "tituloAviso": "$safeTitulo",
-                                  "ubicacion": "$safeUbicacion"
-                                }
-                            """.trimIndent().replace("\n", "")
+                            // pistas: array de strings
+                            val pistasJson = buildPistasJson(q.pistas)
+                            val configRespuestaJson = buildConfigRespuestaJson(q)
 
                             val newId = java.util.UUID.randomUUID()
                             val sql = """
-                                INSERT INTO pregunta (pregunta_id, tipo_banco, sector, nivel, texto, pistas)
-                                VALUES ('$newId', 'AUTO', '$safeSector', '$safeNivel', '$safeTexto', '$pistasJson'::json)
+                                INSERT INTO pregunta (
+                                    pregunta_id,
+                                    tipo_banco,
+                                    sector,
+                                    nivel,
+                                    texto,
+                                    pistas,
+                                    config_respuesta
+                                )
+                                VALUES (
+                                    '$newId',
+                                    'IAJOB',
+                                    '$safeSector',
+                                    '$safeNivel',
+                                    '$safeTexto',
+                                    '$pistasJson'::jsonb,
+                                    '$configRespuestaJson'::jsonb
+                                )
                             """.trimIndent()
 
                             TransactionManager.current().exec(sql)
-                            println("💾 Insertada pregunta en BD: $textoPregunta (nivel=$nivel)")
+                            println("💾 Insertada pregunta en BD: [${q.tipo}] $safeTexto (nivel=$safeNivel)")
                             totalGuardadas++
                         }
                     }
 
                     result += JobWithSavedQuestionsDto(
                         job = job,
-                        preguntas = preguntas
+                        preguntas = preguntasGeneradas.map { it.enunciado }
                     )
                 }
 
                 GenerateJobsResponse(
-                    message = "Se guardaron $totalGuardadas preguntas generadas automáticamente",
+                    message = "Se guardaron $totalGuardadas preguntas generadas automáticamente (IAJOB)",
                     totalEmpleosProcesados = result.size,
                     items = result
                 )
@@ -201,25 +264,22 @@ fun Route.jobsGeneratorRoutes(
          * GET /jobs/generated-questions
          *
          * Parámetros opcionales:
-         *   - nivel: JR | SS | SR
+         *   - nivel: jr | medio | sr
          *   - sector: texto (busca exacto en columna sector)
          *   - limit: cantidad máxima de preguntas (por defecto 50)
          *
-         * Ejemplos:
-         *   /jobs/generated-questions
-         *   /jobs/generated-questions?nivel=JR&limit=20
-         *   /jobs/generated-questions?sector=Tata%20Consultancy%20Services%20Chile&nivel=SR
+         * Filtra solo tipo_banco = 'IAJOB'.
          */
         get("/generated-questions") {
-            val nivelFilter = call.request.queryParameters["nivel"]  // JR / SS / SR
+            val nivelFilter = call.request.queryParameters["nivel"]  // jr / medio / sr
             val sectorFilter = call.request.queryParameters["sector"]
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
 
             val preguntas: List<PreguntaDto> = transaction {
                 val conditions = mutableListOf<String>()
 
-                // Solo tipo_banco = 'AUTO' (las generadas por IA)
-                conditions += "tipo_banco = 'AUTO'"
+                // Solo tipo_banco = 'IAJOB'
+                conditions += "tipo_banco = 'IAJOB'"
 
                 if (!nivelFilter.isNullOrBlank()) {
                     conditions += "nivel = '${nivelFilter.replace("'", "''")}'"
@@ -243,6 +303,7 @@ fun Route.jobsGeneratorRoutes(
                         nivel,
                         texto,
                         pistas,
+                        config_respuesta,
                         activa,
                         fecha_creacion
                     FROM pregunta
@@ -260,7 +321,8 @@ fun Route.jobsGeneratorRoutes(
                         val sector = rs.getString("sector")
                         val nivel = rs.getString("nivel")
                         val texto = rs.getString("texto")
-                        val pistas = rs.getString("pistas") // JSON como string
+                        val pistas = rs.getString("pistas")                   // JSON como string
+                        val configRespuesta = rs.getString("config_respuesta")// JSON como string
                         val activa = rs.getBoolean("activa")
                         val fechaCreacion = rs.getTimestamp("fecha_creacion")?.toInstant()?.toString() ?: ""
 
@@ -271,6 +333,7 @@ fun Route.jobsGeneratorRoutes(
                             nivel = nivel,
                             texto = texto,
                             pistas = pistas,
+                            configRespuesta = configRespuesta,
                             activa = activa,
                             fechaCreacion = fechaCreacion
                         )
