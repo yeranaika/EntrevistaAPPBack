@@ -1,9 +1,18 @@
--- Encabezado recomendado
+-- =============================================================================
+-- 0. LIMPIEZA Y CONFIGURACIÓN INICIAL
+-- =============================================================================
+-- Borramos el esquema completo para empezar de cero (CUIDADO: Borra datos previos)
+DROP SCHEMA IF EXISTS app CASCADE;
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE SCHEMA IF NOT EXISTS app;
 SET search_path TO app, public;
 
 BEGIN;
+
+-- =============================================================================
+-- 1. CREACIÓN DE TABLAS (DDL)
+-- =============================================================================
 
 -- 1) Núcleo de cuentas y seguridad
 CREATE TABLE usuario (
@@ -76,9 +85,7 @@ CREATE TABLE consentimiento_texto (
     fecha_publicacion TIMESTAMPTZ NOT NULL DEFAULT now(),
     vigente           BOOLEAN     NOT NULL DEFAULT TRUE
 );
-
-CREATE INDEX idx_consentimiento_texto_vigente
-    ON consentimiento_texto (vigente);
+CREATE INDEX idx_consentimiento_texto_vigente ON consentimiento_texto (vigente);
 
 -- 2) Suscripciones y pagos
 CREATE TABLE suscripcion (
@@ -128,11 +135,10 @@ CREATE TABLE plan_practica_paso (
 );
 
 CREATE TABLE recordatorio_preferencia (
-    usuario_id UUID PRIMARY KEY
-        REFERENCES usuario(usuario_id) ON DELETE CASCADE,
-    dias_semana VARCHAR(50) NOT NULL,      -- Ej: 'LUNES,MARTES,VIERNES'
-    hora        VARCHAR(5)  NOT NULL,      -- Formato 'HH:MM'
-    tipo_practica VARCHAR(32) NOT NULL,    -- Ej: 'TEST', 'ENTREVISTA', 'REPASO'
+    usuario_id UUID PRIMARY KEY REFERENCES usuario(usuario_id) ON DELETE CASCADE,
+    dias_semana VARCHAR(50) NOT NULL,
+    hora        VARCHAR(5)  NOT NULL,
+    tipo_practica VARCHAR(32) NOT NULL,
     habilitado  BOOLEAN NOT NULL DEFAULT TRUE
 );
 
@@ -147,19 +153,17 @@ CREATE TABLE objetivo_carrera (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- === TABLA MODIFICADA ===
 CREATE TABLE pregunta (
     pregunta_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tipo_banco       VARCHAR(5),
     sector           VARCHAR(80),
     nivel            VARCHAR(3),
     texto            TEXT NOT NULL,
-    pistas           JSONB,        -- Cambiado a JSONB para optimización
-    config_respuesta JSONB,        -- NUEVA COLUMNA: Contiene opciones o reglas
+    pistas           JSONB,
+    config_respuesta JSONB,
     activa           BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_creacion   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
--- ========================
 
 -- 4) Pruebas y relaciones
 CREATE TABLE prueba (
@@ -180,7 +184,6 @@ CREATE TABLE prueba_pregunta (
     clave_correcta     VARCHAR(40),
     CONSTRAINT chk_orden_positivo CHECK (orden > 0)
 );
-
 CREATE UNIQUE INDEX uq_prueba_pregunta_orden ON prueba_pregunta(prueba_id, orden);
 
 -- 5) Intentos, respuestas, sesiones y feedback
@@ -326,270 +329,163 @@ CREATE INDEX idx_log_tipo    ON log_auditoria(tipo_evento, fecha_creacion DESC);
 -- 8) Índices extra
 CREATE INDEX idx_consentimiento_usuario ON consentimiento(usuario_id);
 CREATE INDEX idx_perfil_usuario         ON perfil_usuario(usuario_id);
-
 CREATE INDEX idx_objetivo_usuario ON objetivo_carrera(usuario_id);
 CREATE INDEX idx_pregunta_activa  ON pregunta(nivel, tipo_banco) WHERE activa = TRUE;
-
 CREATE INDEX idx_prueba_activa ON prueba(tipo_prueba, nivel) WHERE activo = TRUE;
-
 CREATE INDEX idx_refresh_usuario ON refresh_token(usuario_id);
-
 CREATE INDEX idx_suscripcion_usuario ON suscripcion(usuario_id);
 CREATE INDEX idx_suscripcion_activa  ON suscripcion(usuario_id, estado) WHERE estado = 'activa';
-
 CREATE INDEX idx_usuario_correo_activo ON usuario(correo) WHERE estado = 'activo';
--- =============================================================================
--- NIVEL JUNIOR (10 Preguntas) - Fundamentos, Sintaxis y Lógica Básica
--- =============================================================================
-
--- 1. HTML Semántico
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    '¿Cuál es el propósito principal de usar etiquetas semánticas en HTML5 (como <header>, <article>, <footer>)?',
-    '["Mejora la accesibilidad (screen readers)", "Ayuda al SEO"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Hacer que la web se vea más bonita"}, {"id": "B", "texto": "Mejorar la accesibilidad y el SEO"}, {"id": "C", "texto": "Ejecutar scripts más rápido"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 2. CSS Selectores
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    'En CSS, ¿cómo seleccionas un elemento que tiene el id "menu"?',
-    '["El punto (.) es para clases", "La almohadilla (#) es para IDs"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": ".menu"}, {"id": "B", "texto": "#menu"}, {"id": "C", "texto": "menu"}, {"id": "D", "texto": "*menu"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 3. Git Básico
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    'Si quieres ver el historial de commits en tu repositorio, ¿qué comando usas?',
-    '["Muestra una lista cronológica", "Log significa registro"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "git status"}, {"id": "B", "texto": "git log"}, {"id": "C", "texto": "git history"}, {"id": "D", "texto": "git commit"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 4. JS Arrays
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    '¿Qué método de Array en JavaScript crea un *nuevo* array con los resultados de la llamada a una función indicada aplicados a cada uno de sus elementos?',
-    '["ForEach no retorna nada", "Map transforma"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "forEach()"}, {"id": "B", "texto": "map()"}, {"id": "C", "texto": "filter()"}, {"id": "D", "texto": "reduce()"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 5. SQL Básico
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    'Escribe una consulta SQL para seleccionar todos los usuarios de la tabla "usuarios" que sean mayores de 18 años.',
-    '["Usa la cláusula WHERE", "El operador es >"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 15, "max_caracteres": 100, "tips_evaluador": "SELECT * FROM usuarios WHERE edad > 18" }'::jsonb
-);
-
--- 6. Concepto API
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    '¿Qué significan las siglas API?',
-    '["Application...", "Interfaz de programación"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Application Programming Interface"}, {"id": "B", "texto": "Advanced Programming Interaction"}, {"id": "C", "texto": "Automated Protocol Interface"}], "respuesta_correcta": "A" }'::jsonb
-);
-
--- 7. POO Básico
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    'En Programación Orientada a Objetos, ¿qué es una Clase?',
-    '["Es como un plano o molde", "Define atributos y métodos"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300, "placeholder": "Es una plantilla para crear objetos..." }'::jsonb
-);
-
--- 8. HTTP Status
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    '¿Qué código de estado HTTP indica que la solicitud fue exitosa?',
-    '["Es el código estándar de OK", "Está en el rango de los 200"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "400"}, {"id": "B", "texto": "500"}, {"id": "C", "texto": "200"}, {"id": "D", "texto": "301"}], "respuesta_correcta": "C" }'::jsonb
-);
-
--- 9. Tipos de datos
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    '¿Cuál de los siguientes NO es un tipo de dato primitivo en JavaScript?',
-    '["Los objetos son tipos de referencia", "String y Boolean son primitivos"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "String"}, {"id": "B", "texto": "Boolean"}, {"id": "C", "texto": "Object"}, {"id": "D", "texto": "Undefined"}], "respuesta_correcta": "C" }'::jsonb
-);
-
--- 10. Lógica condicional
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'jr',
-    'Explica qué hace la sentencia "else if" en una estructura de control.',
-    '["Se ejecuta si el primer IF falla", "Permite múltiples condiciones encadenadas"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200 }'::jsonb
-);
-
 
 -- =============================================================================
--- NIVEL mid (10 Preguntas) - Patrones, Ciclo de vida, DB y Herramientas
+-- 2. CARGA DE DATOS (INSERTS) - TEXTOS CORREGIDOS
 -- =============================================================================
 
--- 11. Principios SOLID
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    'En los principios SOLID, ¿qué significa la "S" (Single Responsibility Principle)?',
-    '["Una clase debe tener una única razón para cambiar", "No mezclar lógica de negocio con presentación, por ejemplo"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 500 }'::jsonb
-);
+-- 1. ANALISTA TI (Código: ANL)
+INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES
+('ANL', 'Analisis TI', 'jr', '¿Qué es un Requisito Funcional?', '["Describe lo que el sistema debe hacer", "Comportamiento"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Cómo se ve el sistema"},{"id":"B", "texto":"Una función o servicio que el sistema debe proveer"},{"id":"C", "texto":"La velocidad del sistema"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'jr', 'En un diagrama de flujo, ¿qué forma representa una decisión?', '["Tiene forma de diamante", "Suelen salir flechas de SI/NO"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Rectángulo"},{"id":"B", "texto":"Rombo/Diamante"},{"id":"C", "texto":"Círculo"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'jr', '¿Qué significan las siglas UML?', '["Lenguaje visual estándar", "Unified..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Universal Modeling List"},{"id":"B", "texto":"Unified Modeling Language"},{"id":"C", "texto":"User Management Logic"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'jr', 'Define brevemente qué es un "Stakeholder".', '["Interesado", "Puede afectar o ser afectado"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('ANL', 'Analisis TI', 'jr', '¿Cuál es el actor principal en un Caso de Uso de "Login"?', '["Quien inicia la acción", "Persona frente al PC"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Usuario"},{"id":"B", "texto":"Base de Datos"},{"id":"C", "texto":"Servidor"}], "respuesta_correcta":"A"}'::jsonb),
+('ANL', 'Analisis TI', 'jr', 'Diferencia principal entre Requisito Funcional y No Funcional.', '["El Qué vs el Cómo", "Calidad vs Comportamiento"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('ANL', 'Analisis TI', 'jr', 'En metodología Ágil, ¿quién suele priorizar el Backlog?', '["Representa al negocio", "Product..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Scrum Master"},{"id":"B", "texto":"Product Owner"},{"id":"C", "texto":"El Desarrollador"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'jr', '¿Qué es un "Bug"?', '["Error", "Fallo en el software"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 10, "max_caracteres": 150}'::jsonb),
+('ANL', 'Analisis TI', 'jr', '¿Para qué sirve una entrevista de levantamiento de información?', '["Técnica de educción", "Hablar con el cliente"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Para programar el código"},{"id":"B", "texto":"Para entender las necesidades del usuario"},{"id":"C", "texto":"Para vender el producto"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'jr', 'Menciona 3 técnicas para recopilar requisitos.', '["Entrevistas...", "Encuestas..."]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('ANL', 'Analisis TI', 'mid', 'Escribe el formato estándar de una Historia de Usuario.', '["Como [rol]...", "Quiero [acción]..."]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 200}'::jsonb),
+('ANL', 'Analisis TI', 'mid', '¿Qué diagrama UML usarías para mostrar los estados por los que pasa una orden de compra?', '["Inicio, Pendiente, Aprobado, Fin", "Máquina de..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Diagrama de Clases"},{"id":"B", "texto":"Diagrama de Estados"},{"id":"C", "texto":"Diagrama de Despliegue"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'mid', '¿Qué es el criterio de aceptación?', '["Condiciones para dar por terminada una tarea", "Definition of Done"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('ANL', 'Analisis TI', 'mid', 'En BPMN, ¿qué representa un carril (Swimlane)?', '["Responsabilidad", "Actor o departamento"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Una decisión lógica"},{"id":"B", "texto":"Un actor o rol responsable de las tareas"},{"id":"C", "texto":"El flujo de datos"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'mid', 'Explica qué es la Trazabilidad de Requisitos.', '["Seguir la vida de un requisito", "Desde el origen hasta el código"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 500}'::jsonb),
+('ANL', 'Analisis TI', 'mid', '¿Cuál es la diferencia entre un prototipo de baja y alta fidelidad?', '["Papel vs Interactivo", "Detalle visual"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('ANL', 'Analisis TI', 'mid', '¿Qué es una prueba UAT?', '["User Acceptance Testing", "Prueba final"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Prueba Unitaria Automatizada"},{"id":"B", "texto":"Prueba de Aceptación de Usuario"},{"id":"C", "texto":"Prueba de Carga"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'mid', 'Si un requisito cambia a mitad del desarrollo en un entorno Waterfall, ¿qué suele pasar?', '["Control de cambios", "Costoso"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Se adapta inmediatamente sin costo"},{"id":"B", "texto":"Requiere un proceso formal de control de cambios y suele ser costoso"},{"id":"C", "texto":"Se ignora el cambio"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'mid', 'Describe el concepto de "Happy Path".', '["Camino ideal", "Sin errores"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 300}'::jsonb),
+('ANL', 'Analisis TI', 'mid', '¿Qué herramienta usarías para gestionar un Backlog?', '["Jira es la más famosa", "Trello"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Photoshop"},{"id":"B", "texto":"Jira / Azure PROps"},{"id":"C", "texto":"Visual Studio Code"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'sr', '¿Cómo manejas a un Stakeholder que insiste en un requisito técnicamente inviable?', '["Negociación", "Alternativas"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 100, "max_caracteres": 1000}'::jsonb),
+('ANL', 'Analisis TI', 'sr', 'Realiza un análisis de brechas (Gap Analysis) breve para la migración de un sistema legado a la nube.', '["Estado actual vs Estado futuro", "Identificar lo que falta"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 100, "max_caracteres": 1500}'::jsonb),
+('ANL', 'Analisis TI', 'sr', '¿Qué es la Deuda Técnica desde la perspectiva del Analista de Negocio?', '["Costo futuro", "Atajos tomados hoy"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Dinero que se debe al proveedor"},{"id":"B", "texto":"Costo implícito de retrabajo futuro por elegir una solución rápida hoy"},{"id":"C", "texto":"Falta de presupuesto"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'sr', 'Describe cómo priorizar requisitos usando la técnica MoSCoW.', '["Must, Should, Could, Won''t", "Esencial vs Deseable"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600}'::jsonb),
+('ANL', 'Analisis TI', 'sr', 'En un proyecto crítico, ¿cómo mitigas el riesgo de "Scope Creep" (Alcance no controlado)?', '["Límites claros", "Proceso de cambios estricto"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 80, "max_caracteres": 800}'::jsonb),
+('ANL', 'Analisis TI', 'sr', 'Diferencia estratégica entre BPM (Business Process Management) y BPR (Business Process Reengineering).', '["Mejora continua vs Cambio radical", "Evolución vs Revolución"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"BPM es radical, BPR es incremental"},{"id":"B", "texto":"BPM es mejora continua, BPR es rediseño radical desde cero"},{"id":"C", "texto":"Son lo mismo"}], "respuesta_correcta":"B"}'::jsonb),
+('ANL', 'Analisis TI', 'sr', '¿Qué valor aporta un Diagrama de Secuencia en la fase de diseño técnico?', '["Interacción entre objetos", "Tiempo y mensajes"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 500}'::jsonb),
+('ANL', 'Analisis TI', 'sr', 'Ante dos departamentos con requisitos contradictorios, ¿cuál es tu estrategia de resolución?', '["Facilitador", "Objetivos de negocio superiores"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 80, "max_caracteres": 1000}'::jsonb),
+('ANL', 'Analisis TI', 'sr', 'Explica el concepto de MVP (Producto Mínimo Viable) a un cliente que quiere "todo el sistema terminado ya".', '["Valor inmediato", "Aprendizaje validado"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 800}'::jsonb),
+('ANL', 'Analisis TI', 'sr', '¿Qué métrica utilizarías para evaluar la calidad de los requisitos definidos?', '["Tasa de defectos en requisitos", "Claridad y Completitud"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Líneas de código generadas"},{"id":"B", "texto":"Número de cambios solicitados post-aprobación (volatilidad)"},{"id":"C", "texto":"Horas de reunión"}], "respuesta_correcta":"B"}'::jsonb);
 
--- 12. REST vs SOAP
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    '¿Cuál es una ventaja principal de REST sobre SOAP?',
-    '["SOAP usa XML estricto", "REST permite JSON y es más ligero"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "REST es más seguro por defecto"}, {"id": "B", "texto": "REST usa menos ancho de banda y es más flexible (JSON)"}, {"id": "C", "texto": "REST solo funciona en Windows"}], "respuesta_correcta": "B" }'::jsonb
-);
+-- 2. ADMINISTRADOR DE EMPRESA (Código: ADM)
+INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES
+('ADM', 'Administracion', 'jr', '¿Qué significa las siglas FODA?', '["Análisis estratégico", "Fortalezas..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Finanzas, Organización, Dirección, Administración"},{"id":"B", "texto":"Fortalezas, Oportunidades, Debilidades, Amenazas"},{"id":"C", "texto":"Fondo de Ahorro"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'jr', '¿Cuál es el objetivo principal de una empresa con fines de lucro?', '["Generar valor", "Rentabilidad"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Pagar impuestos"},{"id":"B", "texto":"Maximizar la riqueza de los accionistas/dueños"},{"id":"C", "texto":"Tener muchos empleados"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'jr', 'Define qué es un "Activo" en contabilidad.', '["Lo que tienes", "Recursos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('ADM', 'Administracion', 'jr', '¿Qué documento muestra la estructura jerárquica de una empresa?', '["Mapa visual de cargos", "Árbol"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Balance General"},{"id":"B", "texto":"Organigrama"},{"id":"C", "texto":"Flujograma"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'jr', '¿Qué es la Eficacia?', '["Lograr el objetivo", "Diferente a Eficiencia"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('ADM', 'Administracion', 'jr', '¿Cuál es la función principal del departamento de Recursos Humanos?', '["Gestión de talento", "Contratación"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('ADM', 'Administracion', 'jr', 'En la mezcla de marketing (4P), ¿cuáles son las 4 P?', '["Producto...", "Precio..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Producto, Precio, Plaza, Promoción"},{"id":"B", "texto":"Personal, Proceso, Planta, Producción"},{"id":"C", "texto":"Planificación, Poder, Política, Prensa"}], "respuesta_correcta":"A"}'::jsonb),
+('ADM', 'Administracion', 'jr', '¿Qué significa B2B?', '["Tipo de comercio", "Business to..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Business to Business"},{"id":"B", "texto":"Business to Buyer"},{"id":"C", "texto":"Back to Basics"}], "respuesta_correcta":"A"}'::jsonb),
+('ADM', 'Administracion', 'jr', 'Define "Costos Fijos".', '["No varían con la producción", "Alquiler, sueldos base"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('ADM', 'Administracion', 'jr', '¿Quién es la máxima autoridad formal en una Sociedad Anónima?', '["Representa a los accionistas", "Junta..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"El Gerente General"},{"id":"B", "texto":"La Junta de Accionistas"},{"id":"C", "texto":"El Contador"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'mid', 'Explica qué son los objetivos SMART.', '["Específicos, Medibles...", "Acrónimo en Inglés"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('ADM', 'Administracion', 'mid', '¿Cuál es la diferencia entre Liderazgo Transaccional y Transformacional?', '["Intercambio vs Inspiración", "Premios vs Visión"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 500}'::jsonb),
+('ADM', 'Administracion', 'mid', '¿Qué mide el KPI "Rotación de Personal"?', '["Entradas y salidas", "Retención"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"La velocidad de trabajo"},{"id":"B", "texto":"El porcentaje de empleados que abandonan la organización en un periodo"},{"id":"C", "texto":"El cambio de puestos internos"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'mid', 'Calcula el Punto de Equilibrio si: Costos Fijos = 1000, Precio = 50, Costo Variable = 30.', '["Fórmula: CF / (P - CV)", "Margen de contribución es 20"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"20 unidades"},{"id":"B", "texto":"50 unidades"},{"id":"C", "texto":"100 unidades"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'mid', '¿Qué es un Diagrama de Gantt?', '["Gestión de proyectos", "Cronograma visual"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('ADM', 'Administracion', 'mid', '¿Qué estado financiero muestra la rentabilidad de la empresa en un periodo determinado?', '["Ingresos - Gastos", "Estado de Resultados"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Balance General"},{"id":"B", "texto":"Estado de Resultados (P&L)"},{"id":"C", "texto":"Flujo de Caja"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'mid', 'Define la técnica de feedback "Sandwich".', '["Positivo - Mejora - Positivo", "Suavizar la crítica"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('ADM', 'Administracion', 'mid', '¿Qué es el Clima Organizacional?', '["Percepción de los empleados", "Ambiente"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('ADM', 'Administracion', 'mid', '¿Cuál es la ventaja competitiva según Michael Porter?', '["Diferenciación o Costos", "Lo que te hace único"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Tener más dinero"},{"id":"B", "texto":"Una característica que permite superar a los rivales de manera sostenible"},{"id":"C", "texto":"Bajar los precios siempre"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'mid', 'En gestión de inventarios, ¿qué es el método FIFO?', '["Lo primero que entra...", "First In First Out"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Primero en Entrar, Primero en Salir"},{"id":"B", "texto":"Último en Entrar, Primero en Salir"},{"id":"C", "texto":"Promedio Ponderado"}], "respuesta_correcta":"A"}'::jsonb),
+('ADM', 'Administracion', 'sr', 'Describe las 5 Fuerzas de Porter.', '["Proveedores, Clientes, Nuevos entrantes...", "Rivalidad"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 100, "max_caracteres": 1000}'::jsonb),
+('ADM', 'Administracion', 'sr', '¿Cuál es la diferencia financiera entre CAPEX y OPEX?', '["Inversión vs Gasto operativo", "Largo plazo vs Día a día"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600}'::jsonb),
+('ADM', 'Administracion', 'sr', 'En una fusión de empresas (M&A), ¿cuál es el mayor riesgo cultural?', '["Choque de culturas", "Resistencia al cambio"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Cambio de logo"},{"id":"B", "texto":"Pérdida de talento clave por choque cultural"},{"id":"C", "texto":"Aumento de capital"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'sr', 'Explica el concepto de "Balanced Scorecard" (Cuadro de Mando Integral).', '["Kaplan y Norton", "4 perspectivas"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 80, "max_caracteres": 800}'::jsonb),
+('ADM', 'Administracion', 'sr', '¿Cómo manejarías una reducción de personal del 20% para minimizar el impacto en la moral de los restantes?', '["Comunicación transparente", "Outplacement"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 100, "max_caracteres": 1500}'::jsonb),
+('ADM', 'Administracion', 'sr', '¿Qué es el EBITDA y por qué es importante para valorar una empresa?', '["Earnings Before...", "Operatividad pura"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Muestra la utilidad neta final"},{"id":"B", "texto":"Muestra la capacidad de generar efectivo operativo puro, sin impuestos ni intereses"},{"id":"C", "texto":"Es el total de ventas"}], "respuesta_correcta":"B"}'::jsonb),
+('ADM', 'Administracion', 'sr', 'Estrategia de Océano Azul: descríbela.', '["Crear nuevos mercados", "Hacer la competencia irrelevante"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600}'::jsonb),
+('ADM', 'Administracion', 'sr', 'En Responsabilidad Social Empresarial (RSE), ¿qué es el concepto de "Triple Bottom Line"?', '["Personas, Planeta, Beneficio", "3P"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Social, Ambiental, Económico"},{"id":"B", "texto":"Ventas, Costos, Utilidad"},{"id":"C", "texto":"Clientes, Proveedores, Estado"}], "respuesta_correcta":"A"}'::jsonb),
+('ADM', 'Administracion', 'sr', '¿Qué harías si tu principal proveedor sube los precios un 30% repentinamente?', '["Cadena de suministro", "Diversificación"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 80, "max_caracteres": 1000}'::jsonb),
+('ADM', 'Administracion', 'sr', 'Explica qué es el ROI y cómo se calcula.', '["Retorno de Inversión", "(Ganancia - Inversión) / Inversión"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
 
--- 13. Índices en Base de Datos
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    '¿Cuándo NO deberías poner un índice en una columna de base de datos?',
-    '["Tablas muy pequeñas", "Columnas con valores booleanos (poca cardinalidad)"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Cuando la tabla tiene millones de registros"}, {"id": "B", "texto": "Cuando la columna tiene baja cardinalidad (ej: Sexo M/F) y muchas escrituras"}, {"id": "C", "texto": "Cuando se usa mucho en el WHERE"}], "respuesta_correcta": "B" }'::jsonb
-);
 
--- 14. Git Avanzado
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    'Explica la diferencia entre "git merge" y "git rebase".',
-    '["Merge crea un commit de unión", "Rebase reescribe la historia linealmente"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600, "tips_evaluador": "Merge preserva historia, Rebase la limpia pero es peligroso en ramas compartidas." }'::jsonb
-);
+-- 3. INGENIERÍA INFORMATICA (Código: ING)
+('PR', 'Ingenieria Informatica', 'jr', '¿Cuál es la unidad mínima de información en un computador?', '["0 o 1", "Bi..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Byte"},{"id":"B", "texto":"Bit"},{"id":"C", "texto":"Hertz"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', '¿Qué sistema numérico utilizan internamente los computadores?', '["Base 2", "Ceros y unos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Decimal"},{"id":"B", "texto":"Hexadecimal"},{"id":"C", "texto":"Binario"}], "respuesta_correcta":"C"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', 'Diferencia básica entre RAM y ROM.', '["Volátil vs No volátil", "Lectura/Escritura vs Solo lectura"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', '¿Cuál es la función principal de un Sistema Operativo?', '["Intermediario", "Gestión de recursos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Editar textos"},{"id":"B", "texto":"Gestionar el hardware y proveer servicios a los programas"},{"id":"C", "texto":"Navegar por internet"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', '¿Qué es una dirección IP?', '["Identificador de red", "Como un número de teléfono"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', '¿Qué significan las siglas CPU?', '["Cerebro del PC", "Central..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Central Processing Unit"},{"id":"B", "texto":"Computer Personal Unit"},{"id":"C", "texto":"Central Power Unit"}], "respuesta_correcta":"A"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', 'En lógica booleana, ¿cuál es el resultado de 1 AND 0?', '["Ambos deben ser 1", "Multiplicación lógica"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"1"},{"id":"B", "texto":"0"},{"id":"C", "texto":"Null"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', '¿Qué es el Hardware?', '["Parte física", "Lo que puedes tocar"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 10, "max_caracteres": 150}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', '¿Para qué sirve un algoritmo?', '["Secuencia de pasos", "Resolver problemas"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('PR', 'Ingenieria Informatica', 'jr', '¿Cuál es el componente encargado de los gráficos en un PC?', '["GPU", "Tarjeta..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"CPU"},{"id":"B", "texto":"GPU"},{"id":"C", "texto":"SSD"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', 'Explica qué es la virtualización.', '["Máquinas virtuales", "Abstraer hardware"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', '¿En qué capa del modelo OSI funciona el protocolo IP?', '["Red", "Capa 3"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Capa 2 (Enlace)"},{"id":"B", "texto":"Capa 3 (Red)"},{"id":"C", "texto":"Capa 4 (Transporte)"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', '¿Qué es RAID 1 y para qué sirve?', '["Espejo", "Redundancia"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', 'Diferencia entre TCP y UDP.', '["Fiabilidad vs Velocidad", "Conexión vs Sin conexión"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"TCP es más rápido, UDP es seguro"},{"id":"B", "texto":"TCP garantiza entrega (orientado a conexión), UDP no (streaming)"},{"id":"C", "texto":"Son iguales"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', '¿Qué es la Normalización en Bases de Datos?', '["Evitar redundancia", "Formas normales"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', '¿Qué función cumple un servidor DNS?', '["Traduce nombres a IP", "Directorio telefónico de internet"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Asigna IPs dinámicas"},{"id":"B", "texto":"Traduce nombres de dominio a direcciones IP"},{"id":"C", "texto":"Encripta la conexión"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', 'Describe el concepto de "Cloud Computing".', '["Servicios a través de internet", "Bajo demanda"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', '¿Qué es un Firewall?', '["Cortafuegos", "Seguridad de red"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un antivirus"},{"id":"B", "texto":"Sistema que controla el tráfico de red entrante y saliente"},{"id":"C", "texto":"Un cable de red blindado"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', '¿Qué es el Kernel de un Sistema Operativo?', '["Núcleo", "Control directo del hardware"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Ingenieria Informatica', 'mid', 'En criptografía asimétrica, ¿qué clave se comparte públicamente?', '["Pública vs Privada", "Para encriptar o verificar"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Clave Privada"},{"id":"B", "texto":"Clave Pública"},{"id":"C", "texto":"Ninguna"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', 'Diseña una arquitectura de Alta Disponibilidad (HA) básica para una web crítica.', '["Balanceadores", "Redundancia", "Multi-AZ"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 80, "max_caracteres": 1000}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', 'Explica el funcionamiento de un ataque DDoS y cómo mitigarlo.', '["Denegación distribuida", "CDN, WAF"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 60, "max_caracteres": 800}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', '¿Qué es un Container Orchestrator (ej: Kubernetes) y por qué es necesario en grandes sistemas?', '["Gestión de ciclo de vida", "Escalado automático"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Es un antivirus para contenedores"},{"id":"B", "texto":"Automatiza el despliegue, escalado y gestión de aplicaciones en contenedores"},{"id":"C", "texto":"Es un lenguaje de programación"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', 'Diferencia entre Escalado Vertical y Horizontal.', '["Más potencia vs Más máquinas", "CPU vs Nodos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Vertical es agregar más máquinas, Horizontal es mejorar la máquina"},{"id":"B", "texto":"Vertical es mejorar la máquina (más RAM/CPU), Horizontal es agregar más máquinas"},{"id":"C", "texto":"Son lo mismo"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', '¿Qué es "Infrastructure as Code" (IaC)?', '["Terraform, Ansible", "Infraestructura programable"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 500}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', 'En el contexto de Big Data, explica las 3 V.', '["Volumen, Velocidad, Variedad", "Datos masivos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', '¿Qué es un plan de DRP (Disaster Recovery Plan)?', '["Recuperación ante desastres", "Continuidad de negocio"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', 'Explica el concepto de "Zero Trust Security".', '["No confiar en nadie", "Verificar siempre"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Confiar solo en la red interna"},{"id":"B", "texto":"Modelo donde no se confía en ningún usuario o dispositivo, dentro o fuera del perímetro"},{"id":"C", "texto":"No usar contraseñas"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', '¿Qué es Latencia y cómo afecta a los sistemas distribuidos?', '["Retardo", "Tiempo de viaje del paquete"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('PR', 'Ingenieria Informatica', 'sr', '¿Cuál es la principal ventaja de usar una arquitectura "Serverless"?', '["No gestionas servidores", "Pago por uso"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Mayor control del hardware"},{"id":"B", "texto":"Abstracción total del servidor y modelo de costos por ejecución"},{"id":"C", "texto":"Es gratis"}], "respuesta_correcta":"B"}'::jsonb),
 
--- 15. Inyección de Dependencias
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    '¿Qué problema resuelve la Inyección de Dependencias?',
-    '["Desacoplamiento", "Facilita el testing"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Mejora la velocidad de compilación"}, {"id": "B", "texto": "Reduce el acoplamiento entre clases y facilita el testing"}, {"id": "C", "texto": "Encripta el código fuente"}], "respuesta_correcta": "B" }'::jsonb
-);
 
--- 16. Autenticación JWT
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    'En un token JWT, ¿dónde se encuentra la información de los "claims" (datos del usuario)?',
-    '["El token tiene 3 partes: Header, Payload, Signature", "Es la parte del medio"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Header"}, {"id": "B", "texto": "Payload"}, {"id": "C", "texto": "Signature"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 17. Pruebas Unitarias
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    '¿Qué es un "Mock" en el contexto de Unit Testing?',
-    '["Simulación", "Evita llamar a la base de datos real"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 400 }'::jsonb
-);
-
--- 18. Complejidad Algorítmica
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    'Si tienes dos bucles anidados recorriendo el mismo array de tamaño N, ¿cuál es la complejidad Big O?',
-    '["N veces N", "Cuadrática"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "O(n)"}, {"id": "B", "texto": "O(log n)"}, {"id": "C", "texto": "O(n^2)"}, {"id": "D", "texto": "O(1)"}], "respuesta_correcta": "C" }'::jsonb
-);
-
--- 19. Contenedores
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    '¿Para qué sirve el archivo "docker-compose.yml"?',
-    '["Orquestación local", "Levantar múltiples servicios a la vez"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400 }'::jsonb
-);
-
--- 20. HTTP Métodos
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'mid',
-    '¿Qué significa que un método HTTP sea "idempotente"?',
-    '["Si lo ejecutas 1000 veces, el resultado en el servidor es el mismo que si lo ejecutas 1 vez", "Ejemplo: DELETE o PUT"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Que es muy rápido"}, {"id": "B", "texto": "Que múltiples peticiones idénticas tienen el mismo efecto que una sola"}, {"id": "C", "texto": "Que siempre retorna error"}], "respuesta_correcta": "B" }'::jsonb
-);
-
+-- 4. DESARROLLADOR (Código: PR)
+('PR', 'Desarrollo', 'jr', '¿Qué imprime "console.log(typeof [])" en JavaScript?', '["Arrays son objetos", "Curiosidad de JS"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"array"},{"id":"B", "texto":"object"},{"id":"C", "texto":"list"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'jr', '¿Para qué sirve el operador "++" en muchos lenguajes?', '["Incremento", "Sumar uno"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Suma dos variables"},{"id":"B", "texto":"Incrementa el valor de la variable en 1"},{"id":"C", "texto":"Concatena strings"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'jr', '¿Qué es un bucle "infinito"?', '["Nunca termina", "Condición siempre true"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('PR', 'Desarrollo', 'jr', 'En Git, ¿qué comando descarga los cambios del remoto al local?', '["Traer cambios", "Pull..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"git push"},{"id":"B", "texto":"git pull"},{"id":"C", "texto":"git commit"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'jr', '¿Qué es una variable?', '["Espacio de memoria", "Contenedor"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('PR', 'Desarrollo', 'jr', 'En CSS, ¿qué propiedad cambia el color de fondo?', '["Background...", "Color es para texto"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"color"},{"id":"B", "texto":"background-color"},{"id":"C", "texto":"border"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'jr', '¿Qué es el DOM en desarrollo web?', '["Document Object Model", "Árbol de elementos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Desarrollo', 'jr', '¿Cuál es el índice del primer elemento en un array (en la mayoría de lenguajes)?', '["Empieza en...", "Cero"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"0"},{"id":"B", "texto":"1"},{"id":"C", "texto":"-1"}], "respuesta_correcta":"A"}'::jsonb),
+('PR', 'Desarrollo', 'jr', '¿Qué significa IDE?', '["Entorno de desarrollo", "Integrated..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Integrated PRelopment Environment"},{"id":"B", "texto":"Internet PRelopment Explorer"},{"id":"C", "texto":"Internal Data Exchange"}], "respuesta_correcta":"A"}'::jsonb),
+('PR', 'Desarrollo', 'jr', 'Escribe una función simple que sume dos números (pseudocódigo).', '["function suma(a,b)...", "return..."]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('PR', 'Desarrollo', 'mid', '¿Qué es la Inyección de Dependencias?', '["Patrón de diseño", "Inversión de control"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('PR', 'Desarrollo', 'mid', 'En una API REST, ¿qué verbo HTTP se usa para actualizar parcialmente un recurso?', '["No es PUT", "Parcial"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"PUT"},{"id":"B", "texto":"PATCH"},{"id":"C", "texto":"POST"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'mid', 'Explica el concepto de "Callback" en programación asíncrona.', '["Función pasada como argumento", "Se ejecuta después"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Desarrollo', 'mid', '¿Qué diferencia hay entre "git merge" y "git rebase"?', '["Historial lineal vs Historial ramificado", "Reescritura"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Merge reescribe la historia, Rebase crea un commit de unión"},{"id":"B", "texto":"Rebase reescribe la historia linealmente, Merge crea un commit de unión"},{"id":"C", "texto":"Son idénticos"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'mid', '¿Qué es un ORM?', '["Object Relational Mapping", "Base de datos como objetos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Desarrollo', 'mid', 'En POO, ¿qué es el Polimorfismo?', '["Muchas formas", "Mismo método, diferente comportamiento"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"La capacidad de heredar atributos"},{"id":"B", "texto":"Capacidad de objetos de diferentes clases de responder al mismo mensaje de distinta manera"},{"id":"C", "texto":"Ocultar datos privados"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'mid', '¿Qué es el "Scope" (alcance) de una variable?', '["Dónde vive la variable", "Global vs Local"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Desarrollo', 'mid', '¿Por qué usarías Docker en desarrollo?', '["Entornos consistentes", "Funciona en mi máquina"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Para hacer el código más rápido"},{"id":"B", "texto":"Para garantizar paridad entre entornos de desarrollo y producción"},{"id":"C", "texto":"Para diseñar interfaces"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'mid', '¿Qué es MVC?', '["Modelo Vista Controlador", "Patrón de arquitectura"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 20, "max_caracteres": 200}'::jsonb),
+('PR', 'Desarrollo', 'mid', 'Identifica el error: "SELECT * FROM users WHERE name = ''Pepe"', '["Faltan comillas", "Sintaxis SQL"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Falta cerrar la comilla simple"},{"id":"B", "texto":"Falta el punto y coma"},{"id":"C", "texto":"Users va con mayúscula"}], "respuesta_correcta":"A"}'::jsonb),
+('PR', 'Desarrollo', 'sr', 'Explica qué es una "Race Condition" (Condición de Carrera).', '["Concurrencia", "Resultados impredecibles"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 500}'::jsonb),
+('PR', 'Desarrollo', 'sr', 'En Arquitectura de Software, ¿qué es el patrón Singleton y cuándo es peligroso?', '["Instancia única", "Estado global mutable"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 500}'::jsonb),
+('PR', 'Desarrollo', 'sr', '¿Qué principio SOLID se viola si una clase tiene demasiadas responsabilidades?', '["Single Responsibility", "La S de SOLID"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"SRP (Single Responsibility Principle)"},{"id":"B", "texto":"OCP (Open/Closed Principle)"},{"id":"C", "texto":"LSP (Liskov Substitution Principle)"}], "respuesta_correcta":"A"}'::jsonb),
+('PR', 'Desarrollo', 'sr', '¿Qué es un "Memory Leak" y cómo lo detectas?', '["Fuga de memoria", "El consumo de RAM crece sin parar"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600}'::jsonb),
+('PR', 'Desarrollo', 'sr', 'Comparación: Monolito vs Microservicios. ¿Cuándo NO usarías microservicios?', '["Complejidad", "Equipos pequeños"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 60, "max_caracteres": 800}'::jsonb),
+('PR', 'Desarrollo', 'sr', 'En bases de datos, ¿qué es una transacción ACID?', '["Atomicidad, Consistencia...", "Todo o nada"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un tipo de base de datos NoSQL"},{"id":"B", "texto":"Un conjunto de propiedades que garantizan la validez de las transacciones"},{"id":"C", "texto":"Un virus informático"}], "respuesta_correcta":"B"}'::jsonb),
+('PR', 'Desarrollo', 'sr', '¿Qué es la complejidad ciclomática?', '["Métrica de código", "Caminos independientes"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('PR', 'Desarrollo', 'sr', 'Estrategias de Caché: Diferencia entre Cache-Aside y Write-Through.', '["Lectura vs Escritura", "Quién carga los datos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Cache-Aside la app carga los datos si no están; Write-Through escribe en caché y DB a la vez"},{"id":"B", "texto":"Son lo mismo"},{"id":"C", "texto":"Write-Through es solo para lectura"}], "respuesta_correcta":"A"}'::jsonb),
+('PR', 'Desarrollo', 'sr', '¿Qué es la Idempotencia en una API REST?', '["Repetir la llamada", "Mismo resultado"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('PR', 'Desarrollo', 'sr', '¿Qué es el teorema CAP?', '["Distribuido", "Escoge 2 de 3"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Consistency, Availability, Partition Tolerance"},{"id":"B", "texto":"Capacity, Availability, Performance"},{"id":"C", "texto":"Code, App, Program"}], "respuesta_correcta":"A"}'::jsonb);
 
 -- =============================================================================
--- NIVEL SENIOR (10 Preguntas) - Arquitectura, Escalabilidad, Liderazgo
+-- 3. CREACIÓN DE USUARIOS ADMIN
 -- =============================================================================
 
--- 21. Microservicios vs Monolito
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    '¿Cuál es el mayor desafío operativo al migrar de un Monolito a Microservicios?',
-    '["No es el código, es la red y la observabilidad", "Trazabilidad distribuida"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Escribir más código"}, {"id": "B", "texto": "Complejidad en despliegue, monitoreo y consistencia de datos"}, {"id": "C", "texto": "El costo de las licencias"}], "respuesta_correcta": "B" }'::jsonb
-);
+-- Insertamos los administradores
+INSERT INTO usuario (usuario_id, correo, contrasena_hash, nombre,rol, idioma, estado) VALUES 
+(gen_random_uuid(), 'admin@sistema.com',     crypt('Admin123', gen_salt('bf')), 'Administrador Principal', 'admin', 'es', 'activo'),
+(gen_random_uuid(), 'admin2@sistema.com', crypt('Admin123', gen_salt('bf')), 'Administrador Secundario', 'admin', 'es', 'activo');
 
--- 22. Teorema CAP
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    'En el diseño de sistemas distribuidos, si eliges Disponibilidad (A) y Tolerancia a Particiones (P), ¿qué estás sacrificando según el Teorema CAP?',
-    '["No puedes tener las 3 letras a la vez", "Los datos pueden no estar actualizados al instante"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Seguridad"}, {"id": "B", "texto": "Consistencia (Consistency)"}, {"id": "C", "texto": "Velocidad"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 23. Escalamiento de Base de Datos
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    'Explica qué es el "Database Sharding" y cuándo lo recomendarías.',
-    '["Particionamiento horizontal", "Cuando una sola instancia ya no soporta la carga de escritura"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 60, "max_caracteres": 800 }'::jsonb
-);
-
--- 24. Caching Strategies
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    '¿En qué consiste la estrategia de caché "Write-Through"?',
-    '["Escritura síncrona", "Escribe en caché y en DB al mismo tiempo"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Escribe solo en caché y luego asíncronamente en DB"}, {"id": "B", "texto": "Escribe en caché y DB simultáneamente antes de confirmar"}, {"id": "C", "texto": "Lee de caché y si falla lee de DB"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 25. Deuda Técnica
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    'Como líder técnico, ¿cómo convences a los stakeholders de negocio para dedicar tiempo a pagar deuda técnica?',
-    '["Habla en términos de riesgo y velocidad futura", "No uses jerga técnica"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 100, "max_caracteres": 1500, "tips_evaluador": "Debe mencionar el riesgo de frenar features futuros o inestabilidad." }'::jsonb
-);
-
--- 26. Seguridad Web Avanzada
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    'Para almacenar contraseñas de usuarios, ¿cuál es la práctica estándar actual?',
-    '["No basta con MD5 o SHA1 simples", "Necesita Salt y coste computacional"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Encriptación reversible (AES)"}, {"id": "B", "texto": "Hashing con algoritmos lentos y Salt (ej: Bcrypt, Argon2)"}, {"id": "C", "texto": "Texto plano en base de datos segura"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 27. CI/CD
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    'Describe qué es un "Canary Deployment".',
-    '["Piensa en el canario en la mina de carbón", "Probar con un pequeño % de usuarios reales"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600 }'::jsonb
-);
-
--- 28. Load Balancers
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    '¿Cuál es la diferencia entre un balanceador de carga de Capa 4 (L4) y uno de Capa 7 (L7)?',
-    '["Modelo OSI", "Transporte (IP/Puerto) vs Aplicación (HTTP/URL)"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "L4 entiende URLs y Cookies, L7 solo IPs"}, {"id": "B", "texto": "L4 balancea por IP/Puerto (TCP/UDP), L7 balancea por contenido (HTTP)"}, {"id": "C", "texto": "L7 es hardware y L4 es software"}], "respuesta_correcta": "B" }'::jsonb
-);
-
--- 29. Observabilidad
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    'En un sistema distribuido, ¿para qué sirve el "Distributed Tracing" (Trazabilidad Distribuida)?',
-    '["Seguir una petición a través de varios microservicios", "Identificar cuellos de botella"]'::jsonb,
-    '{ "tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 600 }'::jsonb
-);
-
--- 30. Cloud Native
-INSERT INTO pregunta (tipo_banco, sector, nivel, texto, pistas, config_respuesta) VALUES (
-    'TECH', 'Desarrollo', 'sr',
-    '¿Qué característica define mejor a una aplicación "Cloud Native"?',
-    '["Contenedores, microservicios, DevOps", "No es solo estar en la nube, es cómo se construye"]'::jsonb,
-    '{ "tipo": "seleccion_unica", "opciones": [{"id": "A", "texto": "Que está hospedada en AWS"}, {"id": "B", "texto": "Que usa máquinas virtuales"}, {"id": "C", "texto": "Diseñada para ser escalable, resiliente y observable (12-Factor App)"}], "respuesta_correcta": "C" }'::jsonb
-);
+-- =============================================================================
+-- 4. CONSENTIMIENTO INICIAL
+-- =============================================================================
+INSERT INTO consentimiento_texto (version, titulo, cuerpo)
+VALUES ('v1.0','Consentimiento de uso de datos','Texto completo del consentimiento que verán los usuarios.');
 
 COMMIT;
