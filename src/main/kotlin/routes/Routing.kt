@@ -17,6 +17,8 @@ import data.repository.nivelacion.PreguntaNivelacionRepository
 import data.repository.nivelacion.TestNivelacionRepository
 import data.repository.usuarios.RecordatorioPreferenciaRepository
 import data.repository.jobs.JobRequisitoRepository   // 👈 NUEVO
+import data.repository.requisitos_cargo.SkillsCargoRepository
+
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -46,6 +48,7 @@ import routes.cuestionario.planPracticaRoutes
 import routes.nivelacion.testNivelacionRoutes
 import routes.historial.historialRoutes
 import routes.onboarding.onboardingRoutes
+import routes.requisitos_cargo.jobsSkillsRoutes
 
 import plugins.settings
 import plugins.DatabaseFactory
@@ -91,6 +94,7 @@ fun Application.configureRouting(
     val preguntaNivelacionRepo = PreguntaNivelacionRepository()
     val testNivelacionRepo = TestNivelacionRepository()
     val jobRequisitoRepo = JobRequisitoRepository()      // 👈 NUEVO
+    val skillsCargoRepository = SkillsCargoRepository()
 
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -237,6 +241,9 @@ fun Application.configureRouting(
 
         // Plan de práctica
         planPracticaRoutes(planRepo, profiles, objetivos, testNivelacionRepo)
+
+
+        jobsSkillsRoutes(skillsCargoRepository)
 
         // Tests de nivelación
         testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo)
