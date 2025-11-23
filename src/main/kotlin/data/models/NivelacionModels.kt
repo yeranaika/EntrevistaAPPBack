@@ -74,3 +74,31 @@ data class HistorialTestRes(
     val nivelSugerido: String,
     val fechaCompletado: String
 )
+
+data class PreguntaNivelacionRow(
+    val id: java.util.UUID,
+    val area: String?,
+    val nivel: String?,
+    val metaCargo: String?,
+    val tipoPregunta: String,
+    val enunciado: String,
+    val opciones: List<String>?,
+    val respuestaCorrectaId: String?,
+    val pistas: String?,
+    val activa: Boolean,
+    val fechaCreacion: java.time.OffsetDateTime
+)
+
+// Modelo detallado para sistema de onboarding (incluye respuesta correcta como índice)
+@Serializable
+data class PreguntaNivelacionDetalle(
+    val id: String,
+    val habilidad: String,
+    val dificultad: Int,  // 1, 2, 3
+    val enunciado: String,
+    val opciones: List<String>,
+    val respuestaCorrecta: Int,  // índice 0-based
+    val explicacion: String?,
+    val activa: Boolean = true,
+    val fechaCreacion: String? = null
+)

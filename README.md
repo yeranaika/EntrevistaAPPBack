@@ -73,9 +73,16 @@ Listo. Copia y pega en `README.md`.
   ```
 
 ## levantamiento de base de datos docker
-
-#levanat base de datos con archivo .yml
+ ```bash
+#levanar base de datos con archivo .yml
 docker compose up -d
 
 #para verificar que se creo
 docker ps
+
+#borrar base de datos
+docker compose down -v
+
+#Borrar Data
+rm -rf ./data
+```

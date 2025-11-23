@@ -21,41 +21,46 @@ fun Route.testNivelacionRoutes(
     authenticate("auth-jwt") {
         route("/tests/nivelacion") {
 
-            // GET /tests/nivelacion?habilidad=logica&cantidad=10
-            // Obtiene un test de nivelación con preguntas aleatorias
-            get {
+            // GET /tests/nivelacion/iniciar?cargo=Desarrollador Full Stack&cantidad=10
+            // Obtiene un test de nivelación con preguntas aleatorias balanceadas por cargo
+            get("/iniciar") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@get call.respond(HttpStatusCode.Unauthorized)
 
-                val habilidad = call.request.queryParameters["habilidad"]
+                val cargo = call.request.queryParameters["cargo"]
                     ?: return@get call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("error" to "Parámetro 'habilidad' requerido")
+                        mapOf("error" to "Parámetro 'cargo' requerido (ej: 'Desarrollador Full Stack', 'Analista de Sistemas', 'Project Manager')")
                     )
 
                 val cantidad = call.request.queryParameters["cantidad"]?.toIntOrNull() ?: 10
 
                 // Validar que haya suficientes preguntas
-                val disponibles = preguntaRepo.countByHabilidad(habilidad)
+                val disponibles = preguntaRepo.countByCargo(cargo)
                 if (disponibles < cantidad) {
                     return@get call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf(
-                            "error" to "No hay suficientes preguntas disponibles",
-                            "disponibles" to disponibles,
-                            "solicitadas" to cantidad
+                        ErrorPreguntasInsuficientes(
+                            error = "No hay suficientes preguntas disponibles para el cargo '$cargo'",
+                            disponibles = disponibles,
+                            solicitadas = cantidad,
+                            sugerencia = "Verifica que el cargo esté correctamente configurado en el onboarding"
                         )
                     )
                 }
 
-                // Obtener preguntas aleatorias
-                val preguntas = preguntaRepo.findRandomByHabilidad(habilidad, cantidad)
+                // Obtener preguntas aleatorias con mezcla balanceada de dificultades
+                val preguntas = preguntaRepo.findRandomByCargo(
+                    cargo = cargo,
+                    cantidad = cantidad,
+                    mezclarDificultades = true
+                )
 
                 val response = TestNivelacionRes(
-                    habilidad = habilidad,
+                    habilidad = cargo,  // Ahora representa el cargo
                     preguntas = preguntas.map { pregunta ->
                         PreguntaNivelacionRes(
-                            id = pregunta.id.toString(),
+                            id = pregunta.id,
                             enunciado = pregunta.enunciado,
                             opciones = pregunta.opciones,
                             dificultad = pregunta.dificultad
@@ -67,9 +72,10 @@ fun Route.testNivelacionRoutes(
                 call.respond(HttpStatusCode.OK, response)
             }
 
-            // POST /tests/nivelacion/responder
+            // POST /tests/nivelacion/evaluar
             // Evalúa las respuestas del usuario y genera resultado + feedback
-            post("/responder") {
+            // Ahora usa 'cargo' en lugar de 'habilidad'
+            post("/evaluar") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@post call.respond(HttpStatusCode.Unauthorized)
 
@@ -83,39 +89,49 @@ fun Route.testNivelacionRoutes(
                     )
                 }
 
-                // Obtener las preguntas del test
+                // Obtener las preguntas del test usando el nuevo método
                 val preguntaIds = request.respuestas.map { UUID.fromString(it.preguntaId) }
-                val preguntas = preguntaRepo.findByIds(preguntaIds)
+                val preguntasRow = preguntaRepo.findByIds(preguntaIds)
 
-                if (preguntas.size != request.respuestas.size) {
+                if (preguntasRow.size != request.respuestas.size) {
                     return@post call.respond(
                         HttpStatusCode.BadRequest,
                         mapOf("error" to "Algunas preguntas no fueron encontradas")
                     )
                 }
 
-                // Crear mapa de preguntas por ID para fácil acceso
-                val preguntasMap = preguntas.associateBy { it.id }
+                // Convertir a mapa para fácil acceso y extraer respuesta correcta del config JSON
+                val preguntasInfo = preguntasRow.map { pregunta ->
+                    // Extraer índice de respuesta correcta del JSON config
+                    val correctaIndice = when (pregunta.respuestaCorrectaId) {
+                        "A" -> 0
+                        "B" -> 1
+                        "C" -> 2
+                        "D" -> 3
+                        else -> 0
+                    }
+                    pregunta.id to Triple(pregunta, correctaIndice, pregunta.pistas)
+                }.toMap()
 
                 // Evaluar respuestas
-                val detalles = mutableListOf<DetalleRespuesta>()
+                val detalles = mutableListOf<data.models.DetalleRespuesta>()
                 var correctas = 0
 
                 for (respuesta in request.respuestas) {
                     val preguntaId = UUID.fromString(respuesta.preguntaId)
-                    val pregunta = preguntasMap[preguntaId] ?: continue
+                    val (pregunta, correctaIndice, explicacion) = preguntasInfo[preguntaId] ?: continue
 
-                    val esCorrecta = pregunta.respuestaCorrecta == respuesta.respuestaSeleccionada
+                    val esCorrecta = correctaIndice == respuesta.respuestaSeleccionada
                     if (esCorrecta) correctas++
 
                     detalles.add(
-                        DetalleRespuesta(
+                        data.models.DetalleRespuesta(
                             preguntaId = pregunta.id.toString(),
                             enunciado = pregunta.enunciado,
                             respuestaUsuario = respuesta.respuestaSeleccionada,
-                            respuestaCorrecta = pregunta.respuestaCorrecta,
+                            respuestaCorrecta = correctaIndice,
                             esCorrecta = esCorrecta,
-                            explicacion = pregunta.explicacion
+                            explicacion = explicacion
                         )
                     )
                 }
@@ -132,14 +148,14 @@ fun Route.testNivelacionRoutes(
                     request.habilidad
                 )
 
-                // Guardar resultado en historial
+                // Guardar resultado en historial usando el método simplificado
                 val testId = testRepo.create(
                     usuarioId = userId,
                     habilidad = request.habilidad,
+                    nivelSugerido = nivelSugerido,
                     puntaje = puntaje,
                     totalPreguntas = totalPreguntas,
                     preguntasCorrectas = correctas,
-                    nivelSugerido = nivelSugerido,
                     feedback = feedback
                 )
 
@@ -157,7 +173,7 @@ fun Route.testNivelacionRoutes(
                 call.respond(HttpStatusCode.OK, response)
             }
 
-            // GET /tests/nivelacion/historial
+            // GET /tests/nivelacion/historial?habilidad=Desarrollo
             // Obtiene el historial de tests del usuario autenticado
             get("/historial") {
                 val principal = call.principal<JWTPrincipal>()
@@ -167,18 +183,28 @@ fun Route.testNivelacionRoutes(
                 val habilidad = call.request.queryParameters["habilidad"]
 
                 val tests = if (habilidad != null) {
-                    testRepo.findByUsuarioAndHabilidad(userId, habilidad)
+                    // Usar área en lugar de habilidad para buscar
+                    testRepo.findByUsuarioAndAreaNivel(userId, habilidad, "")
+                        .filter { it.area == habilidad }
                 } else {
                     testRepo.findByUsuario(userId)
                 }
 
                 val response = tests.map { test ->
+                    // Convertir nivel (jr/mid/sr) a texto legible
+                    val nivelTexto = when (test.nivel) {
+                        "jr" -> "básico"
+                        "mid" -> "intermedio"
+                        "sr" -> "avanzado"
+                        else -> "desconocido"
+                    }
+
                     HistorialTestRes(
                         id = test.id.toString(),
-                        habilidad = test.habilidad,
+                        habilidad = test.area ?: "Desconocida",
                         puntaje = test.puntaje,
-                        nivelSugerido = nivelNumericoATexto(test.nivelSugerido),
-                        fechaCompletado = test.fechaCompletado.toString()
+                        nivelSugerido = nivelTexto,
+                        fechaCompletado = test.fechaCompletado ?: ""
                     )
                 }
 
@@ -209,12 +235,20 @@ fun Route.testNivelacionRoutes(
                     return@get call.respond(HttpStatusCode.Forbidden)
                 }
 
+                // Convertir nivel (jr/mid/sr) a texto legible
+                val nivelTexto = when (test.nivel) {
+                    "jr" -> "básico"
+                    "mid" -> "intermedio"
+                    "sr" -> "avanzado"
+                    else -> "desconocido"
+                }
+
                 val response = HistorialTestRes(
                     id = test.id.toString(),
-                    habilidad = test.habilidad,
+                    habilidad = test.area ?: "Desconocida",
                     puntaje = test.puntaje,
-                    nivelSugerido = nivelNumericoATexto(test.nivelSugerido),
-                    fechaCompletado = test.fechaCompletado.toString()
+                    nivelSugerido = nivelTexto,
+                    fechaCompletado = test.fechaCompletado ?: ""
                 )
 
                 call.respond(HttpStatusCode.OK, response)
@@ -254,7 +288,7 @@ fun Route.testNivelacionRoutes(
 
                     // Guardar en BD
                     generated.forEach { q ->
-                        preguntaRepo.create(
+                        preguntaRepo.createSimple(
                             habilidad = habilidadKey,
                             dificultad = q.dificultad,
                             enunciado = q.enunciado,
@@ -274,6 +308,14 @@ fun Route.testNivelacionRoutes(
         }
     }
 }
+
+@kotlinx.serialization.Serializable
+data class ErrorPreguntasInsuficientes(
+    val error: String,
+    val disponibles: Long,
+    val solicitadas: Int,
+    val sugerencia: String
+)
 
 @kotlinx.serialization.Serializable
 data class GenerateFromJobRes(

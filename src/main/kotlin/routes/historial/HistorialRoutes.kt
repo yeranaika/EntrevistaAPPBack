@@ -95,13 +95,13 @@ fun Route.historialRoutes(
                         HistorialItemDto(
                             id = t.id.toString(),
                             tipo = "TEST",
-                            titulo = "Test: ${t.habilidad.removePrefix("JOB:")}",
-                            fecha = t.fechaCompletado.format(DateTimeFormatter.ISO_DATE_TIME),
+                            titulo = "Test: ${t.area?.removePrefix("JOB:") ?: "General"}",
+                            fecha = t.fechaCompletado ?: "",
                             puntaje = t.puntaje,
-                            nivel = when (t.nivelSugerido) {
-                                1 -> "Junior"
-                                2 -> "Semi-Senior"
-                                3 -> "Senior"
+                            nivel = when (t.nivel?.lowercase()) {
+                                "jr" -> "Junior"
+                                "mid" -> "Semi-Senior"
+                                "sr" -> "Senior"
                                 else -> "N/A"
                             },
                             estado = "Completado"
@@ -174,13 +174,18 @@ fun Route.historialRoutes(
                             tipo = "TEST",
                             test = TestNivelacionDto(
                                 id = testRow.id.toString(),
-                                habilidad = testRow.habilidad,
+                                habilidad = testRow.area ?: "",
                                 puntaje = testRow.puntaje,
                                 totalPreguntas = testRow.totalPreguntas,
                                 preguntasCorrectas = testRow.preguntasCorrectas,
-                                nivelSugerido = testRow.nivelSugerido,
+                                nivelSugerido = when (testRow.nivel?.lowercase()) {
+                                    "jr" -> 1
+                                    "mid" -> 2
+                                    "sr" -> 3
+                                    else -> 1
+                                },
                                 feedback = testRow.feedback,
-                                fechaCompletado = testRow.fechaCompletado.format(DateTimeFormatter.ISO_DATE_TIME)
+                                fechaCompletado = testRow.fechaCompletado ?: ""
                             )
                         )
                     )

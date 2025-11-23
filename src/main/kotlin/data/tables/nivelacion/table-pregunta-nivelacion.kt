@@ -4,31 +4,23 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
 
 /**
- * Tabla para preguntas de opción múltiple usadas en tests de nivelación
+ * Vista de la tabla genérica app.pregunta,
+ * usada para preguntas de nivelación (tipo_banco = 'NV')
  */
-object PreguntaNivelacionTable : UUIDTable("app.pregunta_nivelacion", "pregunta_id") {
+object PreguntaNivelacionTable : UUIDTable("app.pregunta", "pregunta_id") {
 
-    // Habilidad que evalúa esta pregunta (ej: "logica", "algoritmos", "estructuras_datos", "sql", etc.)
-    val habilidad = varchar("habilidad", 50)
+    val tipoBanco = varchar("tipo_banco", 5).nullable()       // 'NV' = nivelación
+    val sector = varchar("sector", 80).nullable()             // área
+    val nivel = varchar("nivel", 3).nullable()                // 'jr','ssr','sr'
+    val metaCargo = varchar("meta_cargo", 120).nullable()     // cargo objetivo
 
-    // Nivel de dificultad (1=básico, 2=intermedio, 3=avanzado)
-    val dificultad = integer("dificultad").default(1)
+    // 'opcion_multiple' o 'abierta'
+    val tipoPregunta = varchar("tipo_pregunta", 20).default("opcion_multiple")
 
-    // Enunciado de la pregunta
-    val enunciado = text("enunciado")
+    val texto = text("texto")                                 // enunciado
+    val pistas = text("pistas").nullable()                    // JSONB → String
+    val configRespuesta = text("config_respuesta").nullable() // JSONB → String
 
-    // Opciones de respuesta (JSON array: ["opcion1", "opcion2", "opcion3", "opcion4"])
-    val opciones = text("opciones")
-
-    // Índice de la respuesta correcta (0-based, ej: 0, 1, 2, 3)
-    val respuestaCorrecta = integer("respuesta_correcta")
-
-    // Explicación de por qué es la respuesta correcta (opcional)
-    val explicacion = text("explicacion").nullable()
-
-    // Si la pregunta está activa o no
     val activa = bool("activa").default(true)
-
-    // Fecha de creación
     val fechaCreacion = timestampWithTimeZone("fecha_creacion")
 }
