@@ -1,132 +1,133 @@
 package data.repository.nivelacion
 
-import data.tables.nivelacion.TestNivelacionTable
+import data.tables.cuestionario.prueba.PruebaTable
+import data.tables.IntentoPruebaTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlin.math.roundToInt
 
 class TestNivelacionRepository {
 
+    private val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+
     /**
-     * Guarda el resultado de un test de nivelación completado
+     * Crea una PRUEBA de tipo 'nivelacion' y un INTENTO asociado para el usuario,
+     * guardando puntaje, total de preguntas y feedback.
+     *
+     * Retorna el ID del intento (lo puedes usar como testId en las respuestas).
      */
     fun create(
         usuarioId: UUID,
-        habilidad: String,
-        puntaje: Int,
+        area: String,
+        nivel: String,
+        metaCargo: String?,
+        puntaje: Int,            // 0–100
         totalPreguntas: Int,
-        preguntasCorrectas: Int,
-        nivelSugerido: Int,
+        preguntasCorrectas: Int, // hoy se usa sólo para mostrar, el cálculo es simple
         feedback: String
     ): UUID = transaction {
-        val id = TestNivelacionTable.insertAndGetId {
-            it[this.usuarioId] = usuarioId
-            it[this.habilidad] = habilidad
-            it[this.puntaje] = puntaje
-            it[this.totalPreguntas] = totalPreguntas
-            it[this.preguntasCorrectas] = preguntasCorrectas
-            it[this.nivelSugerido] = nivelSugerido
-            it[this.feedback] = feedback
-            it[this.fechaCompletado] = OffsetDateTime.now()
+        // 1) Crear una prueba de nivelación (si quisieras podrías reutilizar una por área/nivel)
+        val pruebaId = PruebaTable.insertAndGetId { row ->
+            row[tipoPrueba] = "nivelacion"
+            row[PruebaTable.area] = area
+            row[PruebaTable.nivel] = nivel
+            row[metadata] = metaCargo
+            row[activo] = true
+        }.value
+
+        // 2) Crear intento para ese usuario
+        val now = OffsetDateTime.now().format(formatter)
+
+        val intentoId = IntentoPruebaTable.insertAndGetId { row ->
+            row[this.pruebaId] = pruebaId
+            row[this.usuarioId] = usuarioId
+            row[fechaInicio] = now
+            row[fechaFin] = now
+            row[this.puntaje] = puntaje.toBigDecimal()
+            row[recomendaciones] = feedback
+            row[puntajeTotal] = totalPreguntas   // usamos este campo para guardar total de preguntas
+            row[estado] = "completado"
+            row[tiempoTotalSegundos] = null
+            row[creadoEn] = now
+            row[actualizadoEn] = now
         }
-        id.value
+
+        intentoId.value
     }
 
     /**
-     * Obtiene el historial de tests de un usuario
+     * Historial de tests de nivelación de un usuario.
      */
     fun findByUsuario(usuarioId: UUID): List<TestNivelacionRow> = transaction {
-        TestNivelacionTable
+        (IntentoPruebaTable innerJoin PruebaTable)
             .selectAll()
-            .where { TestNivelacionTable.usuarioId eq usuarioId }
-            .orderBy(TestNivelacionTable.fechaCompletado, SortOrder.DESC)
+            .where {
+                (IntentoPruebaTable.usuarioId eq usuarioId) and
+                (PruebaTable.tipoPrueba eq "nivelacion")
+            }
+            .orderBy(IntentoPruebaTable.creadoEn, SortOrder.DESC)
             .map { toRow(it) }
     }
 
     /**
-     * Obtiene el historial de tests de un usuario para una habilidad específica
+     * Historial filtrado por área+nivel (por si lo necesitas).
      */
-    fun findByUsuarioAndHabilidad(usuarioId: UUID, habilidad: String): List<TestNivelacionRow> = transaction {
-        TestNivelacionTable
+    fun findByUsuarioAndAreaNivel(
+        usuarioId: UUID,
+        area: String,
+        nivel: String
+    ): List<TestNivelacionRow> = transaction {
+        (IntentoPruebaTable innerJoin PruebaTable)
             .selectAll()
             .where {
-                (TestNivelacionTable.usuarioId eq usuarioId) and
-                (TestNivelacionTable.habilidad eq habilidad)
+                (IntentoPruebaTable.usuarioId eq usuarioId) and
+                (PruebaTable.tipoPrueba eq "nivelacion") and
+                (PruebaTable.area eq area) and
+                (PruebaTable.nivel eq nivel)
             }
-            .orderBy(TestNivelacionTable.fechaCompletado, SortOrder.DESC)
+            .orderBy(IntentoPruebaTable.creadoEn, SortOrder.DESC)
             .map { toRow(it) }
     }
 
-    /**
-     * Obtiene el último test de nivelación de un usuario para una habilidad
-     */
-    fun findLatestByUsuarioAndHabilidad(usuarioId: UUID, habilidad: String): TestNivelacionRow? = transaction {
-        TestNivelacionTable
+    fun findById(intentoId: UUID): TestNivelacionRow? = transaction {
+        (IntentoPruebaTable innerJoin PruebaTable)
             .selectAll()
-            .where {
-                (TestNivelacionTable.usuarioId eq usuarioId) and
-                (TestNivelacionTable.habilidad eq habilidad)
-            }
-            .orderBy(TestNivelacionTable.fechaCompletado, SortOrder.DESC)
-            .limit(1)
+            .where { IntentoPruebaTable.id eq intentoId }
             .singleOrNull()
             ?.let { toRow(it) }
     }
 
-    /**
-     * Busca un test por ID
-     */
-    fun findById(testId: UUID): TestNivelacionRow? = transaction {
-        TestNivelacionTable
-            .selectAll()
-            .where { TestNivelacionTable.id eq testId }
-            .singleOrNull()
-            ?.let { toRow(it) }
-    }
-
-    /**
-     * Obtiene estadísticas de tests por habilidad para un usuario
-     */
-    fun getStatsForUsuario(usuarioId: UUID): List<HabilidadStats> = transaction {
-        TestNivelacionTable
-            .select(
-                TestNivelacionTable.habilidad,
-                TestNivelacionTable.puntaje.avg(),
-                TestNivelacionTable.nivelSugerido.max(),
-                TestNivelacionTable.id.count()
-            )
-            .where { TestNivelacionTable.usuarioId eq usuarioId }
-            .groupBy(TestNivelacionTable.habilidad)
-            .map { row ->
-                HabilidadStats(
-                    habilidad = row[TestNivelacionTable.habilidad],
-                    puntajePromedio = row[TestNivelacionTable.puntaje.avg()]?.toInt() ?: 0,
-                    nivelMaximo = row[TestNivelacionTable.nivelSugerido.max()] ?: 1,
-                    cantidadTests = row[TestNivelacionTable.id.count()].toInt()
-                )
-            }
-    }
-
-    /**
-     * Elimina un test del historial
-     */
-    fun delete(testId: UUID): Int = transaction {
-        TestNivelacionTable.deleteWhere { TestNivelacionTable.id eq testId }
+    fun delete(intentoId: UUID): Int = transaction {
+        IntentoPruebaTable.deleteWhere { IntentoPruebaTable.id eq intentoId }
     }
 
     private fun toRow(row: ResultRow): TestNivelacionRow {
+        val total = row[IntentoPruebaTable.puntajeTotal]
+        val puntajeDecimal = row[IntentoPruebaTable.puntaje]?.toDouble() ?: 0.0
+        val puntajeInt = puntajeDecimal.roundToInt()
+
+        // Aproximamos correctas = total * porcentaje / 100
+        val correctas = if (total > 0) {
+            (total * puntajeDecimal / 100.0).roundToInt()
+        } else 0
+
+        val fecha = row[IntentoPruebaTable.fechaFin] ?: row[IntentoPruebaTable.actualizadoEn]
+
         return TestNivelacionRow(
-            id = row[TestNivelacionTable.id].value,
-            usuarioId = row[TestNivelacionTable.usuarioId],
-            habilidad = row[TestNivelacionTable.habilidad],
-            puntaje = row[TestNivelacionTable.puntaje],
-            totalPreguntas = row[TestNivelacionTable.totalPreguntas],
-            preguntasCorrectas = row[TestNivelacionTable.preguntasCorrectas],
-            nivelSugerido = row[TestNivelacionTable.nivelSugerido],
-            feedback = row[TestNivelacionTable.feedback],
-            fechaCompletado = row[TestNivelacionTable.fechaCompletado]
+            id = row[IntentoPruebaTable.id].value,
+            usuarioId = row[IntentoPruebaTable.usuarioId].value,
+            area = row[PruebaTable.area],
+            nivel = row[PruebaTable.nivel],
+            metaCargo = row[PruebaTable.metadata],
+            puntaje = puntajeInt,
+            totalPreguntas = total,
+            preguntasCorrectas = correctas,
+            feedback = row[IntentoPruebaTable.recomendaciones],
+            fechaCompletado = fecha
         )
     }
 }
@@ -134,18 +135,12 @@ class TestNivelacionRepository {
 data class TestNivelacionRow(
     val id: UUID,
     val usuarioId: UUID,
-    val habilidad: String,
+    val area: String?,
+    val nivel: String?,
+    val metaCargo: String?,
     val puntaje: Int,
     val totalPreguntas: Int,
     val preguntasCorrectas: Int,
-    val nivelSugerido: Int,
     val feedback: String?,
-    val fechaCompletado: OffsetDateTime
-)
-
-data class HabilidadStats(
-    val habilidad: String,
-    val puntajePromedio: Int,
-    val nivelMaximo: Int,
-    val cantidadTests: Int
+    val fechaCompletado: String?
 )
