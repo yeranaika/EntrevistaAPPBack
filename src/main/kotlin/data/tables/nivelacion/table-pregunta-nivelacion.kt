@@ -15,7 +15,7 @@ object PreguntaNivelacionTable : UUIDTable("app.pregunta", "pregunta_id") {
     val metaCargo = varchar("meta_cargo", 120).nullable()     // cargo objetivo
 
     // 'opcion_multiple' o 'abierta'
-    val tipoPregunta = varchar("tipo_pregunta", 20)
+    val tipoPregunta = varchar("tipo_pregunta", 20).default("opcion_multiple")
 
     val texto = text("texto")                                 // enunciado
     val pistas = text("pistas").nullable()                    // JSONB → String

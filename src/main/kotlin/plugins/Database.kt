@@ -42,8 +42,7 @@ fun Application.configureDatabase() {
                     data.tables.usuarios.ObjetivoCarreraTable,
                     data.tables.cuestionario.PlanPracticaTable,
                     data.tables.cuestionario.PlanPracticaPasoTable,
-                    data.tables.nivelacion.PreguntaNivelacionTable,  // ← Tests de nivelación
-                    data.tables.nivelacion.TestNivelacionTable       // ← Historial de tests
+                    data.tables.nivelacion.PreguntaNivelacionTable  // ← Tests de nivelación
                 )
             }
             log.info("✅ DB conectada en intento ${attempt + 1}")

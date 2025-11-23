@@ -45,6 +45,7 @@ import routes.auth.deleteAccountRoute
 import routes.cuestionario.planPracticaRoutes
 import routes.nivelacion.testNivelacionRoutes
 import routes.historial.historialRoutes
+import routes.onboarding.onboardingRoutes
 
 import plugins.settings
 import plugins.DatabaseFactory
@@ -220,7 +221,7 @@ fun Application.configureRouting(
         )
 
         // Plan de práctica
-        planPracticaRoutes(planRepo, profiles, objetivos)
+        planPracticaRoutes(planRepo, profiles, objetivos, testNivelacionRepo)
 
         // Tests de nivelación
         testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo)
@@ -231,5 +232,8 @@ fun Application.configureRouting(
         // Historial unificado (Tests + Entrevistas)
         val sesionRepo = data.repository.sesiones.SesionEntrevistaRepository()
         historialRoutes(sesionRepo, testNivelacionRepo)
+
+        // Onboarding (captura de área, nivel, objetivo)
+        onboardingRoutes(profiles, objetivos)
     }
 }

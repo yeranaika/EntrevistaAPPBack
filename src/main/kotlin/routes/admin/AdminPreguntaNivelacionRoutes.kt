@@ -54,7 +54,7 @@ fun Route.adminPreguntaNivelacionRoutes(
                 }
 
                 // Crear pregunta
-                val preguntaId = preguntaRepo.create(
+                val preguntaId = preguntaRepo.createSimple(
                     habilidad = request.habilidad,
                     dificultad = request.dificultad,
                     enunciado = request.enunciado,
@@ -114,7 +114,7 @@ fun Route.adminPreguntaNivelacionRoutes(
                         mapOf("error" to "ID inválido")
                     )
 
-                val pregunta = preguntaRepo.findById(preguntaId)
+                val pregunta = preguntaRepo.findDetalleById(preguntaId)
                     ?: return@get call.respond(
                         HttpStatusCode.NotFound,
                         mapOf("error" to "Pregunta no encontrada")
