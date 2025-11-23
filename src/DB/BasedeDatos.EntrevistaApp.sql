@@ -155,15 +155,19 @@ CREATE TABLE objetivo_carrera (
 
 CREATE TABLE pregunta (
     pregunta_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tipo_banco       VARCHAR(5),
-    sector           VARCHAR(80),
-    nivel            VARCHAR(3),
-    texto            TEXT NOT NULL,
-    pistas           JSONB,
-    config_respuesta JSONB,
+    tipo_banco       VARCHAR(5),      -- 'NV' (nivelación), 'PR' (práctica), etc.
+    sector           VARCHAR(80),     -- área: 'TI', 'Administracion', etc.
+    nivel            VARCHAR(3),      -- 'jr', 'ssr', 'sr'
+    meta_cargo       VARCHAR(120),    -- cargo objetivo (opcional)
+    tipo_pregunta    VARCHAR(20) NOT NULL DEFAULT 'opcion_multiple'
+                     CHECK (tipo_pregunta IN ('opcion_multiple','abierta')),
+    texto            TEXT NOT NULL,   -- enunciado
+    pistas           JSONB,           -- hints / tags / explicaciones extra
+    config_respuesta JSONB,           -- opciones y/o criterios de corrección
     activa           BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_creacion   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
 
 -- 4) Pruebas y relaciones
 CREATE TABLE prueba (

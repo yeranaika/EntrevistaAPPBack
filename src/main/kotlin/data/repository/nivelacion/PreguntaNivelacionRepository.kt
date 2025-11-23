@@ -1,75 +1,123 @@
 package data.repository.nivelacion
 
 import data.tables.nivelacion.PreguntaNivelacionTable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class PreguntaNivelacionRepository {
+class PreguntaNivelacionRepository(
+    private val json: Json = Json { ignoreUnknownKeys = true }
+) {
+
+    // ==========================
+    //  CREAR PREGUNTAS (ADMIN)
+    // ==========================
 
     /**
-     * Crea una nueva pregunta de nivelación
+     * Crea una pregunta de NIVELACIÓN de opción múltiple (tipo_banco = 'NV')
+     * NOTA: debe ser usada solo desde rutas de ADMIN (se valida el rol en la route).
      */
-    fun create(
-        habilidad: String,
-        dificultad: Int,
-        enunciado: String,
+    fun createOpcionMultipleNivelacion(
+        area: String,
+        nivel: String,
+        metaCargo: String?,
+        texto: String,
         opciones: List<String>,
-        respuestaCorrecta: Int,
-        explicacion: String?,
-        activa: Boolean = true
+        indiceCorrecta: Int,
+        pistas: String? = null
     ): UUID = transaction {
-        val id = PreguntaNivelacionTable.insertAndGetId {
-            it[this.habilidad] = habilidad
-            it[this.dificultad] = dificultad
-            it[this.enunciado] = enunciado
-            it[this.opciones] = Json.encodeToString(opciones)
-            it[this.respuestaCorrecta] = respuestaCorrecta
-            it[this.explicacion] = explicacion
-            it[this.activa] = activa
-            it[this.fechaCreacion] = OffsetDateTime.now()
-        }
-        id.value
+        require(opciones.isNotEmpty()) { "Debe haber al menos una opción" }
+        require(indiceCorrecta in opciones.indices) { "indiceCorrecta fuera de rango" }
+
+        val config = buildConfigOpcionMultiple(opciones, indiceCorrecta)
+
+        PreguntaNivelacionTable.insertAndGetId { row ->
+            row[tipoBanco] = "NV"
+            row[sector] = area
+            row[PreguntaNivelacionTable.nivel] = nivel
+            row[metaCargo] = metaCargo
+            row[tipoPregunta] = "opcion_multiple"
+            row[PreguntaNivelacionTable.texto] = texto
+            row[pistas] = pistas
+            row[configRespuesta] = config
+            row[activa] = true
+            row[fechaCreacion] = OffsetDateTime.now()
+        }.value
     }
 
     /**
-     * Obtiene preguntas aleatorias de una habilidad específica
-     * @param habilidad La habilidad a evaluar
-     * @param cantidad Cantidad de preguntas a obtener (default: 10)
-     * @param dificultad Filtro opcional por dificultad (1, 2, 3)
+     * Crea una pregunta de NIVELACIÓN ABIERTA (respuesta libre).
+     * Por ejemplo usada luego en tests de aprendizaje.
      */
-    fun findRandomByHabilidad(
-        habilidad: String,
+    fun createAbiertaNivelacion(
+        area: String,
+        nivel: String,
+        metaCargo: String?,
+        texto: String,
+        criteriosJson: String? = null, // ej {"min_palabras":30,...}
+        pistas: String? = null
+    ): UUID = transaction {
+        val config = buildConfigAbierta(criteriosJson)
+
+        PreguntaNivelacionTable.insertAndGetId { row ->
+            row[tipoBanco] = "NV"
+            row[sector] = area
+            row[PreguntaNivelacionTable.nivel] = nivel
+            row[metaCargo] = metaCargo
+            row[tipoPregunta] = "abierta"
+            row[PreguntaNivelacionTable.texto] = texto
+            row[pistas] = pistas
+            row[configRespuesta] = config
+            row[activa] = true
+            row[fechaCreacion] = OffsetDateTime.now()
+        }.value
+    }
+
+    // ==========================
+    //  OBTENER PREGUNTAS
+    // ==========================
+
+    /**
+     * Preguntas aleatorias de nivelación por área + nivel + (opcional) cargo meta.
+     * Por defecto trae SOLO opción múltiple (útil para test de nivelación con puntaje automático).
+     */
+    fun findRandomNivelacion(
+        area: String,
+        nivel: String,
+        metaCargo: String? = null,
         cantidad: Int = 10,
-        dificultad: Int? = null
+        soloOpcionMultiple: Boolean = true
     ): List<PreguntaNivelacionRow> = transaction {
-        val query = PreguntaNivelacionTable
+        val base = PreguntaNivelacionTable
             .selectAll()
             .where {
-                (PreguntaNivelacionTable.habilidad eq habilidad) and
+                (PreguntaNivelacionTable.tipoBanco eq "NV") and
+                (PreguntaNivelacionTable.sector eq area) and
+                (PreguntaNivelacionTable.nivel eq nivel) and
                 (PreguntaNivelacionTable.activa eq true)
             }
 
-        // Aplicar filtro de dificultad si se especifica
-        val filteredQuery = if (dificultad != null) {
-            query.andWhere { PreguntaNivelacionTable.dificultad eq dificultad }
+        val conCargo = if (metaCargo.isNullOrBlank()) {
+            base
         } else {
-            query
+            base.andWhere { PreguntaNivelacionTable.metaCargo eq metaCargo }
         }
 
-        filteredQuery
+        val finalQuery = if (soloOpcionMultiple) {
+            conCargo.andWhere { PreguntaNivelacionTable.tipoPregunta eq "opcion_multiple" }
+        } else {
+            conCargo
+        }
+
+        finalQuery
             .orderBy(Random())
             .limit(cantidad)
             .map { toRow(it) }
     }
 
-    /**
-     * Busca una pregunta por ID
-     */
     fun findById(id: UUID): PreguntaNivelacionRow? = transaction {
         PreguntaNivelacionTable
             .selectAll()
@@ -78,10 +126,8 @@ class PreguntaNivelacionRepository {
             ?.let { toRow(it) }
     }
 
-    /**
-     * Busca múltiples preguntas por IDs
-     */
     fun findByIds(ids: List<UUID>): List<PreguntaNivelacionRow> = transaction {
+        if (ids.isEmpty()) return@transaction emptyList()
         PreguntaNivelacionTable
             .selectAll()
             .where { PreguntaNivelacionTable.id inList ids }
@@ -89,44 +135,7 @@ class PreguntaNivelacionRepository {
     }
 
     /**
-     * Lista todas las preguntas de una habilidad
-     */
-    fun findByHabilidad(habilidad: String, activasOnly: Boolean = true): List<PreguntaNivelacionRow> = transaction {
-        val query = PreguntaNivelacionTable
-            .selectAll()
-            .where { PreguntaNivelacionTable.habilidad eq habilidad }
-
-        if (activasOnly) {
-            query.andWhere { PreguntaNivelacionTable.activa eq true }
-        }
-
-        query.map { toRow(it) }
-    }
-
-    /**
-     * Actualiza una pregunta existente
-     */
-    fun update(
-        id: UUID,
-        enunciado: String? = null,
-        opciones: List<String>? = null,
-        respuestaCorrecta: Int? = null,
-        explicacion: String? = null,
-        dificultad: Int? = null,
-        activa: Boolean? = null
-    ): Int = transaction {
-        PreguntaNivelacionTable.update({ PreguntaNivelacionTable.id eq id }) {
-            enunciado?.let { value -> it[this.enunciado] = value }
-            opciones?.let { value -> it[this.opciones] = Json.encodeToString(value) }
-            respuestaCorrecta?.let { value -> it[this.respuestaCorrecta] = value }
-            explicacion?.let { value -> it[this.explicacion] = value }
-            dificultad?.let { value -> it[this.dificultad] = value }
-            activa?.let { value -> it[this.activa] = value }
-        }
-    }
-
-    /**
-     * Desactiva una pregunta (soft delete)
+     * Soft delete (desactiva la pregunta)
      */
     fun deactivate(id: UUID): Int = transaction {
         PreguntaNivelacionTable.update({ PreguntaNivelacionTable.id eq id }) {
@@ -134,51 +143,70 @@ class PreguntaNivelacionRepository {
         }
     }
 
-    /**
-     * Elimina permanentemente una pregunta
-     */
-    fun delete(id: UUID): Int = transaction {
-        PreguntaNivelacionTable.deleteWhere { PreguntaNivelacionTable.id eq id }
+    // ==========================
+    //  HELPERS
+    // ==========================
+
+    private fun buildConfigOpcionMultiple(
+        opciones: List<String>,
+        indiceCorrecta: Int
+    ): String {
+        val config = buildJsonObject {
+            put("tipo", "opcion_multiple")
+            putJsonArray("opciones") {
+                opciones.forEachIndexed { idx, texto ->
+                    add(
+                        buildJsonObject {
+                            put("id", ('A' + idx).toString())
+                            put("texto", texto)
+                        }
+                    )
+                }
+            }
+            put("respuesta_correcta", ('A' + indiceCorrecta).toString())
+        }
+        return config.toString()
     }
 
-    /**
-     * Cuenta las preguntas disponibles por habilidad
-     */
-    fun countByHabilidad(habilidad: String, activasOnly: Boolean = true): Long = transaction {
-        val query = PreguntaNivelacionTable
-            .selectAll()
-            .where { PreguntaNivelacionTable.habilidad eq habilidad }
-
-        if (activasOnly) {
-            query.andWhere { PreguntaNivelacionTable.activa eq true }
+    private fun buildConfigAbierta(criteriosJson: String?): String {
+        // Si te mandan criterios como JSON crudo, lo usamos tal cual.
+        val criterios = criteriosJson?.let { json.parseToJsonElement(it) } ?: buildJsonObject { }
+        val config = buildJsonObject {
+            put("tipo", "abierta")
+            put("criterios", criterios)
         }
-
-        query.count()
+        return config.toString()
     }
 
     private fun toRow(row: ResultRow): PreguntaNivelacionRow {
+        val configStr = row[PreguntaNivelacionTable.configRespuesta]
+        val tipoPregunta = row[PreguntaNivelacionTable.tipoPregunta]
+
+        var opciones: List<String>? = null
+        var correctaId: String? = null
+
+        if (!configStr.isNullOrBlank()) {
+            val jsonConfig = json.parseToJsonElement(configStr).jsonObject
+            if (tipoPregunta == "opcion_multiple") {
+                opciones = jsonConfig["opciones"]
+                    ?.jsonArray
+                    ?.map { it.jsonObject["texto"]!!.jsonPrimitive.content }
+                correctaId = jsonConfig["respuesta_correcta"]?.jsonPrimitive?.content
+            }
+        }
+
         return PreguntaNivelacionRow(
             id = row[PreguntaNivelacionTable.id].value,
-            habilidad = row[PreguntaNivelacionTable.habilidad],
-            dificultad = row[PreguntaNivelacionTable.dificultad],
-            enunciado = row[PreguntaNivelacionTable.enunciado],
-            opciones = Json.decodeFromString<List<String>>(row[PreguntaNivelacionTable.opciones]),
-            respuestaCorrecta = row[PreguntaNivelacionTable.respuestaCorrecta],
-            explicacion = row[PreguntaNivelacionTable.explicacion],
+            area = row[PreguntaNivelacionTable.sector],
+            nivel = row[PreguntaNivelacionTable.nivel],
+            metaCargo = row[PreguntaNivelacionTable.metaCargo],
+            tipoPregunta = tipoPregunta,
+            enunciado = row[PreguntaNivelacionTable.texto],
+            opciones = opciones,
+            respuestaCorrectaId = correctaId,
+            pistas = row[PreguntaNivelacionTable.pistas],
             activa = row[PreguntaNivelacionTable.activa],
             fechaCreacion = row[PreguntaNivelacionTable.fechaCreacion]
         )
     }
 }
-
-data class PreguntaNivelacionRow(
-    val id: UUID,
-    val habilidad: String,
-    val dificultad: Int,
-    val enunciado: String,
-    val opciones: List<String>,
-    val respuestaCorrecta: Int,
-    val explicacion: String?,
-    val activa: Boolean,
-    val fechaCreacion: OffsetDateTime
-)
