@@ -3,8 +3,7 @@ package com.example.data.tables
 import org.jetbrains.exposed.sql.Table
 
 object IntentoPruebaTable : Table("app.intento_prueba") {
-    val id = uuid("intento_id")  // Agregado alias 'id' para compatibilidad
-    val intentoId = uuid("intento_id")
+    val id = uuid("intento_id")
     val usuarioId = uuid("usuario_id")
     val pruebaId = uuid("prueba_id")
     val fechaInicio = varchar("fecha_inicio", 50)
@@ -17,5 +16,5 @@ object IntentoPruebaTable : Table("app.intento_prueba") {
     val creadoEn = varchar("creado_en", 50)
     val actualizadoEn = varchar("actualizado_en", 50)
 
-    override val primaryKey = PrimaryKey(intentoId)
+    override val primaryKey = PrimaryKey(id)
 }
