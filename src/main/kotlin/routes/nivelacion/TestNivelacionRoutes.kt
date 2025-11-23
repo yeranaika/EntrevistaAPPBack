@@ -21,43 +21,43 @@ fun Route.testNivelacionRoutes(
     authenticate("auth-jwt") {
         route("/tests/nivelacion") {
 
-            // GET /tests/nivelacion/iniciar?habilidad=Desarrollo&cantidad=10
-            // Obtiene un test de nivelación con preguntas aleatorias balanceadas
+            // GET /tests/nivelacion/iniciar?cargo=Desarrollador Full Stack&cantidad=10
+            // Obtiene un test de nivelación con preguntas aleatorias balanceadas por cargo
             get("/iniciar") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@get call.respond(HttpStatusCode.Unauthorized)
 
-                val habilidad = call.request.queryParameters["habilidad"]
+                val cargo = call.request.queryParameters["cargo"]
                     ?: return@get call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("error" to "Parámetro 'habilidad' requerido (ej: 'Desarrollo', 'Analisis TI', 'Administracion', 'Ingenieria Informatica')")
+                        mapOf("error" to "Parámetro 'cargo' requerido (ej: 'Desarrollador Full Stack', 'Analista de Sistemas', 'Project Manager')")
                     )
 
                 val cantidad = call.request.queryParameters["cantidad"]?.toIntOrNull() ?: 10
 
                 // Validar que haya suficientes preguntas
-                val disponibles = preguntaRepo.countByHabilidad(habilidad)
+                val disponibles = preguntaRepo.countByCargo(cargo)
                 if (disponibles < cantidad) {
                     return@get call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf(
-                            "error" to "No hay suficientes preguntas disponibles para '$habilidad'",
-                            "disponibles" to disponibles,
-                            "solicitadas" to cantidad,
-                            "sugerencia" to "Ejecuta la migración 007_insert_preguntas_nivelacion_completas.sql"
+                        ErrorPreguntasInsuficientes(
+                            error = "No hay suficientes preguntas disponibles para el cargo '$cargo'",
+                            disponibles = disponibles,
+                            solicitadas = cantidad,
+                            sugerencia = "Verifica que el cargo esté correctamente configurado en el onboarding"
                         )
                     )
                 }
 
                 // Obtener preguntas aleatorias con mezcla balanceada de dificultades
-                val preguntas = preguntaRepo.findRandomByHabilidad(
-                    habilidad = habilidad,
+                val preguntas = preguntaRepo.findRandomByCargo(
+                    cargo = cargo,
                     cantidad = cantidad,
                     mezclarDificultades = true
                 )
 
                 val response = TestNivelacionRes(
-                    habilidad = habilidad,
+                    habilidad = cargo,  // Ahora representa el cargo
                     preguntas = preguntas.map { pregunta ->
                         PreguntaNivelacionRes(
                             id = pregunta.id,
@@ -74,6 +74,7 @@ fun Route.testNivelacionRoutes(
 
             // POST /tests/nivelacion/evaluar
             // Evalúa las respuestas del usuario y genera resultado + feedback
+            // Ahora usa 'cargo' en lugar de 'habilidad'
             post("/evaluar") {
                 val principal = call.principal<JWTPrincipal>()
                     ?: return@post call.respond(HttpStatusCode.Unauthorized)
@@ -307,6 +308,14 @@ fun Route.testNivelacionRoutes(
         }
     }
 }
+
+@kotlinx.serialization.Serializable
+data class ErrorPreguntasInsuficientes(
+    val error: String,
+    val disponibles: Long,
+    val solicitadas: Int,
+    val sugerencia: String
+)
 
 @kotlinx.serialization.Serializable
 data class GenerateFromJobRes(

@@ -273,6 +273,20 @@ class PreguntaNivelacionRepository(
     }
 
     /**
+     * Cuenta preguntas activas por cargo (meta_cargo)
+     */
+    fun countByCargo(cargo: String): Long = transaction {
+        PreguntaNivelacionTable
+            .selectAll()
+            .where {
+                (PreguntaNivelacionTable.tipoBanco eq "NV") and
+                (PreguntaNivelacionTable.metaCargo eq cargo) and
+                (PreguntaNivelacionTable.activa eq true)
+            }
+            .count()
+    }
+
+    /**
      * Obtiene preguntas aleatorias por habilidad, mezclando dificultades
      * Útil para generar tests balanceados
      */
@@ -309,6 +323,42 @@ class PreguntaNivelacionRepository(
     }
 
     /**
+     * Obtiene preguntas aleatorias por cargo (meta_cargo), mezclando dificultades
+     * Útil para generar tests balanceados por cargo de trabajo
+     */
+    fun findRandomByCargo(
+        cargo: String,
+        cantidad: Int,
+        mezclarDificultades: Boolean = true
+    ): List<PreguntaNivelacionDetalle> = transaction {
+        if (mezclarDificultades && cantidad >= 10) {
+            // Mezcla balanceada: 40% básicas, 40% intermedias, 20% avanzadas
+            val basicas = (cantidad * 0.4).toInt()
+            val intermedias = (cantidad * 0.4).toInt()
+            val avanzadas = cantidad - basicas - intermedias
+
+            val preguntasBasicas = findByCargoYNivel(cargo, "jr", basicas)
+            val preguntasIntermedias = findByCargoYNivel(cargo, "mid", intermedias)
+            val preguntasAvanzadas = findByCargoYNivel(cargo, "sr", avanzadas)
+
+            (preguntasBasicas + preguntasIntermedias + preguntasAvanzadas).shuffled()
+        } else {
+            // Selección aleatoria sin mezcla específica
+            PreguntaNivelacionTable
+                .selectAll()
+                .where {
+                    (PreguntaNivelacionTable.tipoBanco eq "NV") and
+                    (PreguntaNivelacionTable.metaCargo eq cargo) and
+                    (PreguntaNivelacionTable.activa eq true) and
+                    (PreguntaNivelacionTable.tipoPregunta eq "opcion_multiple")
+                }
+                .orderBy(Random())
+                .limit(cantidad)
+                .map { toDetalle(it) }
+        }
+    }
+
+    /**
      * Método auxiliar para obtener preguntas por habilidad y nivel
      */
     private fun findByHabilidadYNivel(
@@ -321,6 +371,28 @@ class PreguntaNivelacionRepository(
             .where {
                 (PreguntaNivelacionTable.tipoBanco eq "NV") and
                 (PreguntaNivelacionTable.sector eq habilidad) and
+                (PreguntaNivelacionTable.nivel eq nivel) and
+                (PreguntaNivelacionTable.activa eq true) and
+                (PreguntaNivelacionTable.tipoPregunta eq "opcion_multiple")
+            }
+            .orderBy(Random())
+            .limit(cantidad)
+            .map { toDetalle(it) }
+    }
+
+    /**
+     * Método auxiliar para obtener preguntas por cargo y nivel
+     */
+    private fun findByCargoYNivel(
+        cargo: String,
+        nivel: String,
+        cantidad: Int
+    ): List<PreguntaNivelacionDetalle> = transaction {
+        PreguntaNivelacionTable
+            .selectAll()
+            .where {
+                (PreguntaNivelacionTable.tipoBanco eq "NV") and
+                (PreguntaNivelacionTable.metaCargo eq cargo) and
                 (PreguntaNivelacionTable.nivel eq nivel) and
                 (PreguntaNivelacionTable.activa eq true) and
                 (PreguntaNivelacionTable.tipoPregunta eq "opcion_multiple")

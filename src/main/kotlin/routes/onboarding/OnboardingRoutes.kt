@@ -36,6 +36,13 @@ data class OnboardingData(
     val descripcionObjetivo: String?
 )
 
+@Serializable
+data class OnboardingSaveResponse(
+    val success: Boolean,
+    val message: String,
+    val data: OnboardingData
+)
+
 // ========== ROUTES ==========
 
 fun Route.onboardingRoutes(
@@ -101,13 +108,14 @@ fun Route.onboardingRoutes(
 
                     call.respond(
                         HttpStatusCode.OK,
-                        mapOf(
-                            "success" to true,
-                            "message" to "Información de onboarding guardada exitosamente",
-                            "data" to mapOf(
-                                "area" to request.area,
-                                "nivelExperiencia" to nivelInterno,
-                                "nombreCargo" to request.nombreCargo
+                        OnboardingSaveResponse(
+                            success = true,
+                            message = "Información de onboarding guardada exitosamente",
+                            data = OnboardingData(
+                                area = request.area,
+                                nivelExperiencia = nivelInterno,
+                                nombreCargo = request.nombreCargo,
+                                descripcionObjetivo = request.descripcionObjetivo
                             )
                         )
                     )
