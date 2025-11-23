@@ -108,6 +108,7 @@ class TestNivelacionRepository {
 
     /**
      * Busca el test de nivelación más reciente de un usuario para una habilidad específica
+     * Ahora busca por metadata (meta_cargo) en lugar de area
      */
     fun findLatestByUsuarioAndHabilidad(
         usuarioId: UUID,
@@ -119,7 +120,7 @@ class TestNivelacionRepository {
             .where {
                 (IntentoPruebaTable.usuarioId eq usuarioId) and
                 (PruebaTable.tipoPrueba eq "nivel") and
-                (PruebaTable.area eq habilidad)
+                (PruebaTable.metadata eq habilidad)
             }
             .orderBy(IntentoPruebaTable.creadoEn, SortOrder.DESC)
             .limit(1)
