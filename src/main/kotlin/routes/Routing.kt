@@ -15,6 +15,8 @@ import data.repository.usuarios.ObjetivoCarreraRepository
 import data.repository.cuestionario.PlanPracticaRepository
 import data.repository.nivelacion.PreguntaNivelacionRepository
 import data.repository.nivelacion.TestNivelacionRepository
+import data.repository.usuarios.RecordatorioPreferenciaRepository
+import data.repository.jobs.JobRequisitoRepository   // 👈 NUEVO
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -37,8 +39,6 @@ import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
 import routes.admin.adminPlanRoutes
 import routes.billing.billingRoutes
-
-import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
 import routes.sesiones.sesionesRoutes
 import routes.auth.deleteAccountRoute
@@ -64,10 +64,12 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 // API JOB (JSearch) + OpenAI
-import routes.jobs.jobsRoutes
 import services.JSearchService
 import services.InterviewQuestionService
+import routes.jobs.jobsRoutes
 import routes.jobs.jobsGeneratorRoutes
+import routes.jobs.jobsRequirementsRoutes
+import routes.jobs.jobsRequirementsBulkRoutes        // 👈 NUEVO
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -88,6 +90,7 @@ fun Application.configureRouting(
     val planRepo = PlanPracticaRepository()
     val preguntaNivelacionRepo = PreguntaNivelacionRepository()
     val testNivelacionRepo = TestNivelacionRepository()
+    val jobRequisitoRepo = JobRequisitoRepository()      // 👈 NUEVO
 
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -218,6 +221,18 @@ fun Application.configureRouting(
         jobsGeneratorRoutes(
             jSearchService = jSearchService,
             interviewQuestionService = interviewQuestionService
+        )
+
+        // Requisitos para un solo cargo
+        jobsRequirementsRoutes(
+            jSearchService = jSearchService,
+            jobRequisitoRepository = jobRequisitoRepo
+        )
+
+        // Requisitos en bulk para varios cargos a la vez
+        jobsRequirementsBulkRoutes(
+            jSearchService = jSearchService,
+            jobRequisitoRepository = jobRequisitoRepo
         )
 
         // Plan de práctica
