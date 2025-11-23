@@ -134,6 +134,23 @@ CREATE TABLE plan_practica_paso (
     CONSTRAINT uq_plan_paso_orden UNIQUE (plan_id, orden)
 );
 
+CREATE TABLE job_requisito (
+    job_requisito_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    area             VARCHAR(80),
+    cargo            VARCHAR(120) NOT NULL,
+    nivel_inferido   VARCHAR(10),
+    tipo             VARCHAR(20) NOT NULL,      -- 'tecnico' o 'blando'
+    texto            TEXT NOT NULL,             -- el requisito en sí
+    fuente_titulo    TEXT,                      -- título del aviso origen
+    empresa          VARCHAR(200),
+    ubicacion        VARCHAR(200),
+    url_aviso        TEXT,
+    creado_en        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX job_requisito_cargo_idx ON job_requisito(cargo);
+
+
 CREATE TABLE recordatorio_preferencia (
     usuario_id UUID PRIMARY KEY REFERENCES usuario(usuario_id) ON DELETE CASCADE,
     dias_semana VARCHAR(50) NOT NULL,

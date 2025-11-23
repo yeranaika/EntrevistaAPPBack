@@ -65,9 +65,13 @@ import kotlinx.serialization.json.Json
 
 // API JOB (JSearch) + OpenAI
 import routes.jobs.jobsRoutes
+import routes.jobs.jobsGeneratorRoutes
+import routes.jobs.jobsRequirementsRoutes      // 👈 NUEVO IMPORT
 import services.JSearchService
 import services.InterviewQuestionService
-import routes.jobs.jobsGeneratorRoutes
+
+// 👇 NUEVO IMPORT DEL REPO
+import data.repository.jobs.JobRequisitoRepository
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -88,6 +92,7 @@ fun Application.configureRouting(
     val planRepo = PlanPracticaRepository()
     val preguntaNivelacionRepo = PreguntaNivelacionRepository()
     val testNivelacionRepo = TestNivelacionRepository()
+    val jobRequisitoRepo = JobRequisitoRepository()   // 👈 NUEVO REPO
 
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -218,6 +223,12 @@ fun Application.configureRouting(
         jobsGeneratorRoutes(
             jSearchService = jSearchService,
             interviewQuestionService = interviewQuestionService
+        )
+
+        // 🔹 NUEVA RUTA: requisitos por cargo (usado por el onboarding)
+        jobsRequirementsRoutes(
+            jSearchService = jSearchService,
+            jobRequisitoRepository = jobRequisitoRepo
         )
 
         // Plan de práctica
