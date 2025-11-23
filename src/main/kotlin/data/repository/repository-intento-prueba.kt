@@ -21,7 +21,7 @@ object IntentoPruebaRepository {
         val intentoId = UUID.randomUUID()
 
         IntentoPruebaTable.insert {
-            it[this.intentoId] = intentoId
+            it[this.id] = intentoId
             it[this.usuarioId] = usuarioId
             it[this.pruebaId] = pruebaId
             it[fechaInicio] = now
@@ -50,7 +50,7 @@ object IntentoPruebaRepository {
     suspend fun obtenerIntento(intentoId: UUID): IntentoPrueba? = newSuspendedTransaction(db = DatabaseFactory.db) {
         IntentoPruebaTable
             .selectAll()
-            .where { IntentoPruebaTable.intentoId eq intentoId }
+            .where { IntentoPruebaTable.id eq intentoId }
             .map { rowToIntento(it) }
             .singleOrNull()
     }
@@ -132,7 +132,7 @@ object IntentoPruebaRepository {
             .toInt()
 
         // Actualizar puntaje_total en intento_prueba
-        IntentoPruebaTable.update({ IntentoPruebaTable.intentoId eq intentoId }) {
+        IntentoPruebaTable.update({ IntentoPruebaTable.id eq intentoId }) {
             it[puntajeTotal] = respuestasCorrectas
             it[actualizadoEn] = now
         }
@@ -152,7 +152,7 @@ object IntentoPruebaRepository {
         // Obtener intento
         val intento = IntentoPruebaTable
             .selectAll()
-            .where { IntentoPruebaTable.intentoId eq intentoId }
+            .where { IntentoPruebaTable.id eq intentoId }
             .singleOrNull() ?: throw IllegalArgumentException("Intento no encontrado")
 
         // Obtener todas las respuestas
@@ -171,7 +171,7 @@ object IntentoPruebaRepository {
         val tiempoTotal = (Instant.now().epochSecond - fechaInicio.epochSecond).toInt()
 
         // Actualizar intento
-        IntentoPruebaTable.update({ IntentoPruebaTable.intentoId eq intentoId }) {
+        IntentoPruebaTable.update({ IntentoPruebaTable.id eq intentoId }) {
             it[fechaFin] = now
             it[this.puntajeTotal] = puntajeTotal
             it[estado] = if (abandonado) "abandonado" else "finalizado"
@@ -236,7 +236,7 @@ object IntentoPruebaRepository {
     suspend fun obtenerEstadisticas(intentoId: UUID): EstadisticasIntento? = newSuspendedTransaction(db = DatabaseFactory.db) {
         val intento = IntentoPruebaTable
             .selectAll()
-            .where { IntentoPruebaTable.intentoId eq intentoId }
+            .where { IntentoPruebaTable.id eq intentoId }
             .map { rowToIntento(it) }
             .singleOrNull() ?: return@newSuspendedTransaction null
         
@@ -272,7 +272,7 @@ object IntentoPruebaRepository {
 
     private fun rowToIntento(row: ResultRow): IntentoPrueba {
         return IntentoPrueba(
-            intentoId = row[IntentoPruebaTable.intentoId].toString(),
+            intentoId = row[IntentoPruebaTable.id].toString(),
             usuarioId = row[IntentoPruebaTable.usuarioId].toString(),
             pruebaId = row[IntentoPruebaTable.pruebaId].toString(),
             fechaInicio = row[IntentoPruebaTable.fechaInicio],

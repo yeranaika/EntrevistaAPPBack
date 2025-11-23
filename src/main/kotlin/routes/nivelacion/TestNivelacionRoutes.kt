@@ -183,9 +183,9 @@ fun Route.testNivelacionRoutes(
                 val habilidad = call.request.queryParameters["habilidad"]
 
                 val tests = if (habilidad != null) {
-                    // Usar área en lugar de habilidad para buscar
-                    testRepo.findByUsuarioAndAreaNivel(userId, habilidad, "")
-                        .filter { it.area == habilidad }
+                    // Buscar por habilidad específica usando findLatestByUsuarioAndHabilidad
+                    val latest = testRepo.findLatestByUsuarioAndHabilidad(userId, habilidad)
+                    if (latest != null) listOf(latest) else emptyList()
                 } else {
                     testRepo.findByUsuario(userId)
                 }
@@ -201,7 +201,7 @@ fun Route.testNivelacionRoutes(
 
                     HistorialTestRes(
                         id = test.id.toString(),
-                        habilidad = test.area ?: "Desconocida",
+                        habilidad = test.metaCargo ?: test.area ?: "Desconocida",
                         puntaje = test.puntaje,
                         nivelSugerido = nivelTexto,
                         fechaCompletado = test.fechaCompletado ?: ""
