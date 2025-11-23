@@ -56,12 +56,174 @@ fun inferNivelFromTitleReq(titulo: String): String {
 }
 
 /**
- * Extrae skills técnicas y blandas desde el aviso.
- * (por ahora vacío hasta mapear los campos reales de JobNormalizedDto)
+ * Extrae skills técnicas y blandas desde el aviso usando los
+ * campos REALES de JobNormalizedDto:
+ *  - descripcion
+ *  - responsabilidades
+ *  - requisitos
+ *  - habilidades
  */
 fun extractRequirementsFromJob(job: JobNormalizedDto): Pair<List<String>, List<String>> {
-    // TODO: mapear campos reales (job.descripcion, job.skills, etc.)
-    return emptyList<String>() to emptyList<String>()
+    val tecnicos = mutableListOf<String>()
+    val blandos = mutableListOf<String>()
+
+    // 1) Lo que ya viene separado desde JSearch:
+    //    - habilidades  -> casi siempre técnicas
+    //    - requisitos   -> también suelen ser técnicos
+    tecnicos += job.habilidades
+    tecnicos += job.requisitos
+
+    // 2) Responsabilidades: aquí mezclamos, separamos por keywords
+    job.responsabilidades.forEach { linea ->
+        val l = linea.lowercase()
+
+        val esTecnica = listOf(
+            "java", "kotlin", "android", "spring", "rest", "api",
+            "microservices", "microservicios", "sql", "mysql", "postgres",
+            "docker", "kubernetes", "aws", "azure", "gcp", "linux",
+            "javascript", "react", "node", "typescript", "python",
+            "devops", "ci/cd", "pipelines"
+        ).any { it in l }
+
+        val esBlanda = listOf(
+            "comunicación", "comunicacion", "trabajo en equipo",
+            "liderazgo", "colaboración", "colaboracion",
+            "orientación al detalle", "orientacion al detalle",
+            "proactivo", "proactiva", "autonomía", "autonomia",
+            "resolución de problemas", "resolucion de problemas"
+        ).any { it in l }
+
+        when {
+            esTecnica -> tecnicos += linea
+            esBlanda  -> blandos += linea
+            // si no matchea ninguna, la ignoramos
+        }
+    }
+
+    // 3) Extra heurística desde la descripción larga
+    job.descripcion
+        .split("\n", ".", "•", "-", "–")
+        .map { it.trim() }
+        .filter { it.length > 10 }
+        .forEach { frase ->
+            val f = frase.lowercase()
+
+            val esTecnica = listOf(
+                "java", "kotlin", "android", "spring", "rest", "api",
+                "microservices", "microservicios", "sql", "database",
+                "mysql", "postgres", "docker", "kubernetes", "aws",
+                "azure", "gcp", "linux", "bash", "shell", "git",
+                "testing", "automation", "selenium", "cypress"
+            ).any { it in f }
+
+            val esBlanda = listOf(
+                "comunicación", "comunicacion", "trabajo en equipo",
+                "liderazgo", "colaboración", "colaboracion",
+                "orientación al detalle", "orientacion al detalle",
+                "resolución de problemas", "resolucion de problemas",
+                "proactivo", "proactiva", "autonomía", "autonomia"
+            ).any { it in f }
+
+            when {
+                esTecnica -> tecnicos += frase
+                esBlanda  -> blandos += frase
+            }
+        }
+
+    // 4) Normalizar (limpiar y quitar duplicados)
+    val tecnicosFinal = tecnicos
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .distinct()
+
+    val blandosFinal = blandos
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .distinct()
+
+    return tecnicosFinal to blandosFinal
+}
+
+/**
+ * LÓGICA COMPARTIDA: procesa un solo JobRequirementsReq.
+ * La usan tanto /jobs/requirements como /jobs/requirements/bulk.
+ */
+suspend fun processJobRequirementsItem(
+    req: JobRequirementsReq,
+    jSearchService: JSearchService,
+    jobRequisitoRepository: JobRequisitoRepository
+): JobRequirementsResponse {
+
+    val cargo = req.cargo
+    val area = req.area
+    val country = req.country
+    val limitAvisos = req.limitAvisos
+    val skillsLimit = req.skillsLimit
+
+    val queryTexto = buildString {
+        append(cargo.trim())
+        if (!area.isNullOrBlank()) {
+            append(" ")
+            append(area.trim())
+        }
+    }
+
+    val jobs: List<JobNormalizedDto> = jSearchService.searchJobs(
+        query = queryTexto,
+        country = country,
+        page = 1
+    )
+
+    val totalAvisosAnalizados = jobs.size
+    val subset = jobs.take(limitAvisos)
+
+    val rawItems = subset.map { job ->
+        val (requisitosTecnicos, requisitosBlandos) = extractRequirementsFromJob(job)
+
+        JobRequirementItem(
+            fuenteTitulo = job.titulo,
+            empresa = job.empresa,
+            ubicacion = job.ubicacion,
+            nivelInferido = inferNivelFromTitleReq(job.titulo),
+            requisitosTecnicos = requisitosTecnicos,
+            requisitosBlandos = requisitosBlandos,
+            urlAviso = null   // si luego agregas campo url en JobNormalizedDto, lo mapeas aquí
+        )
+    }
+
+    val todosTecnicos = rawItems.flatMap { it.requisitosTecnicos }
+    val todosBlandos = rawItems.flatMap { it.requisitosBlandos }
+
+    val topTecnicos = todosTecnicos.distinct().take(skillsLimit)
+    val topBlandos = todosBlandos.distinct().take(skillsLimit)
+
+    val itemConsolidado = JobRequirementItem(
+        fuenteTitulo = "Requisitos consolidados para $cargo",
+        empresa = null,
+        ubicacion = null,
+        nivelInferido = "mix",
+        requisitosTecnicos = topTecnicos,
+        requisitosBlandos = topBlandos,
+        urlAviso = null
+    )
+
+    val finalItems = listOf(itemConsolidado)
+
+    // guarda en la tabla job_requisito
+    jobRequisitoRepository.replaceRequirements(
+        cargo = cargo,
+        area = area,
+        items = finalItems
+    )
+
+    return JobRequirementsResponse(
+        cargo = cargo,
+        area = area,
+        totalAvisosAnalizados = totalAvisosAnalizados,
+        avisosUsados = subset.size,
+        maxRequisitosPorTipo = skillsLimit,
+        items = finalItems
+    )
 }
 
 // ---------- RUTA SIMPLE (un solo cargo/meta) ----------
@@ -83,79 +245,11 @@ fun Route.jobsRequirementsRoutes(
                 )
             }
 
-            val cargo = req.cargo
-            val area = req.area
-            val country = req.country
-            val limitAvisos = req.limitAvisos
-            val skillsLimit = req.skillsLimit
-
-            val queryTexto = buildString {
-                append(cargo.trim())
-                if (!area.isNullOrBlank()) {
-                    append(" ")
-                    append(area.trim())
-                }
-            }
-
-            try {
-                val jobs: List<JobNormalizedDto> = jSearchService.searchJobs(
-                    query = queryTexto,
-                    country = country,
-                    page = 1
-                )
-
-                val totalAvisosAnalizados = jobs.size
-                val subset = jobs.take(limitAvisos)
-
-                val rawItems = subset.map { job ->
-                    val (requisitosTecnicos, requisitosBlandos) = extractRequirementsFromJob(job)
-
-                    JobRequirementItem(
-                        fuenteTitulo = job.titulo,
-                        empresa = job.empresa,
-                        ubicacion = null,
-                        nivelInferido = inferNivelFromTitleReq(job.titulo),
-                        requisitosTecnicos = requisitosTecnicos,
-                        requisitosBlandos = requisitosBlandos,
-                        urlAviso = null
-                    )
-                }
-
-                val todosTecnicos = rawItems.flatMap { it.requisitosTecnicos }
-                val todosBlandos = rawItems.flatMap { it.requisitosBlandos }
-
-                val topTecnicos = todosTecnicos.distinct().take(skillsLimit)
-                val topBlandos = todosBlandos.distinct().take(skillsLimit)
-
-                val itemConsolidado = JobRequirementItem(
-                    fuenteTitulo = "Requisitos consolidados para $cargo",
-                    empresa = null,
-                    ubicacion = null,
-                    nivelInferido = "mix",
-                    requisitosTecnicos = topTecnicos,
-                    requisitosBlandos = topBlandos,
-                    urlAviso = null
-                )
-
-                val finalItems = listOf(itemConsolidado)
-
-                jobRequisitoRepository.replaceRequirements(
-                    cargo = cargo,
-                    area = area,
-                    items = finalItems
-                )
-
-                val res = JobRequirementsResponse(
-                    cargo = cargo,
-                    area = area,
-                    totalAvisosAnalizados = totalAvisosAnalizados,
-                    avisosUsados = subset.size,
-                    maxRequisitosPorTipo = skillsLimit,
-                    items = finalItems
-                )
-
+            runCatching {
+                processJobRequirementsItem(req, jSearchService, jobRequisitoRepository)
+            }.onSuccess { res ->
                 call.respond(res)
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 e.printStackTrace()
                 call.respond(
                     HttpStatusCode.InternalServerError,
