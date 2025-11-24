@@ -831,5 +831,12 @@ INSERT INTO usuario (correo, contrasena_hash, nombre, idioma, estado, rol) VALUE
     'es',
     'activo',
     'admin'
+),(
+    'Prueba1@entrevista.com',
+    '$argon2id$v=19$m=19456,t=2,p=1$ohYeqdkuF1wBlmYhTi5uow$p3mUFWphjPNNU4fVkbFL7IICdDJnB8bDlbFXoycJjOA',
+    'Prueba1',
+    'es',
+    'activo',
+    'user'
 );
 COMMIT;
