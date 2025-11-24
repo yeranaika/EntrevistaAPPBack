@@ -172,7 +172,7 @@ fun Application.configureRouting(
         )
 
         // Password Recovery (forgot-password, reset-password)
-        passwordRecoveryRoutes(recoveryCodeRepo, emailService, db)
+        passwordRecoveryRoutes(recoveryCodeRepo, emailService, db, usuariosOAuthRepository)
 
         // /me y /me/perfil (GET/PUT)
         meRoutes(users, profiles, objetivos)
@@ -249,7 +249,7 @@ fun Application.configureRouting(
         jobsSkillsRoutes(skillsCargoRepository)
 
         // Tests de nivelación
-        testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo)
+        testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo, profiles, objetivos, users)
 
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)

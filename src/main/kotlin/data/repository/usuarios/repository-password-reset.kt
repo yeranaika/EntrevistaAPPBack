@@ -1,6 +1,7 @@
 package data.repository.usuarios
 
 import data.tables.usuarios.PasswordResetTable
+import data.tables.usuarios.OauthAccountTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -28,7 +29,8 @@ private suspend fun <T> dbTx(block: suspend Transaction.() -> T): T =
  *   útil cuando el cliente no maneja el token.
  */
 class PasswordResetRepository(
-    private val users: UserRepository = UserRepository()
+    private val users: UserRepository = UserRepository(),
+    private val db: Database? = null
 ) {
     data class ResetInfo(
         val token: UUID,
