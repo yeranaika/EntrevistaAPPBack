@@ -10,6 +10,7 @@ import java.util.UUID
 
 interface UsuariosOAuthRepository {
     suspend fun linkOrCreateFromGoogle(sub: String, email: String): UUID
+    suspend fun isGoogleUser(userId: UUID): Boolean
 }
 
 class UsuariosOAuthRepositoryImpl : UsuariosOAuthRepository {
@@ -17,6 +18,17 @@ class UsuariosOAuthRepositoryImpl : UsuariosOAuthRepository {
     // hash para contraseña aleatoria
     private fun hash(password: String): String =
         BCrypt.withDefaults().hashToString(12, password.toCharArray())
+
+    override suspend fun isGoogleUser(userId: UUID): Boolean = db {
+        OauthAccountTable
+            .selectAll()
+            .where {
+                (OauthAccountTable.usuarioId eq userId) and
+                (OauthAccountTable.provider eq "google")
+            }
+            .limit(1)
+            .firstOrNull() != null
+    }
 
     override suspend fun linkOrCreateFromGoogle(sub: String, email: String): UUID = db {
         // 1) ¿Ya existe vínculo (google, sub)?
