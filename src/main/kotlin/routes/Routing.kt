@@ -74,6 +74,8 @@ import routes.jobs.jobsGeneratorRoutes
 import routes.jobs.jobsRequirementsRoutes
 import routes.jobs.jobsRequirementsBulkRoutes        // 👈 NUEVO
 
+import routes.cuestionario.prueba.pruebaFrontRoutes
+
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository,
@@ -200,6 +202,8 @@ fun Application.configureRouting(
 
         // Sesiones de entrevista tipo chat
         sesionesRoutes()
+
+        pruebaFrontRoutes()
 
         // Admin: crear pruebas
         AdminPruebaRoutes(pruebaRepo)
