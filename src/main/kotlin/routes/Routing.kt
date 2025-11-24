@@ -74,6 +74,10 @@ import routes.jobs.jobsRequirementsRoutes
 import routes.jobs.jobsRequirementsBulkRoutes
 import routes.cuestionario.prueba.pruebaFrontRoutes
 
+
+import data.repository.admin.InformeGestionRepository
+import routes.admin.informeGestionRoutes
+
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
     adminUserRepo: AdminUserRepository,
@@ -95,6 +99,7 @@ fun Application.configureRouting(
     val testNivelacionRepo = TestNivelacionRepository()
     val jobRequisitoRepo = JobRequisitoRepository()
     val skillsCargoRepository = SkillsCargoRepository()
+    val informeRepo = InformeGestionRepository()
 
     // Contexto JWT
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -243,6 +248,8 @@ fun Application.configureRouting(
 
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
+
+        informeGestionRoutes(informeRepo)
 
         // Historial unificado (Tests + Entrevistas)
         val sesionRepo = data.repository.sesiones.SesionEntrevistaRepository()
