@@ -3,7 +3,7 @@ package data.repository.jobs
 import data.tables.jobs.JobRequisitoTable
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
-import routes.jobs.JobRequirementItem
+import routes.jobs.JobRequirementItem  // Definido en JobRequirementsModels.kt
 import java.util.UUID
 
 class JobRequisitoRepository {

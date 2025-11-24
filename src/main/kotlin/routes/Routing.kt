@@ -70,7 +70,7 @@ import services.JSearchService
 import services.InterviewQuestionService
 import routes.jobs.jobsRoutes
 import routes.jobs.jobsGeneratorRoutes
-import routes.jobs.jobsRequirementsRoutes      // requisitos por cargo (usado por el onboarding)
+// import routes.jobs.jobsRequirementsRoutes      // requisitos por cargo - COMENTADO: archivo tiene código Android
 import routes.jobs.jobsRequirementsBulkRoutes  // requisitos en bulk
 import routes.cuestionario.prueba.pruebaFrontRoutes
 
@@ -230,11 +230,11 @@ fun Application.configureRouting(
             interviewQuestionService = interviewQuestionService
         )
 
-        // Requisitos por cargo (usado por el onboarding)
-        jobsRequirementsRoutes(
-            jSearchService = jSearchService,
-            jobRequisitoRepository = jobRequisitoRepo
-        )
+        // Requisitos por cargo (usado por el onboarding) - COMENTADO: archivo tiene código Android
+        // jobsRequirementsRoutes(
+        //     jSearchService = jSearchService,
+        //     jobRequisitoRepository = jobRequisitoRepo
+        // )
 
         // Requisitos en bulk para varios cargos a la vez
         jobsRequirementsBulkRoutes(
@@ -249,7 +249,7 @@ fun Application.configureRouting(
         jobsSkillsRoutes(skillsCargoRepository)
 
         // Tests de nivelación
-        testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo, profiles, objetivos, users)
+        testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo)
 
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
