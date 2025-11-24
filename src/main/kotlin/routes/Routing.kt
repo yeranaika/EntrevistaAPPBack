@@ -15,6 +15,9 @@ import data.repository.usuarios.ObjetivoCarreraRepository
 import data.repository.cuestionario.PlanPracticaRepository
 import data.repository.nivelacion.PreguntaNivelacionRepository
 import data.repository.nivelacion.TestNivelacionRepository
+import data.repository.usuarios.RecordatorioPreferenciaRepository
+import data.repository.jobs.JobRequisitoRepository   // 👈 NUEVO
+import data.repository.requisitos_cargo.SkillsCargoRepository
 
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -37,8 +40,6 @@ import com.example.routes.intentosRoutes
 import routes.cuestionario.prueba.pruebaRoutes
 import routes.admin.adminPlanRoutes
 import routes.billing.billingRoutes
-
-import data.repository.usuarios.RecordatorioPreferenciaRepository
 import routes.usuario.recordatorios.recordatorioRoutes
 import routes.sesiones.sesionesRoutes
 import routes.auth.deleteAccountRoute
@@ -46,6 +47,7 @@ import routes.cuestionario.planPracticaRoutes
 import routes.nivelacion.testNivelacionRoutes
 import routes.historial.historialRoutes
 import routes.onboarding.onboardingRoutes
+import routes.requisitos_cargo.jobsSkillsRoutes
 
 import plugins.settings
 import plugins.DatabaseFactory
@@ -64,14 +66,13 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 // API JOB (JSearch) + OpenAI
-import routes.jobs.jobsRoutes
-import routes.jobs.jobsGeneratorRoutes
-import routes.jobs.jobsRequirementsRoutes      // 👈 NUEVO IMPORT
 import services.JSearchService
 import services.InterviewQuestionService
-
-// 👇 NUEVO IMPORT DEL REPO
-import data.repository.jobs.JobRequisitoRepository
+import routes.jobs.jobsRoutes
+import routes.jobs.jobsGeneratorRoutes
+import routes.jobs.jobsRequirementsRoutes      // requisitos por cargo (usado por el onboarding)
+import routes.jobs.jobsRequirementsBulkRoutes  // requisitos en bulk
+import routes.cuestionario.prueba.pruebaFrontRoutes
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -92,7 +93,8 @@ fun Application.configureRouting(
     val planRepo = PlanPracticaRepository()
     val preguntaNivelacionRepo = PreguntaNivelacionRepository()
     val testNivelacionRepo = TestNivelacionRepository()
-    val jobRequisitoRepo = JobRequisitoRepository()   // 👈 NUEVO REPO
+    val jobRequisitoRepo = JobRequisitoRepository()
+    val skillsCargoRepository = SkillsCargoRepository()
 
     // El contexto JWT debe haber sido cargado por configureSecurity()
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
@@ -199,6 +201,9 @@ fun Application.configureRouting(
         // Sesiones de entrevista tipo chat
         sesionesRoutes()
 
+        // Front de pruebas (si lo usas desde web / app)
+        pruebaFrontRoutes()
+
         // Admin: crear pruebas
         AdminPruebaRoutes(pruebaRepo)
 
@@ -225,14 +230,23 @@ fun Application.configureRouting(
             interviewQuestionService = interviewQuestionService
         )
 
-        // 🔹 NUEVA RUTA: requisitos por cargo (usado por el onboarding)
+        // Requisitos por cargo (usado por el onboarding)
         jobsRequirementsRoutes(
+            jSearchService = jSearchService,
+            jobRequisitoRepository = jobRequisitoRepo
+        )
+
+        // Requisitos en bulk para varios cargos a la vez
+        jobsRequirementsBulkRoutes(
             jSearchService = jSearchService,
             jobRequisitoRepository = jobRequisitoRepo
         )
 
         // Plan de práctica
         planPracticaRoutes(planRepo, profiles, objetivos, testNivelacionRepo)
+
+        // Skills por cargo
+        jobsSkillsRoutes(skillsCargoRepository)
 
         // Tests de nivelación
         testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo)

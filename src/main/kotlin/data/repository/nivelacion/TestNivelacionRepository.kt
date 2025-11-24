@@ -34,7 +34,7 @@ class TestNivelacionRepository {
         val pruebaId = UUID.randomUUID()
         PruebaTable.insert { row ->
             row[id] = pruebaId
-            row[tipoPrueba] = "nivelacion"
+            row[tipoPrueba] = "nivel"
             row[PruebaTable.area] = area
             row[PruebaTable.nivel] = nivel
             row[metadata] = metaCargo
@@ -84,11 +84,21 @@ class TestNivelacionRepository {
             else -> "jr"
         }
 
+        // Extraer área corta del cargo (primeras 5 letras o mapeo)
+        val areaCorta = when {
+            habilidad.contains("Desarrollador", ignoreCase = true) -> "tec"
+            habilidad.contains("Analista", ignoreCase = true) -> "tec"
+            habilidad.contains("DevOps", ignoreCase = true) -> "tec"
+            habilidad.contains("Project", ignoreCase = true) -> "soft"
+            habilidad.contains("Manager", ignoreCase = true) -> "soft"
+            else -> "mix"
+        }
+
         return create(
             usuarioId = usuarioId,
-            area = habilidad,
+            area = areaCorta,
             nivel = nivelTexto,
-            metaCargo = null,
+            metaCargo = habilidad,
             puntaje = puntaje,
             totalPreguntas = totalPreguntas,
             preguntasCorrectas = preguntasCorrectas,
@@ -98,17 +108,19 @@ class TestNivelacionRepository {
 
     /**
      * Busca el test de nivelación más reciente de un usuario para una habilidad específica
+     * Ahora busca por metadata (meta_cargo) en lugar de area
      */
     fun findLatestByUsuarioAndHabilidad(
         usuarioId: UUID,
         habilidad: String
     ): TestNivelacionRow? = transaction {
-        (IntentoPruebaTable innerJoin PruebaTable)
+        IntentoPruebaTable
+            .innerJoin(PruebaTable, { IntentoPruebaTable.pruebaId }, { PruebaTable.id })
             .selectAll()
             .where {
                 (IntentoPruebaTable.usuarioId eq usuarioId) and
-                (PruebaTable.tipoPrueba eq "nivelacion") and
-                (PruebaTable.area eq habilidad)
+                (PruebaTable.tipoPrueba eq "nivel") and
+                (PruebaTable.metadata eq habilidad)
             }
             .orderBy(IntentoPruebaTable.creadoEn, SortOrder.DESC)
             .limit(1)
@@ -120,11 +132,12 @@ class TestNivelacionRepository {
      * Historial de tests de nivelación de un usuario.
      */
     fun findByUsuario(usuarioId: UUID): List<TestNivelacionRow> = transaction {
-        (IntentoPruebaTable innerJoin PruebaTable)
+        IntentoPruebaTable
+            .innerJoin(PruebaTable, { IntentoPruebaTable.pruebaId }, { PruebaTable.id })
             .selectAll()
             .where {
                 (IntentoPruebaTable.usuarioId eq usuarioId) and
-                (PruebaTable.tipoPrueba eq "nivelacion")
+                (PruebaTable.tipoPrueba eq "nivel")
             }
             .orderBy(IntentoPruebaTable.creadoEn, SortOrder.DESC)
             .map { toRow(it) }
@@ -138,11 +151,12 @@ class TestNivelacionRepository {
         area: String,
         nivel: String
     ): List<TestNivelacionRow> = transaction {
-        (IntentoPruebaTable innerJoin PruebaTable)
+        IntentoPruebaTable
+            .innerJoin(PruebaTable, { IntentoPruebaTable.pruebaId }, { PruebaTable.id })
             .selectAll()
             .where {
                 (IntentoPruebaTable.usuarioId eq usuarioId) and
-                (PruebaTable.tipoPrueba eq "nivelacion") and
+                (PruebaTable.tipoPrueba eq "nivel") and
                 (PruebaTable.area eq area) and
                 (PruebaTable.nivel eq nivel)
             }
@@ -151,7 +165,8 @@ class TestNivelacionRepository {
     }
 
     fun findById(intentoId: UUID): TestNivelacionRow? = transaction {
-        (IntentoPruebaTable innerJoin PruebaTable)
+        IntentoPruebaTable
+            .innerJoin(PruebaTable, { IntentoPruebaTable.pruebaId }, { PruebaTable.id })
             .selectAll()
             .where { IntentoPruebaTable.id eq intentoId }
             .singleOrNull()

@@ -15,6 +15,9 @@ build/
 .env(MV)
 .env.*
 
+src/main/kotlin/routes/jobs/datos.json
+
+
 ### STS ###
 .apt_generated
 .classpath

@@ -154,6 +154,14 @@ CREATE TABLE objetivo_carrera (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE skills_cargo (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cargo VARCHAR(120) NOT NULL,
+    tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('tecnico','blando')),
+    descripcion TEXT NOT NULL
+);
+
+
 CREATE TABLE pregunta (
     pregunta_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tipo_banco       VARCHAR(5),      -- 'NV' (nivelación), 'PR' (práctica), etc.
@@ -169,6 +177,29 @@ CREATE TABLE pregunta (
     fecha_creacion   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE pregunta_nivelacion (
+    pregunta_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tipo_banco        VARCHAR(5)  NOT NULL DEFAULT 'NV',        -- siempre 'NV'
+    sector            VARCHAR(80),                              -- área (TI, Administración, etc.)
+    nivel             VARCHAR(3),                               -- 'jr', 'ssr', 'sr'
+    meta_cargo        VARCHAR(120),                             -- cargo objetivo
+    tipo_pregunta     VARCHAR(20)  NOT NULL DEFAULT 'opcion_multiple'
+                         CHECK (tipo_pregunta IN ('opcion_multiple','abierta')),
+    texto             TEXT        NOT NULL,                     -- enunciado
+    pistas            JSONB,                                    -- hints / tags opcionales
+    config_respuesta  JSONB,                                    -- opciones y/o criterios de corrección
+    activa            BOOLEAN     NOT NULL DEFAULT TRUE,
+    fecha_creacion    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE app.recovery_code (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id      UUID NOT NULL REFERENCES app.usuario(usuario_id) ON DELETE CASCADE,
+    codigo          VARCHAR(6) NOT NULL,          -- 6 dígitos como en el Table
+    fecha_expiracion TIMESTAMPTZ NOT NULL,        -- vence el código
+    usado           BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_creacion  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- 4) Pruebas y relaciones
 CREATE TABLE prueba (
@@ -176,7 +207,7 @@ CREATE TABLE prueba (
     tipo_prueba VARCHAR(8)  NOT NULL DEFAULT 'aprendiz',
     area        VARCHAR(80),
     nivel       VARCHAR(3),
-    metadata    VARCHAR(120),
+    metadata    VARCHAR(300),
     activo      BOOLEAN NOT NULL DEFAULT TRUE
 );
 
@@ -481,6 +512,303 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, texto, pistas, conf
 ('PR', 'Desarrollador', 'sr', 'Desarrollor FullStack','¿Qué es la Idempotencia en una API REST?', '["Repetir la llamada", "Mismo resultado"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
 ('PR', 'Desarrollador', 'sr', 'Desarrollor FullStack','¿Qué es el teorema CAP?', '["Distribuido", "Escoge 2 de 3"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Consistency, Availability, Partition Tolerance"},{"id":"B", "texto":"Capacity, Availability, Performance"},{"id":"C", "texto":"Code, App, Program"}], "respuesta_correcta":"A"}'::jsonb);
 
+-- ====================================================================================
+-- SOPORTE TI (5 preguntas - nivel básico)
+-- ====================================================================================
+INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, texto, pistas, config_respuesta) VALUES
+('NV', 'TI', 1, 'Soporte TI', '¿Qué es un sistema operativo?', '["Windows, Linux, macOS", "Software base"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un programa que gestiona el hardware y software del computador"},{"id":"B", "texto":"Un antivirus"},{"id":"C", "texto":"Una aplicación de office"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'TI', 1, 'Soporte TI', '¿Qué significa IP en redes?', '["Dirección de red", "Internet Protocol"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Internet Provider"},{"id":"B", "texto":"Internet Protocol"},{"id":"C", "texto":"Internal Program"}], "respuesta_correcta":"B"}'::jsonb),
+('NV', 'TI', 1, 'Soporte TI', '¿Cuál es la función del protocolo DHCP?', '["Asigna direcciones", "Automático"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Asignar direcciones IP automáticamente"},{"id":"B", "texto":"Proteger contra virus"},{"id":"C", "texto":"Comprimir archivos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'TI', 1, 'Soporte TI', '¿Qué comando usarías para verificar la conectividad de red en Windows?', '["Verificar conexión", "Ping..."]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"ipconfig"},{"id":"B", "texto":"ping"},{"id":"C", "texto":"netstat"}], "respuesta_correcta":"B"}'::jsonb),
+('NV', 'TI', 1, 'Soporte TI', '¿Qué es un firewall?', '["Protección de red", "Bloquea tráfico"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un sistema que controla el tráfico de red entrante y saliente"},{"id":"B", "texto":"Un tipo de cable de red"},{"id":"C", "texto":"Un servidor web"}], "respuesta_correcta":"A"}'::jsonb),
+
+-- ====================================================================================
+-- DEVOPS ENGINEER (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Desarrollo', 1, 'DevOps Engineer', '¿Qué es Docker?', '["Contenedores", "Portable"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Una plataforma de contenedores"},{"id":"B", "texto":"Un lenguaje de programación"},{"id":"C", "texto":"Una base de datos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'DevOps Engineer', '¿Qué es CI/CD?', '["Integración continua", "Despliegue continuo"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Continuous Integration/Continuous Deployment"},{"id":"B", "texto":"Central Information Control Data"},{"id":"C", "texto":"Computer Integration Code Development"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'DevOps Engineer', '¿Qué es Kubernetes?', '["Orquestación", "K8s"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un sistema de orquestación de contenedores"},{"id":"B", "texto":"Un editor de código"},{"id":"C", "texto":"Un framework de testing"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'DevOps Engineer', '¿Para qué sirve Terraform?', '["Infrastructure as Code", "IaC"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Para definir infraestructura como código"},{"id":"B", "texto":"Para compilar código"},{"id":"C", "texto":"Para hacer testing"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 3, 'DevOps Engineer', '¿Qué es una pipeline de CI/CD?', '["Automatización", "Build, test, deploy"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 300}'::jsonb),
+
+-- ====================================================================================
+-- SYSADMIN (5 preguntas - nivel básico/intermedio)
+-- ====================================================================================
+('NV', 'TI', 1, 'SysAdmin', '¿Qué es un servidor?', '["Computador que provee servicios", "Siempre encendido"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un computador que provee servicios a otros equipos"},{"id":"B", "texto":"Un tipo de cable"},{"id":"C", "texto":"Una aplicación móvil"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'TI', 1, 'SysAdmin', '¿Qué comando en Linux muestra los procesos en ejecución?', '["Ver procesos", "ps, top"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"ls"},{"id":"B", "texto":"ps"},{"id":"C", "texto":"cd"}], "respuesta_correcta":"B"}'::jsonb),
+('NV', 'TI', 2, 'SysAdmin', '¿Qué es un backup incremental?', '["Solo cambios", "Vs completo"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Copia solo los cambios desde el último backup"},{"id":"B", "texto":"Copia todos los archivos siempre"},{"id":"C", "texto":"Elimina archivos antiguos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'TI', 2, 'SysAdmin', '¿Qué puerto usa SSH por defecto?', '["Secure Shell", "22"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"80"},{"id":"B", "texto":"22"},{"id":"C", "texto":"443"}], "respuesta_correcta":"B"}'::jsonb),
+('NV', 'TI', 2, 'SysAdmin', 'Explica qué es un RAID y para qué sirve', '["Redundancia", "Varios discos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+
+-- ====================================================================================
+-- DESARROLLADOR BACKEND (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Desarrollo', 1, 'Desarrollador Backend', '¿Qué es una API?', '["Application Programming Interface", "Comunicación entre apps"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Application Programming Interface"},{"id":"B", "texto":"Advanced Program Information"},{"id":"C", "texto":"Automatic Process Integration"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 1, 'Desarrollador Backend', '¿Qué es REST?', '["Arquitectura de APIs", "HTTP"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un estilo arquitectónico para APIs web"},{"id":"B", "texto":"Una base de datos"},{"id":"C", "texto":"Un lenguaje de programación"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Backend', '¿Qué diferencia hay entre SQL y NoSQL?', '["Estructurado vs No estructurado", "Relacional vs Documental"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Backend', '¿Qué es un middleware?', '["Intermediario", "Entre request y response"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Software que procesa peticiones entre cliente y servidor"},{"id":"B", "texto":"Una base de datos"},{"id":"C", "texto":"Un framework frontend"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 3, 'Desarrollador Backend', 'Explica el patrón Repository en arquitectura de software', '["Separación de concerns", "Acceso a datos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+
+-- ====================================================================================
+-- DESARROLLADOR FRONTEND (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Desarrollo', 1, 'Desarrollador Frontend', '¿Qué es HTML?', '["Lenguaje de marcado", "Estructura web"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"HyperText Markup Language"},{"id":"B", "texto":"High Tech Modern Language"},{"id":"C", "texto":"Home Tool Making Language"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 1, 'Desarrollador Frontend', '¿Para qué sirve CSS?', '["Estilos", "Diseño visual"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Para dar estilos y diseño a páginas web"},{"id":"B", "texto":"Para programar la lógica"},{"id":"C", "texto":"Para bases de datos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Frontend', '¿Qué es el DOM?', '["Document Object Model", "Árbol de elementos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Document Object Model - representación de la página"},{"id":"B", "texto":"Data Operation Method"},{"id":"C", "texto":"Digital Online Manager"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Frontend', '¿Qué es React?', '["Librería JS", "Componentes"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Una librería de JavaScript para construir interfaces"},{"id":"B", "texto":"Una base de datos"},{"id":"C", "texto":"Un servidor web"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 3, 'Desarrollador Frontend', 'Explica qué es el Virtual DOM y por qué React lo usa', '["Rendimiento", "Comparación"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+
+-- ====================================================================================
+-- DESARROLLADOR FULLSTACK (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Desarrollo', 1, 'Desarrollador Fullstack', '¿Qué significa Full Stack?', '["Frontend + Backend", "Completo"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Desarrollador que trabaja tanto en frontend como backend"},{"id":"B", "texto":"Desarrollador solo de bases de datos"},{"id":"C", "texto":"Desarrollador solo de diseño"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Fullstack', '¿Qué es Node.js?', '["JavaScript en servidor", "Runtime"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un entorno de ejecución de JavaScript en el servidor"},{"id":"B", "texto":"Una base de datos"},{"id":"C", "texto":"Un framework de CSS"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Fullstack', '¿Qué es una SPA (Single Page Application)?', '["Una sola página", "Carga dinámica"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Aplicación que carga una sola página y actualiza contenido dinámicamente"},{"id":"B", "texto":"Aplicación con muchas páginas"},{"id":"C", "texto":"Aplicación móvil"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Fullstack', '¿Qué es CORS?', '["Cross-Origin", "Seguridad"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Cross-Origin Resource Sharing - mecanismo de seguridad"},{"id":"B", "texto":"Central Online Resource System"},{"id":"C", "texto":"Computer Operating Resource Server"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 3, 'Desarrollador Fullstack', 'Explica la diferencia entre autenticación y autorización', '["Quién eres vs Qué puedes hacer", "Login vs Permisos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 300}'::jsonb),
+
+-- ====================================================================================
+-- DESARROLLADOR ANDROID (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Desarrollo', 1, 'Desarrollador Android', '¿Qué lenguaje es nativo para Android?', '["Kotlin, Java", "Android"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Kotlin y Java"},{"id":"B", "texto":"Python"},{"id":"C", "texto":"Ruby"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 1, 'Desarrollador Android', '¿Qué es una Activity en Android?', '["Pantalla", "Componente UI"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Una pantalla/interfaz de usuario"},{"id":"B", "texto":"Una base de datos"},{"id":"C", "texto":"Un servicio en background"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Android', '¿Qué es un Intent en Android?', '["Mensajería", "Comunicación entre componentes"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un mensaje para comunicar componentes"},{"id":"B", "texto":"Una variable"},{"id":"C", "texto":"Un tipo de error"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'Desarrollador Android', '¿Qué es el AndroidManifest.xml?', '["Configuración de app", "Permisos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Archivo de configuración de la aplicación"},{"id":"B", "texto":"Código fuente principal"},{"id":"C", "texto":"Base de datos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 3, 'Desarrollador Android', 'Explica el ciclo de vida de una Activity', '["onCreate, onStart, onResume...", "Estados"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 50, "max_caracteres": 400}'::jsonb),
+
+-- ====================================================================================
+-- QA AUTOMATION (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Desarrollo', 1, 'QA Automation', '¿Qué es el testing automatizado?', '["Scripts de prueba", "Automático"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Pruebas ejecutadas por scripts sin intervención manual"},{"id":"B", "texto":"Pruebas manuales"},{"id":"C", "texto":"Diseño de interfaces"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 1, 'QA Automation', '¿Qué es un test case?', '["Caso de prueba", "Escenario"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Un escenario de prueba con pasos y resultado esperado"},{"id":"B", "texto":"Un error en el código"},{"id":"C", "texto":"Una función del programa"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'QA Automation', '¿Qué es Selenium?', '["Automatización web", "Testing"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Herramienta para automatizar pruebas de aplicaciones web"},{"id":"B", "texto":"Una base de datos"},{"id":"C", "texto":"Un lenguaje de programación"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Desarrollo', 2, 'QA Automation', 'Diferencia entre testing unitario e integración', '["Función vs Múltiples componentes", "Aislado vs Conjunto"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Desarrollo', 3, 'QA Automation', '¿Qué es el patrón Page Object Model (POM)?', '["Patrón de diseño", "Mantenibilidad"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+
+-- ====================================================================================
+-- ANALISTA DE DATOS (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Analisis TI', 1, 'Analista de Datos', '¿Qué es SQL?', '["Lenguaje de consultas", "Bases de datos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Structured Query Language - para consultar bases de datos"},{"id":"B", "texto":"Simple Question Language"},{"id":"C", "texto":"System Quality Level"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 1, 'Analista de Datos', '¿Qué es un dashboard?', '["Tablero de visualización", "Gráficos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Panel visual que muestra métricas e indicadores clave"},{"id":"B", "texto":"Una base de datos"},{"id":"C", "texto":"Un tipo de servidor"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista de Datos', '¿Qué es ETL?', '["Extract, Transform, Load", "Proceso de datos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Extract, Transform, Load - proceso de integración de datos"},{"id":"B", "texto":"Error Testing Language"},{"id":"C", "texto":"External Tool Library"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista de Datos', 'Explica qué es la normalización de datos', '["Estructurar datos", "Eliminar redundancia"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Analisis TI', 3, 'Analista de Datos', '¿Qué es un Data Warehouse?', '["Almacén de datos", "Histórico"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Sistema centralizado para almacenar y analizar grandes volúmenes de datos"},{"id":"B", "texto":"Una hoja de cálculo"},{"id":"C", "texto":"Un tipo de gráfico"}], "respuesta_correcta":"A"}'::jsonb),
+
+-- ====================================================================================
+-- ANALISTA DE NEGOCIOS (5 preguntas - niveles variados)
+-- ====================================================================================
+('NV', 'Analisis TI', 1, 'Analista de Negocios', '¿Qué es un requerimiento funcional?', '["Qué debe hacer el sistema", "Funcionalidades"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Descripción de una funcionalidad que el sistema debe tener"},{"id":"B", "texto":"Hardware necesario"},{"id":"C", "texto":"Costo del proyecto"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 1, 'Analista de Negocios', '¿Qué es un stakeholder?', '["Interesado", "Afectado por el proyecto"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Persona u organización con interés en el proyecto"},{"id":"B", "texto":"Un tipo de software"},{"id":"C", "texto":"Una metodología"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista de Negocios', '¿Qué es un caso de uso?', '["Interacción usuario-sistema", "Escenario"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Descripción de cómo un usuario interactúa con el sistema"},{"id":"B", "texto":"Un error en el software"},{"id":"C", "texto":"Una prueba técnica"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista de Negocios', 'Diferencia entre requerimiento funcional y no funcional', '["Qué hace vs Cómo lo hace", "Funcionalidad vs Calidad"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Analisis TI', 3, 'Analista de Negocios', '¿Qué es el análisis de brecha (gap analysis)?', '["Estado actual vs deseado", "Diferencia"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 300}'::jsonb),
+
+-- ====================================================================================
+-- ANALISTA QA (5 preguntas - nivel básico/intermedio)
+-- ====================================================================================
+('NV', 'Analisis TI', 1, 'Analista QA', '¿Qué significa QA?', '["Quality Assurance", "Calidad"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Quality Assurance - Aseguramiento de Calidad"},{"id":"B", "texto":"Quick Access"},{"id":"C", "texto":"Question Answer"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 1, 'Analista QA', '¿Qué es un bug?', '["Error en software", "Defecto"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Error o defecto en el software"},{"id":"B", "texto":"Una funcionalidad nueva"},{"id":"C", "texto":"Un tipo de virus"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 1, 'Analista QA', '¿Qué es el testing de regresión?', '["Verificar que nada se rompió", "Después de cambios"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Pruebas para verificar que cambios no afectaron funcionalidad existente"},{"id":"B", "texto":"Pruebas solo de nuevas funciones"},{"id":"C", "texto":"Pruebas de rendimiento"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista QA', 'Explica la diferencia entre verificación y validación', '["¿Lo hicimos bien? vs ¿Hicimos lo correcto?", "Proceso vs Producto"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista QA', '¿Qué es un plan de pruebas?', '["Documento", "Estrategia de testing"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Documento que define estrategia, alcance y recursos de testing"},{"id":"B", "texto":"Lista de bugs"},{"id":"C", "texto":"Manual de usuario"}], "respuesta_correcta":"A"}'::jsonb),
+
+-- ====================================================================================
+-- ANALISTA FUNCIONAL (5 preguntas - nivel intermedio)
+-- ====================================================================================
+('NV', 'Analisis TI', 2, 'Analista Funcional', '¿Cuál es el rol principal de un Analista Funcional?', '["Puente negocio-TI", "Requerimientos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Traducir necesidades de negocio a requerimientos técnicos"},{"id":"B", "texto":"Programar aplicaciones"},{"id":"C", "texto":"Gestionar servidores"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista Funcional', '¿Qué es un diagrama de flujo?', '["Representación visual de proceso", "Pasos"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Representación gráfica de un proceso o algoritmo"},{"id":"B", "texto":"Una tabla de datos"},{"id":"C", "texto":"Un reporte"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista Funcional', '¿Qué es la especificación funcional?', '["Documento detallado", "Cómo debe funcionar"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Documento que describe en detalle cómo debe funcionar el sistema"},{"id":"B", "texto":"Manual de usuario"},{"id":"C", "texto":"Código fuente"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Analisis TI', 2, 'Analista Funcional', 'Explica qué es el modelado de procesos de negocio', '["BPM", "Representar flujos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Analisis TI', 3, 'Analista Funcional', '¿Qué técnicas usarías para elicitar requerimientos?', '["Entrevistas, talleres, observación", "Múltiples técnicas"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+
+-- ====================================================================================
+-- ASISTENTE ADMINISTRATIVO (5 preguntas - nivel básico)
+-- ====================================================================================
+('NV', 'Administracion', 1, 'Asistente Administrativo', '¿Qué es Microsoft Excel?', '["Hoja de cálculo", "Tablas y fórmulas"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Programa de hojas de cálculo"},{"id":"B", "texto":"Editor de imágenes"},{"id":"C", "texto":"Base de datos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 1, 'Asistente Administrativo', '¿Para qué sirve una agenda digital?', '["Organizar tareas", "Calendario"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Para organizar eventos, reuniones y tareas"},{"id":"B", "texto":"Para editar videos"},{"id":"C", "texto":"Para programar"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 1, 'Asistente Administrativo', '¿Qué es un correo corporativo?', '["Email profesional", "Dominio de empresa"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Cuenta de email profesional con dominio de la empresa"},{"id":"B", "texto":"Correo personal"},{"id":"C", "texto":"Red social"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 1, 'Asistente Administrativo', '¿Qué es un acta de reunión?', '["Documento de registro", "Minuta"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Documento que registra lo tratado en una reunión"},{"id":"B", "texto":"Invitación a reunión"},{"id":"C", "texto":"Lista de asistentes"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 1, 'Asistente Administrativo', '¿Qué es la gestión documental?', '["Organización de archivos", "Sistema"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Sistema para organizar, almacenar y recuperar documentos"},{"id":"B", "texto":"Edición de textos"},{"id":"C", "texto":"Impresión de documentos"}], "respuesta_correcta":"A"}'::jsonb),
+
+-- ====================================================================================
+-- ANALISTA CONTABLE (5 preguntas - nivel básico/intermedio)
+-- ====================================================================================
+('NV', 'Administracion', 1, 'Analista Contable', '¿Qué es un balance general?', '["Estado financiero", "Activos, pasivos, patrimonio"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Estado financiero que muestra activos, pasivos y patrimonio"},{"id":"B", "texto":"Lista de empleados"},{"id":"C", "texto":"Presupuesto mensual"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 1, 'Analista Contable', '¿Qué significa débito y crédito en contabilidad?', '["Partida doble", "Cargo y abono"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Administracion', 2, 'Analista Contable', '¿Qué es la conciliación bancaria?', '["Comparar registros", "Libro vs Banco"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Proceso de comparar registros contables con extractos bancarios"},{"id":"B", "texto":"Transferencia bancaria"},{"id":"C", "texto":"Solicitud de préstamo"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 2, 'Analista Contable', '¿Qué son las cuentas por pagar?', '["Obligaciones", "Deudas"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Deudas u obligaciones que la empresa debe pagar"},{"id":"B", "texto":"Dinero que nos deben"},{"id":"C", "texto":"Ingresos futuros"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 2, 'Analista Contable', '¿Qué es la depreciación?', '["Pérdida de valor", "Desgaste"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Pérdida de valor de un activo con el tiempo"},{"id":"B", "texto":"Aumento de precio"},{"id":"C", "texto":"Tipo de impuesto"}], "respuesta_correcta":"A"}'::jsonb),
+
+-- ====================================================================================
+-- ENCARGADO DE ADMINISTRACIÓN (5 preguntas - nivel intermedio)
+-- ====================================================================================
+('NV', 'Administracion', 2, 'Encargado de Administración', '¿Qué es la gestión de recursos humanos?', '["Administrar personal", "Reclutamiento, capacitación"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Proceso de administrar el personal de la organización"},{"id":"B", "texto":"Compra de equipos"},{"id":"C", "texto":"Gestión financiera"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 2, 'Encargado de Administración', '¿Qué es un presupuesto?', '["Plan financiero", "Ingresos y gastos proyectados"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Plan que estima ingresos y gastos futuros"},{"id":"B", "texto":"Informe de ventas"},{"id":"C", "texto":"Lista de productos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 2, 'Encargado de Administración', 'Explica qué es un indicador de gestión (KPI)', '["Key Performance Indicator", "Medir desempeño"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 30, "max_caracteres": 300}'::jsonb),
+('NV', 'Administracion', 2, 'Encargado de Administración', '¿Qué es la cadena de suministro?', '["Supply Chain", "Proveedores a clientes"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Red de proveedores, fabricantes y distribuidores"},{"id":"B", "texto":"Lista de empleados"},{"id":"C", "texto":"Catálogo de productos"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 2, 'Encargado de Administración', '¿Qué es el control interno?', '["Procesos de control", "Prevenir fraudes"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Sistema de políticas y procedimientos para proteger activos"},{"id":"B", "texto":"Auditoría externa"},{"id":"C", "texto":"Seguridad física"}], "respuesta_correcta":"A"}'::jsonb),
+
+-- ====================================================================================
+-- JEFE DE ADMINISTRACIÓN (5 preguntas - nivel intermedio/avanzado)
+-- ====================================================================================
+('NV', 'Administracion', 2, 'Jefe de Administración', '¿Qué es la planeación estratégica?', '["Objetivos a largo plazo", "Estrategia organizacional"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Proceso de definir objetivos y estrategias a largo plazo"},{"id":"B", "texto":"Plan de ventas mensual"},{"id":"C", "texto":"Lista de tareas diarias"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 2, 'Jefe de Administración', '¿Qué es el análisis FODA?', '["Fortalezas, Oportunidades, Debilidades, Amenazas", "Diagnóstico estratégico"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Herramienta para analizar fortalezas, oportunidades, debilidades y amenazas"},{"id":"B", "texto":"Tipo de presupuesto"},{"id":"C", "texto":"Sistema contable"}], "respuesta_correcta":"A"}'::jsonb),
+('NV', 'Administracion', 3, 'Jefe de Administración', 'Explica qué es el balanced scorecard (cuadro de mando integral)', '["Perspectivas múltiples", "Indicadores estratégicos"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('NV', 'Administracion', 3, 'Jefe de Administración', '¿Qué es la gestión del cambio organizacional?', '["Change management", "Transición"]'::jsonb, '{"tipo": "abierta_texto", "min_caracteres": 40, "max_caracteres": 400}'::jsonb),
+('NV', 'Administracion', 3, 'Jefe de Administración', '¿Qué es el ROI (Return on Investment)?', '["Retorno de inversión", "Rentabilidad"]'::jsonb, '{"tipo": "seleccion_unica", "opciones": [{"id":"A", "texto":"Métrica que mide la rentabilidad de una inversión"},{"id":"B", "texto":"Tipo de impuesto"},{"id":"C", "texto":"Estado financiero"}], "respuesta_correcta":"A"}'::jsonb);
+
+-- INSERT RESUISTOS POR CARGO 
+INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
+('Soporte TI','tecnico','Prestar apoyo a los Asistentes de reuniones para proyectar presentaciones'),
+('Soporte TI','tecnico','Documentación: Mantener registros detallados de los procedimientos y servicios prestados, incluyendo manuales y registros de resolución de problemas'),
+('Soporte TI','blando','Buenas habilidades comunicacionales y orientación al cliente'),
+('Soporte TI','blando','Habilidades personales: autonomía, dinamismo, iniciativa, responsabilidad y orientación a la resolución de problemas'),
+('Soporte TI','blando','Excelentes habilidades de comunicación y atención al usuario'),
+('Soporte TI','blando','Brindar soporte técnico en sitio y remoto a los equipos informáticos, software y redes de la empresa, garantizando la resolución de problemas técnicos, la ejecución de mantenimiento preventivo y correctivo, y el asesoramiento técnico para el óptimo funcionamiento de los sistemas'),
+('Soporte TI','blando','Diagnóstico y resolución de problemas: Identificar y solucionar problemas técnicos críticos que afecten la continuidad de las operaciones'),
+('Soporte TI','blando','Colaboración con el equipo de TI: Trabajar de forma conjunta con otros miembros del área para resolver problemas complejos y asegurar la alineación de objetivos'),
+('Soporte TI','blando','Formación técnica en áreas relacionadas con informática, redes, telecomunicaciones o similar'),
+('DevOps Engineer','tecnico','Nos encontramos en búsqueda de un(a) DevOps / Cloud Engineer para el área TI, buscamos un perfil con fuertes habilidades técnicas en infraestructura y GCP, con experiencia previa en compañías similares e idealmente habiendo liderado o participado en procesos de implementación de servicios en la nube'),
+('DevOps Engineer','tecnico','Diseñar, implementar y mantener infraestructura en la nube (GCP)'),
+('DevOps Engineer','tecnico','Implementar y administrar clústeres y contenedores con Docker y Kubernetes (GKE)'),
+('DevOps Engineer','tecnico','Desarrollar y mantener pipelines CI/CD con GitLab (runners, stages, jobs)'),
+('DevOps Engineer','tecnico','Amplia experiencia en Google Cloud Platform (GCP)'),
+('DevOps Engineer','tecnico','Experiencia administrando infraestructura en la nube y entornos Linux'),
+('DevOps Engineer','tecnico','Sólidos conocimientos en Docker y Kubernetes (GKE, EKS, Helm Charts)'),
+('DevOps Engineer','tecnico','Experiencia comprobada en pipelines de CI/CD utilizando GitLab CI/CD, GitHub Actions o Jenkins'),
+('DevOps Engineer','tecnico','Dominio de configuración de pipelines CI/CD con GitLab y uso de Templating Engines'),
+('DevOps Engineer','tecnico','Familiaridad con Apache Kafka y arquitecturas basadas en microservicios'),
+('DevOps Engineer','blando','Capacidad de resolución de problemas y pensamiento analítico aplicado a procesos de automatización'),
+('DevOps Engineer','blando','Comunicación efectiva'),
+('SysAdmin','tecnico','En Tecnocomp iniciamos el proceso para incorporar a un Administrador de Sistemas que prestará servicios presenciales a un importante cliente del sector energía en la Región Metropolitana'),
+('SysAdmin','tecnico','Conocimientos en herramientas de respaldo y uso de PowerShell'),
+('SysAdmin','tecnico','Deseable: experiencia con Linux, Azure, y certificaciones (Microsoft, VMware, CompTIA, ITIL)'),
+('SysAdmin','tecnico','En este rol, te incorporarás a un equipo orientado al soporte y la administración de infraestructuras críticas, participando en proyectos innovadores para clientes de alto nivel y con un compromiso claro de excelencia operativa y customersociedad digital'),
+('SysAdmin','tecnico','Supervisar y dar soporte a plataformas y experiencias digitales'),
+('SysAdmin','tecnico','Es deseable experiencia en Kubernetes y/o Docker Swarm (en entornos on'),
+('SysAdmin','tecnico','premise o en la nube: GCP, AWS, Azure), así como familiaridad con herramientas de monitoreo (ELK, Datadog, AppDynamics)'),
+('SysAdmin','tecnico','Es fundamental experiencia con bases de datos SQL y NoSQL (por ejemplo Cassandra, MongoDB) y manejo de herramientas de ticketing (Jira)'),
+('SysAdmin','tecnico','En BICE Vida nos encontramos en búsqueda de un Ingeniero SysAdmin, quien estará encargado de mantener la continuidad operativa y mejorar los servicios de infraestructura tecnológica alojadas en ambientes on premise, Amazon Web Services, Microsoft Azure y cualquier otro prestador de Servicios de Infraestructura, velando por contar con un ambiente estable y seguro'),
+('SysAdmin','tecnico','Conocimiento y experiência en: administración y soporte de plataformas Linux, Windows; administración de plataformas de Sistemas Operativos, Virtualización, storage; y en la administración de recursos de infraestructura, servidores físicos y virtuales, storage, networking'),
+('SysAdmin','blando','Comunicación clara y trabajo colaborativo'),
+('SysAdmin','blando','Liderar mesas de incidentes y participar activamente en la resolución de problemas'),
+('SysAdmin','blando','Se valorará certificaciones relacionadas con sistemas, nube y contenedores, así como habilidades de trabajo en equipos ágiles y conocimiento de metodologías de ITIL o similares'),
+('SysAdmin','blando','La modalidad híbrida que ofrecemos, ubicada en Las Condes, permite combinar la flexibilidad del trabajo remoto con la colaboración presencial, facilitando un mejor equilibrio y dinamismo laboral'),
+('SysAdmin','blando','Trabajo en equipo, pensamiento analítico, sentido de urgencia, orientación al cliente interno, proactividad y autogestión'),
+('SysAdmin','blando','Alta capacidad analítica, orientación al cliente, trabajo colaborativo y comunicación efectiva'),
+('SysAdmin','blando','Horario: Artículo 22 (colaboración con distintos mercados: Chile, Perú, México y Colombia)'),
+('SysAdmin','blando','Registrar y tratar proactivamente los incidentes y requerimientos asociados al área de Operaciones y Tecnologías'),
+('Desarrollador Backend','tecnico','Gestión de Spring Boot'),
+('Desarrollador Backend','tecnico','Práctica en JUnit, Mockito y Hamcrest'),
+('Desarrollador Backend','tecnico','Creación de servicios REST y SOAP'),
+('Desarrollador Backend','tecnico','Aplicación de APIs con estándares modernos'),
+('Desarrollador Backend','tecnico','Digital library'),
+('Desarrollador Backend','tecnico','Access to digital books or subscriptions'),
+('Desarrollador Backend','tecnico','Participar en la integración de APIs internas y externas'),
+('Desarrollador Backend','tecnico','Experiencia en integración con APIs internas y externa (comprobable)'),
+('Desarrollador Backend','tecnico','PHP, JavaScript, MySQL o PostgreSQL'),
+('Desarrollador Backend','tecnico','Integración con APIs REST y estructuras JSON'),
+('Desarrollador Backend','blando','Nos guiamos por valores como el trabajo en equipo, la confiabilidad, la empatía, el compromiso, la honestidad y la calidad, porque sabemos que los buenos resultados parten de buenas relaciones'),
+('Desarrollador Backend','blando','Mantener comunicación fluida con otros desarrolladores y áreas de soporte'),
+('Desarrollador Backend','blando','Nuestros empleados trabajan remotamente, pero lo hacen dentro de una cultura confiable y sólida que promueve diversidad y trabajo en equipo'),
+('Desarrollador Backend','blando','Comunicación efectiva para interactuar con usuarios y equipos'),
+('Desarrollador Backend','blando','Trabajo en equipo y actitud colaborativa'),
+('Desarrollador Backend','blando','Proactividad en la resolución de problemas'),
+('Desarrollador Frontend','tecnico','Un importante canal de televisión está en búsqueda de un(a) Desarrollador(a) de Plataformas para integrarse al área digital y de Prensa'),
+('Desarrollador Frontend','tecnico','End, con conocimientos en HTML, CSS y Java/JavaScript'),
+('Desarrollador Frontend','tecnico','Familiaridad con los sistemas de control de versiones (por ejemplo, Git)'),
+('Desarrollador Frontend','tecnico','Integración con APIs Rest desde el front'),
+('Desarrollador Frontend','tecnico','Sí, sabemos que recibís un montón de ofertas de trabajo y que podéis pensar que esta es una más de ellas, que poco o nada nos diferencia del resto de empresas, pero no, os prometemos que esta oferta es muy pero que muy diferente (pero sobre todo muy muy TOP!)🤞🏻'),
+('Desarrollador Frontend','tecnico','Es decir, sabemos cuándo y cómo usar React, TypeScript o Svelte, pero para ellos tenemos que conocer a la perfección HTML, CSS y JavaScript'),
+('Desarrollador Frontend','tecnico','Necesitamos que conozcas los fundamentos de HTML, CSS y JavaScript, que son la base de nuestro trabajo'),
+('Desarrollador Frontend','tecnico','Experiencia trabajando en equipo con Git'),
+('Desarrollador Frontend','tecnico','Que seas capaz de construir herramientas que nos hagan trabajar mejor: CLI, Github Actions, extensiones de navegador, etc'),
+('Desarrollador Frontend','tecnico','Tienes conocimiento y has trabajado con CDNs y servicios en la nube (AWS, GCP y Azure)'),
+('Desarrollador Frontend','blando','¿Eres apasionado por el desarrollo Front End, proactivo y siempre dispuesto a aprender? ¡Esta oportunidad es para ti! Estamos en busca de perfiles senior que quieran formar parte de un equipo innovador'),
+('Desarrollador Frontend','blando','Excelentes habilidades de comunicación y resolución de problemas'),
+('Desarrollador Frontend','blando','Trabaja en estrecha colaboración con el equipo de diseño y los desarrolladores de back'),
+('Desarrollador Frontend','blando','Fuertes habilidades de resolución de problemas y atención al detalle'),
+('Desarrollador Frontend','blando','Excelentes habilidades de comunicación y capacidad para entender los requisitos y expectativas del cliente y del usuario final'),
+('Desarrollador Fullstack','tecnico','Desarrollar módulos, microservicios, mejoras de API y aplicaciones como parte de la mejora continua de los productos propietarios de la compañía'),
+('Desarrollador Fullstack','tecnico','Dominio de Python para desarrollo backend, con experiencia específica en Flask (conocimiento en Django o FastAPI es un plus)'),
+('Desarrollador Fullstack','tecnico','js y ecosistema frontend contemporáneo (HTML5, CSS3, JavaScript ES6+)'),
+('Desarrollador Fullstack','tecnico','Manejo avanzado de Git y flujos de trabajo colaborativo en GitHub'),
+('Desarrollador Fullstack','tecnico','Experiencia en línea de comandos de Linux'),
+('Desarrollador Fullstack','tecnico','Conocimiento de MySQL y manejo de SQLAlchemy como ORM'),
+('Desarrollador Fullstack','tecnico','Nociones básicas de contenedores (Docker)'),
+('Desarrollador Fullstack','tecnico','Estamos en búsqueda de un Desarrollador Full Stack apasionado por la tecnología, la innovación y la creación de soluciones robustas para un futuro digital Si tienes experiencia en desarrollo de software, estás familiarizado con las últimas herramientas y deseas trabajar en un ambiente ágil, ¡te estamos buscando! […]'),
+('Desarrollador Fullstack','tecnico','Alto conocimiento de Java J2EE y Java Spring Boot […]'),
+('Desarrollador Fullstack','tecnico','Alto conocimiento Serverless computing AWS (NodeJs, lambda, DynamoDB) […]'),
+('QA Automation','tecnico','performing team!If you are an QA Automation ambitious and passionate about innovation, joining Yuno will allow you to transform your passion into real high'),
+('QA Automation','tecnico','As a QA Automation you will be part of the team of integrations'),
+('QA Automation','tecnico','Create and manage test cases for regression; create automation and performance testing'),
+('QA Automation','tecnico','Estimate, prioritize, plan, setup test environment, and conduct testing activities'),
+('QA Automation','tecnico','Perform thorough regression testing'),
+('QA Automation','tecnico','standard testing frameworks and tools'),
+('QA Automation','tecnico','Identify test scenarios and use cases for automation, considering various payment methods and scenarios'),
+('QA Automation','tecnico','Proven experience as a QA Automation Engineer or similar role in the payments industry'),
+('QA Automation','tecnico','Demonstrated knowledge in: Automation backend: Python, Cucumber/Behave, Automation web/mobile, Typescrip, Webdriver'),
+('QA Automation','tecnico','POO, design patterns, docker, k6/jmeter, CI/CD tools and y monitoring tools such as DataDog'),
+('Analista de Datos','tecnico','SQL Server Integration Services (SSIS)'),
+('Analista de Datos','tecnico','SQL Server Analysis Services (SSAS)'),
+('Analista de Datos','tecnico','Programación (Python, SQL, RPA)'),
+('Analista de Datos','tecnico','Diseñar, optimizar y ejecutar consultas SQL (MySQL y SQL Server) para extracción y transformación de datos'),
+('Analista de Datos','tecnico','Dominio avanzado de SQL (consultas, procedimientos almacenados, funciones, índices) en MySQL y SQL Server'),
+('Analista de Datos','blando','Valoramos a personas analíticas, proactivas y con capacidad para aportar ideas que generen impacto'),
+('Analista de Datos','blando','Buscamos a una persona analítica, proactiva y orientada al detalle'),
+('Analista de Datos','blando','Pensamiento analítico, orientación al detalle y capacidad para identificar patrones en grandes volúmenes de datos'),
+('Analista de Negocios','tecnico','Conocimientos de SQL para validación de datos y análisis económico'),
+('Analista de Negocios','tecnico','Formar parte del equipo estratégico detrás de la optimización de procesos críticos de operaciones de Capitaria, asegurando que cada decisión se base en datos relevantes y generando mejoras continuas en los mismos'),
+('Analista de Negocios','tecnico','Monitoreo de KPIs Financieros y Operacionales >Diseñar y mantener dashboards de indicadores clave relacionados con el uso de capital, márgenes operacionales, flujos de caja, entre otros'),
+('Analista de Negocios','tecnico','Conocimiento de SQL, Python, y herramientas de visualización (Power BI, Tableau u otro)'),
+('Analista de Negocios','blando','Generar base de datos y reportes que colaboran a la transparencia y comunicación interna'),
+('Analista de Negocios','blando','¿Te apasiona el análisis, el trabajo en equipo y el contacto'),
+('Analista de Negocios','blando','· Capacidad de análisis, comunicación efectiva y'),
+('Analista de Negocios','blando','· Buen ambiente laboral y cultura de colaboración'),
+('Analista de Negocios','blando','Este rol reportará directamente al Gerente General y trabajará en estrecha colaboración con el Director Ejecutivo que asesora el área de Finanzas y Mesa de Dinero'),
+('Analista QA','tecnico','Analista Testing QA'),
+('Analista QA','tecnico','Buscamos un QA Funcional con experiencia en el sector bancario y sólidos conocimientos en testing de software, metodologías ágiles y herramientas de gestión de calidad'),
+('Analista QA','tecnico','Automatización y Mejora Continua: Automatizar pruebas de regresión utilizando Selenium / Cucumber / Gherkin'),
+('Analista QA','tecnico','Experiencia en Testing de Software bajo metodologías ágiles (Scrum)'),
+('Analista QA','tecnico','Conocimientos en pruebas manuales funcionales y de servicios (API, logs, base de datos)'),
+('Analista QA','tecnico','Familiaridad con herramientas de automatización (Selenium, UFT, Appium) y frameworks BDD (Cucumber, Gherkin)'),
+('Analista QA','tecnico','Conocimiento básico en testing en Cloud (AWS, OCI) y uso de granjas de dispositivos web y móviles'),
+('Analista QA','tecnico','Deseable experiencia en herramientas de stress y performance testing (JMeter, LoadRunner)'),
+('Analista QA','tecnico','Experiencia en QA de SQL, Shell, Control'),
+('Analista QA','tecnico','Conocimiento a nivel de usuario en lenguaje PL/SQL y Unix'),
+('Analista QA','blando','Colaboración en el Ciclo de Desarrollo: Participar en ceremonias ágiles y revisiones funcionales'),
+('Analista QA','blando','Enfoque en la calidad y trabajo en equipo'),
+('Analista QA','blando','Comunicación con el cliente y con su equipo de trabajo'),
+('Analista QA','blando','Comunicación clara: capaz de traducir necesidades del negocio bancario a soluciones técnicas'),
+('Analista QA','blando','Trabajo en equipo multidisciplinario: interacción con BAs, arquitectos, reguladores y áreas de riesgo'),
+('Analista Funcional','tecnico','Ejecutar testing, levantar alertas y aplicar correctivos para optimizar las iniciativas implementadas'),
+('Analista Funcional','tecnico','Experiencia con herramientas de desarrollo en plataformas abiertas (SQL Server, ambientes Windows)'),
+('Analista Funcional','tecnico','Lenguaje: Java, Angular, Springboot'),
+('Analista Funcional','tecnico','Versionamiento: bitbucket, gitlab'),
+('Analista Funcional','tecnico','Base de datos: SQL server, mysql, postgresql'),
+('Analista Funcional','tecnico','Manejo de procesos de QA, testing funcional y validación de integraciones'),
+('Analista Funcional','tecnico','Conocimientos básicos de SQL para validaciones de datos'),
+('Analista Funcional','tecnico','Experiencia en integración continua (Jenkins, GitLab CI/CD)'),
+('Analista Funcional','blando','Manejo comunicacional ejecutivo y capacidad de relacionamiento transversal'),
+('Analista Funcional','blando','Alta autonomía y proactividad'),
+('Analista Funcional','blando','Manejo comunicacional ejecutivo y alta autonomía'),
+('Asistente Administrativo','blando','Estamos buscando un Asistente Administrativo proactivo y organizado para unirse a nuestro equipo de Recursos Humanos'),
+('Asistente Administrativo','blando','El candidato ideal será responsable, comprometido y poseerá excelentes habilidades comunicacionales y disposición para el trabajo en equipo'),
+('Asistente Administrativo','blando','Buenas habilidades comunicacionales y disposición para el trabajo en equipo'),
+('Asistente Administrativo','blando','Estamos buscando un/a Asistente Administrativo/a dinámico/a y proactivo/a para unirse a nuestro equipo'),
+('Asistente Administrativo','blando','Buscamos a alguien con excelentes habilidades de organización, comunicación y capacidad para trabajar en equipo'),
+('Analista Contable','tecnico','*Realizar la digitación de las facturas al sistema contable, para chequear por errores antes de imprimir los reportes'),
+('Analista Contable','blando','Apoyo administrativo y comunicación con clientes y proveedores — Atender requerimientos administrativos relacionados con facturación, órdenes de compra y coordinación de pagos'),
+('Encargado de Administración','tecnico','Informar mensualmente al Directorio sobre ejecución presupuestaria y preparar proyecciones financieras para el resto del año'),
+('Encargado de Administración','tecnico','Bash, destacado holding de empresas con presencia a nivel nacional y ubicado en la zona norte de Santiago, busca incorporar a su equipo a un/a Jefe/a de Administración'),
+('Encargado de Administración','tecnico','️ Mantener orden físico y digital de documentación legal, tributaria y laboral'),
+('Encargado de Administración','blando','Buena comunicación y trabajo en equipo'),
+('Encargado de Administración','blando','Capacidad de liderazgo, gestión de equipos y habilidades comunicacionales'),
+('Encargado de Administración','blando','Orientación al detalle, proactividad y capacidad de trabajo bajo presión'),
+('Encargado de Administración','blando','Comunicación Efectiva: Habilidad para transmitir información clara y precisa tanto a equipos internos como externos'),
+('Encargado de Administración','blando','Resolución de Problemas: Aptitud para identificar situaciones críticas y proponer soluciones oportunas');
+
+
 COMMIT;
 
 -- =============================================================================
@@ -504,5 +832,12 @@ INSERT INTO usuario (correo, contrasena_hash, nombre, idioma, estado, rol) VALUE
     'es',
     'activo',
     'admin'
+),(
+    'Prueba1@entrevista.com',
+    '$argon2id$v=19$m=19456,t=2,p=1$ohYeqdkuF1wBlmYhTi5uow$p3mUFWphjPNNU4fVkbFL7IICdDJnB8bDlbFXoycJjOA',
+    'Prueba1',
+    'es',
+    'activo',
+    'user'
 );
 COMMIT;

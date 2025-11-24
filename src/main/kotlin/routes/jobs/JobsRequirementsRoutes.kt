@@ -1,258 +1,302 @@
-package routes.jobs
+package com.example.entrevista_app_android
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
-import services.JSearchService
-import services.JobNormalizedDto
-import data.repository.jobs.JobRequisitoRepository   // repo para guardar en BD
+import android.util.Log
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.entrevista_app_android.data.local.auth.TokenStorage
+import com.example.entrevista_app_android.data.remote.consent.ConsentRemoteDataSource
+import com.example.entrevista_app_android.data.remote.me.FlagsAccesibilidadDto
+import com.example.entrevista_app_android.data.remote.me.MeRemoteDataSource
+import com.example.entrevista_app_android.data.repository.me.FullProfile
+import com.example.entrevista_app_android.data.repository.me.MeRepository
+import com.example.entrevista_app_android.ui.auth.LoginViewModel
+import com.example.entrevista_app_android.ui.consent.ConsentScreen
+import com.example.entrevista_app_android.ui.consent.LastConsentScreen
+import com.example.entrevista_app_android.ui.home.HomeScreen
+import com.example.entrevista_app_android.ui.onboarding.ObjectivesListScreen
+import com.example.entrevista_app_android.ui.onboarding.OnboardingScreen
+import com.example.entrevista_app_android.ui.profile.ProfileEditScreen
+import com.example.entrevista_app_android.ui.profile.ProfileViewScreen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 
-// ---------- DTOs ----------
-
-// JSON que envía Android / Postman
-@Serializable
-data class JobRequirementsReq(
-    val cargo: String,
-    val area: String? = null,
-    val country: String = "cl",
-    val limitAvisos: Int = 5,     // cuántos avisos máximo usar
-    val skillsLimit: Int = 10     // cuántas skills máximo por tipo (técnicas / blandas)
-)
-
-@Serializable
-data class JobRequirementItem(
-    val fuenteTitulo: String,
-    val empresa: String?,
-    val ubicacion: String?,              // por ahora no mapeado
-    val nivelInferido: String,
-    val requisitosTecnicos: List<String>,
-    val requisitosBlandos: List<String>,
-    val urlAviso: String?                // por ahora no mapeado
-)
-
-@Serializable
-data class JobRequirementsResponse(
-    val cargo: String,
-    val area: String?,
-    val totalAvisosAnalizados: Int,      // cuántos avisos devolvió JSearch
-    val avisosUsados: Int,               // cuántos se usaron (limitAvisos)
-    val maxRequisitosPorTipo: Int,       // ej: 10 (técnicos) + 10 (blandos)
-    val items: List<JobRequirementItem>  // normalmente 1 item consolidado
-)
-
-// ---------- Helpers ----------
-
-/**
- * Determina el nivel (jr / mid / sr) en base al título del aviso.
- */
-private fun inferNivelFromTitle(titulo: String): String {
-    val t = titulo.lowercase()
-
-    return when {
-        "senior" in t || " sr" in t || "sr " in t -> "sr"
-        "semi" in t || "medio" in t || "middle" in t || "ssr" in t -> "mid"
-        "junior" in t || " jr" in t || "jr " in t || "trainee" in t -> "jr"
-        else -> "jr"
-    }
+private enum class LoggedInScreen {
+    HOME,
+    PROFILE_VIEW,
+    PROFILE_EDIT,
+    LAST_CONSENT,
+    OBJECTIVES,
+    ONBOARDING
 }
 
-/**
- * Extrae requisitos técnicos y blandos de un JobNormalizedDto
- * usando su representación en texto (job.toString()).
- */
-private fun extractRequirementsFromJob(job: JobNormalizedDto): Pair<List<String>, List<String>> {
-    val text = job.toString()
-    val lower = text.lowercase()
+@Composable
+fun LoggedInRoot(
+    loginViewModel: LoginViewModel
+) {
+    val loginUiState by loginViewModel.uiState.collectAsState()
 
-    // Palabras clave técnicas (puedes ir agregando más)
-    val technicalKeywords = listOf(
-        "kotlin", "java", "android", "compose", "jetpack",
-        "sql", "postgres", "mysql", "rest", "api", "apis",
-        "spring", "hibernate", "docker", "kubernetes", "aws", "azure", "gcp",
-        "git", "github", "gitlab", "ci/cd", "ci cd",
-        "testing", "junit", "mockito", "unit test", "integración",
-        "javascript", "typescript", "react", "node", "angular",
-        "microservicio", "microservicios"
-    )
+    var currentScreen by rememberSaveable { mutableStateOf(LoggedInScreen.HOME) }
 
-    // Palabras clave blandas
-    val softKeywords = listOf(
-        "comunicación", "comunicacion", "trabajo en equipo", "colaboración",
-        "colaboracion", "liderazgo", "proactivo", "proactiva", "proactividad",
-        "autonomía", "autonomia", "resolución de problemas", "resolucion de problemas",
-        "adaptabilidad", "flexibilidad", "empatía", "empatia", "organización",
-        "organizacion", "gestión del tiempo", "gestion del tiempo",
-        "aprendizaje continuo", "responsabilidad"
-    )
+    var profileLoaded by rememberSaveable { mutableStateOf(false) }
+    var needsConsent by rememberSaveable { mutableStateOf(false) }
+    var consentChecked by rememberSaveable { mutableStateOf(false) }
 
-    // 1) Detectar keywords que aparecen en el texto
-    val detectedTech = technicalKeywords
-        .filter { it in lower }
-        .map { kw -> kw.replaceFirstChar { c -> c.uppercaseChar() } }
+    val consentRemote = remember { ConsentRemoteDataSource() }
+    val meRepository = remember { MeRepository(MeRemoteDataSource()) }
 
-    val detectedSoft = softKeywords
-        .filter { it in lower }
-        .map { kw ->
-            // Capitalizar primera letra de cada palabra
-            kw.split(" ").joinToString(" ") { w ->
-                w.replaceFirstChar { c -> c.uppercaseChar() }
-            }
+    var fullProfile by remember { mutableStateOf<FullProfile?>(null) }
+    var accessToken by remember { mutableStateOf<String?>(null) }
+
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(loginUiState.isLoggedIn) {
+        if (!loginUiState.isLoggedIn) {
+            profileLoaded = false
+            consentChecked = false
+            needsConsent = false
+            currentScreen = LoggedInScreen.HOME
+            fullProfile = null
+            accessToken = null
+            return@LaunchedEffect
         }
 
-    // 2) Además, intentar cortar el texto en frases "tipo bullet"
-    val rawSegments = text
-        .split('\n', '.', ';', '•', '-', '·', '*', '●')
-        .map { it.trim() }
-        .filter { it.length in 10..180 } // descartar cosas muy cortas o larguísimas
+        profileLoaded = false
+        consentChecked = false
+        needsConsent = false
+        currentScreen = LoggedInScreen.HOME
 
-    val extraTech = mutableListOf<String>()
-    val extraSoft = mutableListOf<String>()
+        val tokens = TokenStorage.get()
+        if (tokens == null) {
+            loginViewModel.logout()
+            return@LaunchedEffect
+        }
+        accessToken = tokens.accessToken
 
-    for (seg in rawSegments) {
-        val segLower = seg.lowercase()
-        val isTechSeg = technicalKeywords.any { it in segLower }
-        val isSoftSeg = softKeywords.any { it in segLower }
+        val profileResult = meRepository.loadProfile(tokens.accessToken)
+        val profile = profileResult.getOrElse {
+            loginViewModel.logout()
+            return@LaunchedEffect
+        }
+        fullProfile = profile
 
-        if (isTechSeg) extraTech += seg
-        if (isSoftSeg) extraSoft += seg
+        val needsOnboarding =
+            profile.area.isBlank() ||
+                    profile.nivelExperiencia.isBlank() ||
+                    profile.notaObjetivos.isBlank() ||
+                    profile.metaCargo.isNullOrBlank()
+
+        currentScreen = if (needsOnboarding) {
+            LoggedInScreen.ONBOARDING
+        } else {
+            LoggedInScreen.HOME
+        }
+
+        profileLoaded = true
+
+        try {
+            val current = consentRemote.getCurrentConsent()
+            val latest = consentRemote.getLatestUserConsentOrNull()
+            needsConsent = latest == null || latest.version != current.version
+        } catch (e: Exception) {
+            needsConsent = false
+        } finally {
+            consentChecked = true
+        }
     }
 
-    val allTech = (detectedTech + extraTech).distinct()
-    val allSoft = (detectedSoft + extraSoft).distinct()
+    when {
+        !profileLoaded || !consentChecked -> {
+            LoadingScreen()
+        }
 
-    return allTech to allSoft
+        needsConsent -> {
+            ConsentScreen(
+                onBack = { loginViewModel.logout() },
+                onAccepted = { needsConsent = false }
+            )
+        }
+
+        else -> {
+            LoggedInContent(
+                currentScreen = currentScreen,
+                onChangeScreen = { currentScreen = it },
+                fullProfile = fullProfile,
+                onFullProfileChange = { fullProfile = it },
+                accessToken = accessToken,
+                meRepository = meRepository,
+                scope = scope,
+                onLogout = {
+                    loginViewModel.logout()
+                    profileLoaded = false
+                    consentChecked = false
+                    needsConsent = false
+                    currentScreen = LoggedInScreen.HOME
+                    fullProfile = null
+                    accessToken = null
+                }
+            )
+        }
+    }
 }
 
-// ---------- Rutas ----------
-
-/**
- * Rutas para obtener requisitos de un cargo a partir del onboarding.
- *
- * POST /jobs/requirements
- *
- * Body JSON de ejemplo:
- * {
- *   "cargo": "Desarrollador Android",
- *   "area": "Desarrollador",
- *   "country": "cl",
- *   "limitAvisos": 5,
- *   "skillsLimit": 10
- * }
- */
-fun Route.jobsRequirementsRoutes(
-    jSearchService: JSearchService,
-    jobRequisitoRepository: JobRequisitoRepository
+@Composable
+private fun LoggedInContent(
+    currentScreen: LoggedInScreen,
+    onChangeScreen: (LoggedInScreen) -> Unit,
+    fullProfile: FullProfile?,
+    onFullProfileChange: (FullProfile) -> Unit,
+    accessToken: String?,
+    meRepository: MeRepository,
+    scope: CoroutineScope,
+    onLogout: () -> Unit
 ) {
-    route("/jobs") {
-
-        post("/requirements") {
-            val req = try {
-                call.receive<JobRequirementsReq>()
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return@post call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("error" to "json_invalido", "message" to (e.message ?: "Body inválido"))
-                )
-            }
-
-            val cargo = req.cargo
-            val area = req.area
-            val country = req.country
-            val limitAvisos = req.limitAvisos
-            val skillsLimit = req.skillsLimit
-
-            // Texto que vamos a mandar a JSearch: cargo + área
-            val queryTexto = buildString {
-                append(cargo.trim())
-                if (!area.isNullOrBlank()) {
-                    append(" ")
-                    append(area.trim())
+    when (currentScreen) {
+        LoggedInScreen.HOME -> {
+            HomeScreen(
+                onLogout = onLogout,
+                onProfileClick = { onChangeScreen(LoggedInScreen.PROFILE_VIEW) },
+                onOpenObjectives = {
+                    val p = fullProfile
+                    if (p?.metaCargo.isNullOrBlank()) {
+                        onChangeScreen(LoggedInScreen.ONBOARDING)
+                    } else {
+                        onChangeScreen(LoggedInScreen.OBJECTIVES)
+                    }
                 }
-            }
+            )
+        }
 
-            runCatching {
-                // 1) Buscar avisos en JSearch
-                val jobs: List<JobNormalizedDto> = jSearchService.searchJobs(
-                    query = queryTexto,
-                    country = country,
-                    page = 1
-                )
+        LoggedInScreen.PROFILE_VIEW -> {
+            ProfileViewScreen(
+                onBack = { onChangeScreen(LoggedInScreen.HOME) },
+                onEditClick = { onChangeScreen(LoggedInScreen.PROFILE_EDIT) },
+                onShowLastConsent = { onChangeScreen(LoggedInScreen.LAST_CONSENT) }
+            )
+        }
 
-                val totalAvisosAnalizados = jobs.size
+        LoggedInScreen.PROFILE_EDIT -> {
+            ProfileEditScreen(
+                onBack = { onChangeScreen(LoggedInScreen.PROFILE_VIEW) },
+                onAccountDeleted = { onLogout() }
+            )
+        }
 
-                // Solo usamos los primeros N avisos según parámetro
-                val subset = jobs.take(limitAvisos)
+        LoggedInScreen.LAST_CONSENT -> {
+            LastConsentScreen(
+                onBack = { onChangeScreen(LoggedInScreen.PROFILE_VIEW) }
+            )
+        }
 
-                // 2) Transformar cada aviso a JobRequirementItem "raw"
-                val rawItems = subset.map { job ->
-                    val (requisitosTecnicos, requisitosBlandos) = extractRequirementsFromJob(job)
-
-                    JobRequirementItem(
-                        fuenteTitulo = job.titulo,      // ej: "Android Developer Semi Senior"
-                        empresa = job.empresa,          // si existe en JobNormalizedDto
-                        ubicacion = null,               // ej: job.ubicacion si luego lo mapeas
-                        nivelInferido = inferNivelFromTitle(job.titulo),
-                        requisitosTecnicos = requisitosTecnicos,
-                        requisitosBlandos = requisitosBlandos,
-                        urlAviso = null                 // ej: job.url si luego lo mapeas
-                    )
+        LoggedInScreen.OBJECTIVES -> {
+            val p = fullProfile
+            ObjectivesListScreen(
+                area = p?.area,
+                objetivo = p?.notaObjetivos,
+                cargoMeta = p?.metaCargo,
+                nivel = p?.nivelExperiencia,
+                onBack = { onChangeScreen(LoggedInScreen.HOME) },
+                onEdit = { onChangeScreen(LoggedInScreen.ONBOARDING) },
+                onDelete = {
+                    val token = accessToken
+                    if (token == null) {
+                        onLogout()
+                        return@ObjectivesListScreen
+                    }
+                    scope.launch {
+                        meRepository.deleteObjetivo(token)
+                            .onSuccess {
+                                val updated = p?.copy(metaCargo = null)
+                                if (updated != null) {
+                                    onFullProfileChange(updated)
+                                }
+                                onChangeScreen(LoggedInScreen.HOME)
+                            }
+                            .onFailure {
+                                onChangeScreen(LoggedInScreen.HOME)
+                            }
+                    }
                 }
+            )
+        }
 
-                // 3) Consolidar requisitos de TODOS los avisos:
-                //    - juntar todos
-                //    - eliminar duplicados
-                //    - quedarse con máximo 'skillsLimit' por tipo
-                val todosTecnicos = rawItems.flatMap { it.requisitosTecnicos }
-                val todosBlandos  = rawItems.flatMap { it.requisitosBlandos }
+        LoggedInScreen.ONBOARDING -> {
+            val tokenLocal = accessToken
+            OnboardingScreen(
+                initialArea = fullProfile?.area,
+                initialObjetivo = fullProfile?.notaObjetivos,
+                initialCargoMeta = fullProfile?.metaCargo,
+                initialNivel = fullProfile?.nivelExperiencia,
+                onFinished = { area, objetivo, cargoMeta, nivel ->
+                    val t = tokenLocal
+                    if (t == null) {
+                        onLogout()
+                        return@OnboardingScreen
+                    }
+                    scope.launch {
+                        try {
+                            meRepository.guardarOnboardingObjetivo(
+                                accessToken = t,
+                                area = area,
+                                objetivo = objetivo,
+                                cargoMeta = cargoMeta,
+                                nivel = nivel
+                            )
 
-                val topTecnicos = todosTecnicos.distinct().take(skillsLimit)
-                val topBlandos  = todosBlandos.distinct().take(skillsLimit)
+                            val updated = (fullProfile ?: FullProfile(
+                                email = "",
+                                nombre = "",
+                                idioma = "es",
+                                nivelExperiencia = "",
+                                area = "",
+                                pais = "CL",
+                                notaObjetivos = "",
+                                metaCargo = null,
+                                flags = FlagsAccesibilidadDto(
+                                    tts = false,
+                                    altoContraste = false,
+                                    subtitulos = false
+                                )
+                            )).copy(
+                                area = area,
+                                notaObjetivos = objetivo,
+                                nivelExperiencia = nivel,
+                                metaCargo = cargoMeta
+                            )
 
-                // 4) Crear un solo item "consolidado" con esos requisitos filtrados
-                val itemConsolidado = JobRequirementItem(
-                    fuenteTitulo = "Requisitos consolidados para $cargo",
-                    empresa = null,
-                    ubicacion = null,
-                    nivelInferido = "mix",
-                    requisitosTecnicos = topTecnicos,
-                    requisitosBlandos = topBlandos,
-                    urlAviso = null
-                )
+                            onFullProfileChange(updated)
+                        } catch (e: Exception) {
+                            Log.e("LoggedInRoot", "Error guardando onboarding", e)
+                        } finally {
+                            onChangeScreen(LoggedInScreen.HOME)
+                        }
+                    }
+                },
+                onCancel = {
+                    onChangeScreen(LoggedInScreen.HOME)
+                }
+            )
+        }
+    }
+}
 
-                val finalItems = listOf(itemConsolidado)
-
-                // 5) Guardar solo estos requisitos consolidados en la tabla job_requisito
-                jobRequisitoRepository.replaceRequirements(
-                    cargo = cargo,
-                    area = area,
-                    items = finalItems
-                )
-
-                // 6) Construir respuesta al cliente (Android / Postman)
-                JobRequirementsResponse(
-                    cargo = cargo,
-                    area = area,
-                    totalAvisosAnalizados = totalAvisosAnalizados,
-                    avisosUsados = subset.size,
-                    maxRequisitosPorTipo = skillsLimit,
-                    items = finalItems
-                )
-            }.onSuccess { res ->
-                call.respond(res)
-            }.onFailure { e ->
-                e.printStackTrace()
-                call.respond(
-                    HttpStatusCode.InternalServerError,
-                    mapOf(
-                        "error" to "jobs_requirements_error",
-                        "message" to (e.message ?: "Error obteniendo requisitos del cargo")
-                    )
-                )
-            }
+@Composable
+private fun LoadingScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(8.dp))
+            Text("Preparando tu cuenta…")
         }
     }
 }
