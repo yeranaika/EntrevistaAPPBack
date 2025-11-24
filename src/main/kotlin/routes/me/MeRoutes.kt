@@ -20,7 +20,7 @@ data class MeRes(
     val id: String,
     val email: String,
     val nombre: String? = null,
-    val idioma: String? = null,          // ← nullable, calza con UserRow.idioma
+    val idioma: String? = null,
     val perfil: PerfilRes? = null,
     val meta: String? = null
 )
@@ -62,57 +62,56 @@ data class ObjetivoRes(
     val sector: String?
 )
 
-@Serializable data class OkRes(val ok: Boolean = true)
-@Serializable data class ErrorRes(val error: String)
+@Serializable
+data class OkRes(val ok: Boolean = true)
 
-// ---------- Validaciones ----------
+@Serializable
+data class ErrorRes(val error: String)
+
 // ---------- Validaciones ----------
 object Validaciones {
 
-    // Niveles que puede mandar la APP (textos de la UI)
     private val NIVELES_APP = setOf(
         "Estoy empezando en este tema",
         "Tengo experiencia intermedia",
         "Tengo mucha experiencia"
     )
 
-    // Códigos antiguos que ya usábamos
     private val NIVELES_CODIGO = setOf("jr", "mid", "sr", "otro")
 
-    // Áreas que puede mandar la APP (textos de la UI)
     private val AREAS_APP = setOf(
         "TI",
+        "Desarollador",   // igual que en la app
+        "Analista",
+        "Administracion",
+        "Otra área",
         "Ventas / Comercial",
         "Finanzas",
         "RRHH / Personas",
         "Diseño / UX",
-        "Operaciones / Logística",
-        "Otra área"
+        "Operaciones / Logística"
     )
 
-    // Códigos antiguos
     private val AREAS_CODIGO = setOf("tec", "soft", "mix", "_")
 
     val IDIOMAS = setOf("es", "en", "pt", "fr", "de")
 
     fun validarNivelExperiencia(nivel: String?): String? {
         if (nivel == null) return null
-
         val ok = nivel in NIVELES_APP || nivel in NIVELES_CODIGO
         return if (ok) null else "nivel_experiencia_invalido"
     }
 
     fun validarArea(area: String?): String? {
         if (area == null) return null
-
         val ok = area in AREAS_APP || area in AREAS_CODIGO
         return if (ok) null else "area_invalida"
     }
 
     fun validarPais(pais: String?): String? {
         if (pais == null) return null
-        // ISO 3166-1 alpha-2 (2 letras mayúsculas)
-        return if (pais.matches(Regex("^[A-Z]{2}$"))) null else "pais_invalido"
+        val upper = pais.uppercase()
+        return if (upper.matches(Regex("^[A-Z]{2}$"))) null else "pais_invalido"
     }
 
     fun validarIdioma(idioma: String?): String? {
@@ -120,7 +119,6 @@ object Validaciones {
         return if (idioma in IDIOMAS) null else "idioma_invalido"
     }
 }
-
 
 // ---------- Helper ----------
 private fun ApplicationCall.userIdFromJwt(): UUID {
@@ -138,13 +136,12 @@ fun Route.meRoutes(
     authenticate("auth-jwt") {
         route("/me") {
 
-            // GET /me → usuario + perfil (si existe)
+            // GET /me
             get {
                 val uid = call.userIdFromJwt()
                 val u = users.findById(uid)
                     ?: return@get call.respond(HttpStatusCode.NotFound, ErrorRes("user_not_found"))
 
-                // ✅ usa el método real del repo
                 val p = profiles.findByUser(uid)
                 val obj = objetivos.findByUser(uid)
 
@@ -170,14 +167,13 @@ fun Route.meRoutes(
                 )
             }
 
-            // PUT /me → actualizar nombre/idioma (parcial)
+            // PUT /me
             put {
                 val uid = call.userIdFromJwt()
                 val req = runCatching { call.receive<PutMeReq>() }.getOrElse {
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("invalid_json"))
                 }
 
-                // Validar idioma si está presente
                 val errorIdioma = Validaciones.validarIdioma(req.idioma)
                 if (errorIdioma != null) {
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorIdioma))
@@ -187,11 +183,13 @@ fun Route.meRoutes(
                 if (req.nombre != null) touched += users.updateNombre(uid, req.nombre)
                 if (req.idioma  != null) touched += users.updateIdioma(uid, req.idioma)
 
-                if (touched == 0) return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("nothing_to_update"))
+                if (touched == 0) {
+                    return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("nothing_to_update"))
+                }
                 call.respond(OkRes())
             }
 
-            // GET /me/perfil → solo perfil
+            // GET /me/perfil
             get("/perfil") {
                 val uid = call.userIdFromJwt()
                 val p = profiles.findByUser(uid)
@@ -208,35 +206,39 @@ fun Route.meRoutes(
                 )
             }
 
-            // PUT /me/perfil → upsert de perfil_usuario
+            // PUT /me/perfil
             put("/perfil") {
                 val uid = call.userIdFromJwt()
                 val req = runCatching { call.receive<PutPerfilReq>() }.getOrElse {
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("invalid_json"))
                 }
 
-                // Validar campos antes de guardar
+                // normalizamos país a mayúsculas
+                val paisNormalizado = req.pais?.uppercase()
+
                 val errorNivel = Validaciones.validarNivelExperiencia(req.nivelExperiencia)
                 if (errorNivel != null) {
+                    application.log.error("PUT /me/perfil → $errorNivel (nivel='${req.nivelExperiencia}')")
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorNivel))
                 }
 
                 val errorArea = Validaciones.validarArea(req.area)
                 if (errorArea != null) {
+                    application.log.error("PUT /me/perfil → $errorArea (area='${req.area}')")
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorArea))
                 }
 
-                val errorPais = Validaciones.validarPais(req.pais)
+                val errorPais = Validaciones.validarPais(paisNormalizado)
                 if (errorPais != null) {
+                    application.log.error("PUT /me/perfil → $errorPais (pais='${req.pais}')")
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes(errorPais))
                 }
 
-                // Upsert: crea o actualiza en una sola operación
                 profiles.upsert(
                     userId             = uid,
                     nivelExperiencia   = req.nivelExperiencia,
                     area               = req.area,
-                    pais               = req.pais,
+                    pais               = paisNormalizado,
                     notaObjetivos      = req.notaObjetivos,
                     flagsAccesibilidad = req.flagsAccesibilidad
                 )
@@ -244,7 +246,7 @@ fun Route.meRoutes(
                 call.respond(OkRes())
             }
 
-            // GET /me/objetivo → obtener objetivo de carrera
+            // GET /me/objetivo
             get("/objetivo") {
                 val uid = call.userIdFromJwt()
                 val obj = objetivos.findByUser(uid)
@@ -259,19 +261,17 @@ fun Route.meRoutes(
                 )
             }
 
-            // PUT /me/objetivo → crear/actualizar objetivo de carrera
+            // PUT /me/objetivo
             put("/objetivo") {
                 val uid = call.userIdFromJwt()
                 val req = runCatching { call.receive<PutObjetivoReq>() }.getOrElse {
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("invalid_json"))
                 }
 
-                // Validar que nombreCargo no esté vacío
                 if (req.nombreCargo.isBlank()) {
                     return@put call.respond(HttpStatusCode.BadRequest, ErrorRes("nombre_cargo_requerido"))
                 }
 
-                // Crear o actualizar objetivo
                 val objetivoId = objetivos.upsert(uid, req.nombreCargo, req.sector)
 
                 call.respond(
@@ -283,7 +283,6 @@ fun Route.meRoutes(
                 )
             }
 
-            // DELETE /me/objetivo → eliminar (desactivar) objetivo de carrera
             delete("/objetivo") {
                 val uid = call.userIdFromJwt()
                 val deleted = objetivos.delete(uid)
