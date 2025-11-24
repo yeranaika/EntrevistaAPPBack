@@ -206,7 +206,7 @@ CREATE TABLE prueba (
     tipo_prueba VARCHAR(8)  NOT NULL DEFAULT 'aprendiz',
     area        VARCHAR(80),
     nivel       VARCHAR(3),
-    metadata    VARCHAR(120),
+    metadata    VARCHAR(300),
     activo      BOOLEAN NOT NULL DEFAULT TRUE
 );
 
