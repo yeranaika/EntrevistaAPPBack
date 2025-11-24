@@ -69,11 +69,10 @@ fun Route.passwordRecoveryRoutes(
 
             // Enviar el código por correo
             try {
-                // Ajusta a la firma real de tu EmailService
-                // Supongamos: fun sendRecoveryCode(toEmail: String, code: String)
+                // Firma esperada: sendRecoveryCode(toEmail: String, code: String)
                 emailService.sendRecoveryCode(
-                    resetInfo.code,
-                    correo
+                    correo,          // ← primero el correo
+                    resetInfo.code   // ← luego el código
                 )
 
                 call.application.environment.log.info(
@@ -171,10 +170,12 @@ fun Route.passwordRecoveryRoutes(
             val updated = newSuspendedTransaction(db = db) {
                 UsuarioTable.update({ UsuarioTable.usuarioId eq usuarioId }) { st ->
                     st[UsuarioTable.contrasenaHash] = hashedPassword
-                    // Si tienes columna updatedAt la pones aquí, si no, lo dejamos así
-                    // st[UsuarioTable.updatedAt] = Instant.now()
                 }
             }
+
+            call.application.environment.log.info(
+                "Reset-password: updated=$updated para usuario=$usuarioId / correo=$correo"
+            )
 
             if (updated == 0) {
                 return@post call.respond(
