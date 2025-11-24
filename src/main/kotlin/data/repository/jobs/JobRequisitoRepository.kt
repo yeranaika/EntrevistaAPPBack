@@ -14,6 +14,8 @@ class JobRequisitoRepository {
         items: List<JobRequirementItem>
     ) {
         transaction {
+            // Por ahora solo insertamos (no borramos anteriores).
+
             items.forEach { item ->
                 // Técnicos
                 item.requisitosTecnicos.forEach { req: String ->

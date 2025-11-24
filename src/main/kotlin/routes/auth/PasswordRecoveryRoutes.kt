@@ -20,7 +20,8 @@ import services.EmailService
 fun Route.passwordRecoveryRoutes(
     passwordResetRepo: PasswordResetRepository,
     emailService: EmailService,
-    db: Database
+    db: Database,
+    oauthRepo: data.repository.usuarios.UsuariosOAuthRepository
 ) {
     // ============================
     // POST /auth/forgot-password
@@ -52,6 +53,16 @@ fun Route.passwordRecoveryRoutes(
                     HttpStatusCode.BadRequest,
                     ForgotPasswordRes(
                         message = "No existe ningún usuario registrado con ese correo"
+                    )
+                )
+            }
+
+            // ❌ Si el usuario está registrado con Google, no puede usar reset de contraseña
+            if (oauthRepo.isGoogleUser(resetInfo.userId)) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    ForgotPasswordRes(
+                        message = "Esta cuenta fue creada con Google. Por favor, inicia sesión con Google."
                     )
                 )
             }
@@ -137,6 +148,16 @@ fun Route.passwordRecoveryRoutes(
                     HttpStatusCode.BadRequest,
                     ResetPasswordRes(
                         message = "Código inválido o expirado"
+                    )
+                )
+            }
+
+            // ❌ Doble verificación: si el usuario está registrado con Google, no puede cambiar contraseña
+            if (oauthRepo.isGoogleUser(usuarioId)) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    ResetPasswordRes(
+                        message = "Esta cuenta fue creada con Google. Por favor, inicia sesión con Google."
                     )
                 )
             }
