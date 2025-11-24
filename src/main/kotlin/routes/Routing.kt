@@ -19,7 +19,6 @@ import data.repository.usuarios.RecordatorioPreferenciaRepository
 import data.repository.jobs.JobRequisitoRepository   // 👈 NUEVO
 import data.repository.requisitos_cargo.SkillsCargoRepository
 
-
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -71,9 +70,8 @@ import services.JSearchService
 import services.InterviewQuestionService
 import routes.jobs.jobsRoutes
 import routes.jobs.jobsGeneratorRoutes
-import routes.jobs.jobsRequirementsRoutes
-import routes.jobs.jobsRequirementsBulkRoutes        // 👈 NUEVO
-
+import routes.jobs.jobsRequirementsRoutes      // requisitos por cargo (usado por el onboarding)
+import routes.jobs.jobsRequirementsBulkRoutes  // requisitos en bulk
 import routes.cuestionario.prueba.pruebaFrontRoutes
 
 fun Application.configureRouting(
@@ -95,7 +93,7 @@ fun Application.configureRouting(
     val planRepo = PlanPracticaRepository()
     val preguntaNivelacionRepo = PreguntaNivelacionRepository()
     val testNivelacionRepo = TestNivelacionRepository()
-    val jobRequisitoRepo = JobRequisitoRepository()      // 👈 NUEVO
+    val jobRequisitoRepo = JobRequisitoRepository()
     val skillsCargoRepository = SkillsCargoRepository()
 
     // El contexto JWT debe haber sido cargado por configureSecurity()
@@ -203,6 +201,7 @@ fun Application.configureRouting(
         // Sesiones de entrevista tipo chat
         sesionesRoutes()
 
+        // Front de pruebas (si lo usas desde web / app)
         pruebaFrontRoutes()
 
         // Admin: crear pruebas
@@ -231,7 +230,7 @@ fun Application.configureRouting(
             interviewQuestionService = interviewQuestionService
         )
 
-        // Requisitos para un solo cargo
+        // Requisitos por cargo (usado por el onboarding)
         jobsRequirementsRoutes(
             jSearchService = jSearchService,
             jobRequisitoRepository = jobRequisitoRepo
@@ -246,7 +245,7 @@ fun Application.configureRouting(
         // Plan de práctica
         planPracticaRoutes(planRepo, profiles, objetivos, testNivelacionRepo)
 
-
+        // Skills por cargo
         jobsSkillsRoutes(skillsCargoRepository)
 
         // Tests de nivelación

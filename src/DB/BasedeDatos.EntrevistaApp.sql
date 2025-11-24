@@ -134,6 +134,7 @@ CREATE TABLE plan_practica_paso (
     CONSTRAINT uq_plan_paso_orden UNIQUE (plan_id, orden)
 );
 
+
 CREATE TABLE recordatorio_preferencia (
     usuario_id UUID PRIMARY KEY REFERENCES usuario(usuario_id) ON DELETE CASCADE,
     dias_semana VARCHAR(50) NOT NULL,
