@@ -1,35 +1,20 @@
 package data.tables.jobs
 
 import org.jetbrains.exposed.sql.Table
+import java.util.UUID
 
-/**
- * Tabla que guarda los requisitos consolidados por cargo.
- *
- * CREATE TABLE job_requisito (
- *   job_requisito_id UUID PRIMARY KEY,
- *   area             VARCHAR(80),
- *   cargo            VARCHAR(120) NOT NULL,
- *   nivel_inferido   VARCHAR(10)  NOT NULL,
- *   tipo             VARCHAR(20)  NOT NULL, -- "tecnico" / "blando"
- *   texto            TEXT         NOT NULL,
- *   fuente_titulo    VARCHAR(255),
- *   empresa          VARCHAR(255),
- *   ubicacion        VARCHAR(255),
- *   url_aviso        VARCHAR(512)
- * );
- */
 object JobRequisitoTable : Table("job_requisito") {
-
-    val id = uuid("job_requisito_id")
+    val id = uuid("job_requisito_id").clientDefault { UUID.randomUUID() }
     val area = varchar("area", length = 80).nullable()
     val cargo = varchar("cargo", length = 120)
-    val nivelInferido = varchar("nivel_inferido", length = 10)
-    val tipo = varchar("tipo", length = 20)          // "tecnico" / "blando"
+    val nivelInferido = varchar("nivel_inferido", length = 10).nullable()
+    val tipo = varchar("tipo", length = 20)      // "tecnico" | "blando"
     val texto = text("texto")
-    val fuenteTitulo = varchar("fuente_titulo", length = 255).nullable()
-    val empresa = varchar("empresa", length = 255).nullable()
-    val ubicacion = varchar("ubicacion", length = 255).nullable()
-    val urlAviso = varchar("url_aviso", length = 512).nullable()
-
+    val fuenteTitulo = text("fuente_titulo").nullable()
+    val empresa = varchar("empresa", 200).nullable()
+    val ubicacion = varchar("ubicacion", 200).nullable()
+    val urlAviso = text("url_aviso").nullable()
+    // si ya usas un tipo de fecha distinto, copia el que uses en otras tablas
+    // val creadoEn = datetime("creado_en")
     override val primaryKey = PrimaryKey(id)
 }

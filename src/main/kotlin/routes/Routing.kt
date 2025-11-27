@@ -16,7 +16,7 @@ import data.repository.cuestionario.PlanPracticaRepository
 import data.repository.nivelacion.PreguntaNivelacionRepository
 import data.repository.nivelacion.TestNivelacionRepository
 import data.repository.usuarios.RecordatorioPreferenciaRepository
-import data.repository.jobs.JobRequisitoRepository   // 👈 NUEVO
+import data.repository.jobs.JobRequisitoRepository
 import data.repository.requisitos_cargo.SkillsCargoRepository
 
 import io.ktor.server.application.*
@@ -58,7 +58,7 @@ import security.billing.GooglePlayBillingService
 import services.EmailService
 import org.jetbrains.exposed.sql.Database
 
-// 👉 Cliente HTTP para servicios externos
+// Cliente HTTP para servicios externos
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -70,9 +70,13 @@ import services.JSearchService
 import services.InterviewQuestionService
 import routes.jobs.jobsRoutes
 import routes.jobs.jobsGeneratorRoutes
-import routes.jobs.jobsRequirementsRoutes      // requisitos por cargo (usado por el onboarding)
-import routes.jobs.jobsRequirementsBulkRoutes  // requisitos en bulk
+import routes.jobs.jobsRequirementsRoutes
+import routes.jobs.jobsRequirementsBulkRoutes
 import routes.cuestionario.prueba.pruebaFrontRoutes
+
+
+import data.repository.admin.InformeGestionRepository
+import routes.admin.informeGestionRoutes
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -95,8 +99,9 @@ fun Application.configureRouting(
     val testNivelacionRepo = TestNivelacionRepository()
     val jobRequisitoRepo = JobRequisitoRepository()
     val skillsCargoRepository = SkillsCargoRepository()
+    val informeRepo = InformeGestionRepository()
 
-    // El contexto JWT debe haber sido cargado por configureSecurity()
+    // Contexto JWT
     val ctx: AuthCtx = if (attributes.contains(AuthCtxKey)) {
         attributes[AuthCtxKey]
     } else {
@@ -105,15 +110,11 @@ fun Application.configureRouting(
         )
     }
 
-    // Config general de la app (ya la usas para Billing)
     val s = settings()
 
-    // 👉 Repositorio OAuth para Google
     val usuariosOAuthRepository = UsuariosOAuthRepositoryImpl()
-
     val googleTokenVerifier = GoogleTokenVerifier(s.googleClientId)
 
-    // Servicio de Billing (Google Play) usando los repos ya creados
     val billingService = GooglePlayBillingService(
         userRepo = users,
         suscripcionRepo = suscripcionRepo,
@@ -122,9 +123,7 @@ fun Application.configureRouting(
         useMock = s.googlePlayBillingMock
     )
 
-    // ============================
-    //   CLIENTE HTTP COMPARTIDO
-    // ============================
+    // HTTP client compartido
     val httpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(
@@ -138,9 +137,7 @@ fun Application.configureRouting(
         expectSuccess = true
     }
 
-    // ============================
-    //   SERVICIOS EXTERNOS
-    // ============================
+    // Servicios externos
     val jSearchService = JSearchService(
         httpClient = httpClient,
         apiKey = s.jSearchApiKey,
@@ -156,25 +153,25 @@ fun Application.configureRouting(
         // Healthcheck
         get("/health") { call.respondText("OK") }
 
-        // Auth (register/login/refresh/reset)
+        // Auth
         authRoutes(ctx.issuer, ctx.audience, ctx.algorithm)
 
-        // 🔹 Google OAuth2 (web + móvil)
+        // Google OAuth2
         googleAuthRoutes(
             repo = usuariosOAuthRepository,
             verifier = googleTokenVerifier
         )
 
-        // Billing (Google Play)
+        // Billing
         billingRoutes(
             billingService = billingService,
             suscripcionRepo = suscripcionRepo
         )
 
-        // Password Recovery (forgot-password, reset-password)
+        // Password Recovery
         passwordRecoveryRoutes(recoveryCodeRepo, emailService, db, usuariosOAuthRepository)
 
-        // /me y /me/perfil (GET/PUT)
+        // /me y /me/perfil
         meRoutes(users, profiles, objetivos)
 
         // Consentimientos
@@ -189,8 +186,11 @@ fun Application.configureRouting(
         // Intentos de prueba
         intentosRoutes()
 
-        // Rutas de cuestionario (pruebas, asociar preguntas, responder)
+        // Rutas de cuestionario
         pruebaRoutes()
+
+        // Front de pruebas (nivelación/práctica para app/web)
+        pruebaFrontRoutes()
 
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
@@ -201,42 +201,34 @@ fun Application.configureRouting(
         // Sesiones de entrevista tipo chat
         sesionesRoutes()
 
-        // Front de pruebas (si lo usas desde web / app)
-        pruebaFrontRoutes()
-
         // Admin: crear pruebas
         AdminPruebaRoutes(pruebaRepo)
 
-        // Admin: crear usuarios (incluye admins)
+        // Admin: crear usuarios
         AdminUserCreateRoutes(adminUserRepo)
 
-        // Admin: gestión completa de usuarios (listar, actualizar rol, eliminar)
+        // Admin: gestión de usuarios
         adminRoutes(adminUserRepo)
 
-        // Eliminar cuenta (derecho al olvido)
+        // Eliminar cuenta
         deleteAccountRoute(users)
 
-        // ============================
-        //   RUTAS DE JOBS (JSEARCH + OPENAI)
-        // ============================
+        // Rutas jobs (JSearch + OpenAI)
         jobsRoutes(
             jSearchService = jSearchService,
             interviewQuestionService = interviewQuestionService
         )
 
-        // Ruta independiente para generar y guardar preguntas en la tabla pregunta
         jobsGeneratorRoutes(
             jSearchService = jSearchService,
             interviewQuestionService = interviewQuestionService
         )
 
-        // Requisitos por cargo (usado por el onboarding)
         jobsRequirementsRoutes(
             jSearchService = jSearchService,
             jobRequisitoRepository = jobRequisitoRepo
         )
 
-        // Requisitos en bulk para varios cargos a la vez
         jobsRequirementsBulkRoutes(
             jSearchService = jSearchService,
             jobRequisitoRepository = jobRequisitoRepo
@@ -248,17 +240,22 @@ fun Application.configureRouting(
         // Skills por cargo
         jobsSkillsRoutes(skillsCargoRepository)
 
-        // Tests de nivelación
-        testNivelacionRoutes(preguntaNivelacionRepo, testNivelacionRepo, profiles, objetivos, users)
+        // ✅ Tests de nivelación (solo 2 parámetros, como está declarada la función)
+        testNivelacionRoutes(
+            preguntaRepo = preguntaNivelacionRepo,
+            testRepo = testNivelacionRepo
+        )
 
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
+
+        informeGestionRoutes(informeRepo)
 
         // Historial unificado (Tests + Entrevistas)
         val sesionRepo = data.repository.sesiones.SesionEntrevistaRepository()
         historialRoutes(sesionRepo, testNivelacionRepo)
 
-        // Onboarding (captura de área, nivel, objetivo)
+        // Onboarding
         onboardingRoutes(profiles, objetivos)
     }
 }

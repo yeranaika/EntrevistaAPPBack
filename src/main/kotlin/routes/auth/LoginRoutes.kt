@@ -8,8 +8,12 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import security.issueAccessToken
-import security.verifyPassword
 import security.generateRefreshToken
+import security.verifyPassword   // 👈 usa tu helper Argon2 (y fallback si lo dejaste así)
+
+// data class LoginReq(val email: String, val password: String)
+// data class LoginOk(val accessToken: String, val refreshToken: String)
+// data class ErrorRes(val error: String)
 
 fun Route.loginRoutes(
     issuer: String,
@@ -19,24 +23,35 @@ fun Route.loginRoutes(
     post("/login") {
         try {
             val req = call.receive<LoginReq>()
-            val email = req.email.trim().lowercase()
 
-            call.application.environment.log.info("Login attempt for email: $email")
+            val email = req.email.trim().lowercase()
+            val password = req.password   // NO lo toques más
+
+            val log = call.application.environment.log
+            log.info("Login attempt for email: $email")
 
             val user = AuthDeps.users.findByEmail(email)
             if (user == null) {
-                call.application.environment.log.warn("User not found for email: $email")
-                return@post call.respond(HttpStatusCode.Unauthorized, ErrorRes("bad_credentials"))
+                log.warn("User not found for email: $email")
+                return@post call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorRes("bad_credentials")
+                )
             }
 
-            call.application.environment.log.info("User found: ${user.id}, checking password...")
+            log.info("User found: ${user.id}, checking password...")
 
-            if (!verifyPassword(req.password, user.hash)) {
-                call.application.environment.log.warn("Password verification failed for user: ${user.id}")
-                return@post call.respond(HttpStatusCode.Unauthorized, ErrorRes("bad_credentials"))
+            val verified = verifyPassword(password, user.hash)   // 👈 AQUÍ el Argon2
+
+            if (!verified) {
+                log.warn("Password verification failed for user: ${user.id}")
+                return@post call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorRes("bad_credentials")
+                )
             }
 
-            call.application.environment.log.info("Password verified successfully for user: ${user.id}")
+            log.info("Password verified successfully for user: ${user.id}")
 
             val access = issueAccessToken(
                 subject = user.id.toString(),
@@ -44,13 +59,18 @@ fun Route.loginRoutes(
                 audience = audience,
                 algorithm = algorithm,
                 ttlSeconds = 15 * 60,
-                extraClaims = mapOf("role" to user.rol) // ← IMPORTANTE: claim 'role'
+                extraClaims = mapOf("role" to user.rol)
             )
 
             val refreshPlain = generateRefreshToken()
             issueNewRefresh(AuthDeps.refreshRepo, refreshPlain, user.id)
 
-            call.respond(LoginOk(accessToken = access, refreshToken = refreshPlain))
+            call.respond(
+                LoginOk(
+                    accessToken = access,
+                    refreshToken = refreshPlain
+                )
+            )
         } catch (_: ContentTransformationException) {
             call.respond(HttpStatusCode.BadRequest, ErrorRes("invalid_json"))
         } catch (t: Throwable) {
