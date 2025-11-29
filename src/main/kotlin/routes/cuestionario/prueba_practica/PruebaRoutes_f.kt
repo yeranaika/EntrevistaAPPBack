@@ -1,4 +1,4 @@
-package routes.cuestionario.prueba
+package routes.cuestionario.prueba_practica
 
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -92,7 +92,7 @@ data class CrearPruebaNivelacionRes(
  */
 fun Route.pruebaFrontRoutes() {
 
-    post("/api/nivelacion/prueba/front") {
+    post("/api/prueba-practica/front") {
         val req = call.receive<CrearPruebaNivelacionReq>()
 
         val nivelNormalizado = req.nivel.trim().lowercase()

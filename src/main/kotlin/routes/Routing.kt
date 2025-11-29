@@ -37,7 +37,7 @@ import routes.admin.AdminUserCreateRoutes
 import routes.admin.adminRoutes
 import routes.admin.adminPreguntaNivelacionRoutes
 import com.example.routes.intentosRoutes
-import routes.cuestionario.prueba.pruebaRoutes
+import routes.cuestionario.prueba_practica.pruebaRoutes
 import routes.admin.adminPlanRoutes
 import routes.billing.billingRoutes
 import routes.usuario.recordatorios.recordatorioRoutes
@@ -72,8 +72,8 @@ import routes.jobs.jobsRoutes
 import routes.jobs.jobsGeneratorRoutes
 import routes.jobs.jobsRequirementsRoutes
 import routes.jobs.jobsRequirementsBulkRoutes
-import routes.cuestionario.prueba.pruebaFrontRoutes
-
+import routes.cuestionario.prueba_practica.pruebaFrontRoutes
+import routes.cuestionario.respuesta_practica.pruebaPracticaRespuestaRoutes
 
 import data.repository.admin.InformeGestionRepository
 import routes.admin.informeGestionRoutes
