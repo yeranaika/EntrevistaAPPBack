@@ -5,6 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -13,20 +14,28 @@ import services.InterviewQuestionService
 import services.JobNormalizedDto
 import services.MixedGeneratedQuestionDto
 
+// ===================== Constantes =====================
+
+private const val QUESTIONS_PER_JOB = 3          // cuántas preguntas devolvemos al cliente por cada meta_dato
+private const val BOOTSTRAP_TOTAL = 30          // total esperado en bootstrap
+private const val BOOTSTRAP_PER_LEVEL = 10      // 10 jr, 10 mid, 10 sr
+private const val MAX_JOBS = 1                  // cuántos avisos tomamos desde JSearch por meta_dato
+
 // ===================== DTOs =====================
 
 @Serializable
 data class GenerateJobsRequest(
-    val q: String,
-    val country: String? = "cl",
-    val n: Int = 3,
-    val preguntasPorAviso: Int = 3
+    @SerialName("meta_dato")
+    val metaDato: String,
+    val country: String? = "cl"
 )
 
 @Serializable
 data class JobWithSavedQuestionsDto(
     val job: JobNormalizedDto,
-    val preguntas: List<String> // solo devolvemos los enunciados al cliente
+    val preguntas: List<String>,      // enunciados devueltos al cliente
+    val generadoPorIA: Boolean,       // true si se generaron nuevas preguntas
+    val motivo: String? = null        // explicación del flujo
 )
 
 @Serializable
@@ -52,7 +61,7 @@ data class PreguntaDto(
 // ===================== Helpers =====================
 
 /**
- * Determina el nivel (jr / medio / sr) en base al título del aviso.
+ * Determina el nivel (jr / mid / sr) en base al título del aviso (fallback).
  */
 private fun inferNivelFromTitle(titulo: String): String {
     val t = titulo.lowercase()
@@ -64,49 +73,103 @@ private fun inferNivelFromTitle(titulo: String): String {
         else -> "jr"
     }
 }
+
+/**
+ * Dado un meta_cargo (metaDato), determina el sector usando los valores del MVP.
+ *
+ * Si no matchea nada, sector = "Otra área".
+ */
+private fun inferSectorFromMetaCargo(metaCargo: String): String {
+    val t = metaCargo.lowercase()
+
+    return when {
+        // Desarrollador
+        "desarrollador backend" in t || ("developer" in t && "backend" in t) ->
+            "Desarrollador"
+        "desarrollador frontend" in t || ("developer" in t && "frontend" in t) ->
+            "Desarrollador"
+        "desarrollador fullstack" in t || ("developer" in t && ("fullstack" in t || "full stack" in t)) ->
+            "Desarrollador"
+        "desarrollador android" in t || ("developer" in t && "android" in t) ->
+            "Desarrollador"
+        "qa automation" in t ->
+            "Desarrollador"
+
+        // Analista TI
+        "soporte ti" in t || "helpdesk" in t || "help desk" in t ->
+            "Analista TI"
+        "devops" in t ->
+            "Analista TI"
+        "sysadmin" in t || "administrador de sistemas" in t ->
+            "Analista TI"
+
+        // Analista
+        "analista de datos" in t || "data analyst" in t ->
+            "Analista"
+        "analista de negocios" in t || "business analyst" in t ->
+            "Analista"
+        "analista qa" in t ->
+            "Analista"
+        "analista funcional" in t ->
+            "Analista"
+
+        // Administración
+        "asistente administrativo" in t || "administrativo" in t ->
+            "Administracion"
+        "analista contable" in t || "contador" in t ->
+            "Administracion"
+        "jefe de administración" in t || "jefe de administracion" in t ->
+            "Administracion"
+
+        else -> "Otra área"
+    }
+}
+
 /**
  * Convierte lista de pistas (List<String>) a JSON string seguro para insertar.
- * Ej: ["a", "b"] -> ["a", "b"]
  */
 private fun buildPistasJson(pistas: List<String>): String {
     if (pistas.isEmpty()) return "[]"
     val safeHints = pistas.map { it.replace("\"", "\\\"") }
-    val joined = safeHints.joinToString(
+    return safeHints.joinToString(
         separator = "\", \"",
         prefix = "[\"",
         postfix = "\"]"
     )
-    return joined
 }
 
 /**
- * Construye el JSON de config_respuesta para una pregunta mixta.
+ * Construye el JSON de config_respuesta SIN incluir el campo "tipo".
  */
 private fun buildConfigRespuestaJson(q: MixedGeneratedQuestionDto): String {
     return if (q.tipo == "seleccion_unica") {
-        // Cerrada con alternativas
+        // Pregunta cerrada con alternativas
         val safeOpciones = q.opciones.map { opt ->
             val safeTexto = opt.texto.replace("\"", "\\\"")
             """{"id":"${opt.id}","texto":"$safeTexto"}"""
         }
-        val opcionesJoined = safeOpciones.joinToString(separator = ",", prefix = "[", postfix = "]")
+
+        val opcionesJoined = safeOpciones.joinToString(
+            separator = ",",
+            prefix = "[",
+            postfix = "]"
+        )
+
         val correct = q.respuesta_correcta ?: ""
 
         """
         {
-          "tipo": "seleccion_unica",
           "opciones": $opcionesJoined,
           "respuesta_correcta": "$correct"
         }
         """.trimIndent().replace("\n", "")
     } else {
-        // Abierta
+        // Pregunta abierta
         val min = q.min_caracteres ?: 20
         val max = q.max_caracteres ?: 300
 
         """
         {
-          "tipo": "abierta_texto",
           "min_caracteres": $min,
           "max_caracteres": $max
         }
@@ -126,19 +189,11 @@ fun Route.jobsGeneratorRoutes(
         /**
          * POST /jobs/generate-and-save
          *
-         * Body:
+         * Body esperado:
          * {
-         *   "q": "desarrollador backend",
-         *   "country": "cl",
-         *   "n": 2,
-         *   "preguntasPorAviso": 3
+         *   "meta_dato": "Desarrollador Android",
+         *   "country": "cl"
          * }
-         *
-         * Flujo:
-         *  - Busca avisos en la API de empleo (JSearch).
-         *  - Genera preguntas MIXTAS (cerradas + abiertas) con OpenAI por cada aviso.
-         *  - Inserta cada pregunta en la tabla `pregunta`.
-         *  - Devuelve resumen + detalle (job + enunciados de preguntas).
          */
         post("/generate-and-save") {
 
@@ -146,41 +201,227 @@ fun Route.jobsGeneratorRoutes(
                 call.receive<GenerateJobsRequest>()
             } catch (e: Exception) {
                 e.printStackTrace()
-                return@post call.respond(
+                call.respond(
                     HttpStatusCode.BadRequest,
                     mapOf(
                         "error" to "Body inválido",
-                        "example" to """{ "q": "desarrollador backend", "country": "cl", "n": 2 }"""
+                        "example" to """{ "meta_dato": "Desarrollador Android", "country": "cl" }"""
                     )
                 )
+                return@post
             }
 
-            if (req.q.isBlank()) {
-                return@post call.respond(
+            if (req.metaDato.isBlank()) {
+                call.respond(
                     HttpStatusCode.BadRequest,
-                    mapOf("error" to "El campo q (query) es obligatorio")
+                    mapOf("error" to "El campo meta_dato es obligatorio")
                 )
+                return@post
             }
 
-            runCatching {
+            try {
+                // Usamos metaDato como query hacia JSearch
                 val jobs = jSearchService.searchJobs(
-                    query = req.q,
+                    query = req.metaDato,
                     country = req.country,
                     page = 1
                 )
 
-                println("📌 Encontrados ${jobs.size} empleos para '${req.q}'")
+                println("📌 Encontrados ${jobs.size} empleos para meta_dato='${req.metaDato}'")
 
-                val subset = jobs.take(req.n)
+                val subset = jobs.take(MAX_JOBS)
                 var totalGuardadas = 0
 
                 val result = mutableListOf<JobWithSavedQuestionsDto>()
 
                 for (job in subset) {
-                    // NUEVO: preguntas mixtas (cerradas + abiertas)
+                    val nivelInferido = inferNivelFromTitle(job.titulo)
+
+                    // Ahora el meta_cargo viene del request
+                    val metaCargoInferido = req.metaDato
+                    val sectorInferido = inferSectorFromMetaCargo(metaCargoInferido)
+
+                    val safeSector = sectorInferido.replace("'", "''")
+                    val safeMetaCargo = metaCargoInferido.replace("'", "''")
+                    val safeNivelBase = nivelInferido.replace("'", "''")
+
+                    // ----------------------------------------------------------------
+                    // 0) ¿Existe ALGUNA pregunta para este (sector, meta_cargo)?
+                    //    (cualquier nivel, cualquier tipo_banco)
+                    // ----------------------------------------------------------------
+                    val existeBancoParaSectorMeta = transaction {
+                    var count = 0
+                    val sql = """
+                        SELECT COUNT(*) AS cnt
+                        FROM pregunta
+                        WHERE sector = '$safeSector'
+                        AND meta_cargo = '$safeMetaCargo'
+                        AND tipo_banco <> 'NV'
+                    """.trimIndent()
+
+                    TransactionManager.current().exec(sql) { rs ->
+                        if (rs.next()) {
+                            count = rs.getInt("cnt")
+                        }
+                    }
+                    count > 0
+                    }
+
+
+                    if (!existeBancoParaSectorMeta) {
+                        // =========================================================
+                        // Caso A: NO hay nada aún para este sector/meta_cargo
+                        //         -> Crear banco inicial:
+                        //            10 jr, 10 mid, 10 sr (total 30)
+                        // =========================================================
+                        println("🆕 No existe banco para sector=$safeSector, meta_cargo=$safeMetaCargo. Generando banco inicial (10 jr, 10 mid, 10 sr)...")
+
+                        val nivelesBootstrap = listOf("jr", "mid", "sr")
+                        val preguntasBootstrap = mutableListOf<Pair<MixedGeneratedQuestionDto, String>>()
+
+                        for (nivelTarget in nivelesBootstrap) {
+                            var acumuladasNivel = 0
+
+                            // Loop para asegurar hasta 10 por nivel (si la IA coopera)
+                            while (acumuladasNivel < BOOTSTRAP_PER_LEVEL) {
+                                val batch = interviewQuestionService.generateMixedQuestionsForJob(
+                                    job = job,
+                                    cantidad = 1 // pedimos 1 para no depender de que respete el "cantidad"
+                                )
+
+                                println("   🔧 IA nivel=$nivelTarget devolvió ${batch.size} preguntas (acumuladasNivel=$acumuladasNivel)")
+
+                                if (batch.isEmpty()) {
+                                    // Evita loop infinito si la IA empieza a devolver 0
+                                    println("   ⚠️ La IA devolvió 0 preguntas para nivel=$nivelTarget, se detiene el loop de este nivel.")
+                                    break
+                                }
+
+                                batch.forEach { q ->
+                                    preguntasBootstrap += q to nivelTarget
+                                    acumuladasNivel++
+
+                                    if (acumuladasNivel >= BOOTSTRAP_PER_LEVEL) return@forEach
+                                }
+                            }
+                        }
+
+                        println("✅ Total preguntas generadas en bootstrap para meta_cargo=$safeMetaCargo: ${preguntasBootstrap.size}")
+
+                        transaction {
+                            preguntasBootstrap.forEach { (q, nivelTarget) ->
+                                val safeTexto = q.enunciado.replace("'", "''")
+
+                                // Nivel forzado por batch (jr / mid / sr)
+                                val safeNivel = nivelTarget.replace("'", "''")
+
+                                val tipoPreguntaDb = if (q.tipo == "seleccion_unica") {
+                                    "opcion_multiple"
+                                } else {
+                                    "abierta"
+                                }
+
+                                val pistasJson = buildPistasJson(q.pistas)
+                                val configRespuestaJson = buildConfigRespuestaJson(q)
+
+                                val newId = java.util.UUID.randomUUID()
+                                val sql = """
+                                    INSERT INTO pregunta (
+                                        pregunta_id,
+                                        tipo_banco,
+                                        sector,
+                                        nivel,
+                                        meta_cargo,
+                                        tipo_pregunta,
+                                        texto,
+                                        pistas,
+                                        config_respuesta,
+                                        activa,
+                                        fecha_creacion
+                                    )
+                                    VALUES (
+                                        '$newId',
+                                        'IAJOB',
+                                        '$safeSector',
+                                        '$safeNivel',
+                                        '$safeMetaCargo',
+                                        '$tipoPreguntaDb',
+                                        '$safeTexto',
+                                        '$pistasJson'::jsonb,
+                                        '$configRespuestaJson'::jsonb,
+                                        true,
+                                        now()
+                                    )
+                                """.trimIndent()
+
+                                TransactionManager.current().exec(sql)
+                                println("💾 [Bootstrap] Insertada pregunta sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivel")
+                                totalGuardadas++
+                            }
+                        }
+
+                        // Devolvemos al cliente solo las primeras QUESTIONS_PER_JOB preguntas como ejemplo
+                        result += JobWithSavedQuestionsDto(
+                            job = job,
+                            preguntas = preguntasBootstrap
+                                .map { it.first.enunciado }
+                                .take(QUESTIONS_PER_JOB),
+                            generadoPorIA = true,
+                            motivo = "Se creó banco inicial de hasta $BOOTSTRAP_TOTAL preguntas (10 jr, 10 mid, 10 sr) para este sector y meta_cargo, porque no existían preguntas previas."
+                        )
+
+                        // Pasamos al siguiente aviso
+                        continue
+                    }
+
+                    // =========================================================
+                    // Caso B: YA hay banco para este sector/meta_cargo
+                    //         -> Intentamos reutilizar por nivel
+                    // =========================================================
+                    val preguntasExistentes: List<String> = transaction {
+                        val existing = mutableListOf<String>()
+                        val sql = """
+                            SELECT texto
+                            FROM pregunta
+                            WHERE sector = '$safeSector'
+                            AND meta_cargo = '$safeMetaCargo'
+                            AND nivel = '$safeNivelBase'
+                            AND tipo_banco <> 'NV'
+                            ORDER BY fecha_creacion DESC
+                            LIMIT $QUESTIONS_PER_JOB
+                        """.trimIndent()
+
+                        TransactionManager.current().exec(sql) { rs ->
+                            while (rs.next()) {
+                                val texto = rs.getString("texto")
+                                if (!texto.isNullOrBlank()) {
+                                    existing += texto
+                                }
+                            }
+                        }
+
+                        existing
+                    }
+
+                    if (preguntasExistentes.isNotEmpty()) {
+                        println("🔁 Reutilizando ${preguntasExistentes.size} preguntas existentes para sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivelBase")
+
+                        result += JobWithSavedQuestionsDto(
+                            job = job,
+                            preguntas = preguntasExistentes,
+                            generadoPorIA = false,
+                            motivo = "No se generaron preguntas nuevas porque ya existen preguntas para este sector, meta_cargo y nivel."
+                        )
+                        continue
+                    }
+
+                    // =========================================================
+                    // Caso C: Sí hay banco para el sector/meta_cargo,
+                    //         pero no para este nivel específico -> generamos
+                    // =========================================================
                     val preguntasGeneradas = interviewQuestionService.generateMixedQuestionsForJob(
                         job = job,
-                        cantidad = req.preguntasPorAviso
+                        cantidad = QUESTIONS_PER_JOB
                     )
 
                     println("\n🎯 Aviso: ${job.titulo} (${job.empresa ?: "Sin empresa"})")
@@ -188,22 +429,22 @@ fun Route.jobsGeneratorRoutes(
                         println("   ❓ [${idx + 1}] (${p.tipo}) ${p.enunciado}")
                     }
 
-                    // Inferimos nivel (jr / medio / sr) desde el título del aviso
-                    val nivel = inferNivelFromTitle(job.titulo)
-
                     transaction {
                         preguntasGeneradas.forEach { q ->
                             val safeTexto = q.enunciado.replace("'", "''")
-                            // sector = título del aviso (ej: "Desarrollador Backend")
-                            val safeSector = job.titulo.replace("'", "''")
-                            val rawNivel = q.nivel ?: nivel
+                            val rawNivel = q.nivel ?: nivelInferido
                             val safeNivel = when (rawNivel.lowercase()) {
                                 "medio", "intermedio", "semi", "ssr", "middle" -> "mid"
                                 "senior", "sr" -> "sr"
                                 else -> "jr"
                             }.replace("'", "''")
 
-                            // pistas: array de strings
+                            val tipoPreguntaDb = if (q.tipo == "seleccion_unica") {
+                                "opcion_multiple"
+                            } else {
+                                "abierta"
+                            }
+
                             val pistasJson = buildPistasJson(q.pistas)
                             val configRespuestaJson = buildConfigRespuestaJson(q)
 
@@ -214,41 +455,51 @@ fun Route.jobsGeneratorRoutes(
                                     tipo_banco,
                                     sector,
                                     nivel,
+                                    meta_cargo,
+                                    tipo_pregunta,
                                     texto,
                                     pistas,
-                                    config_respuesta
+                                    config_respuesta,
+                                    activa,
+                                    fecha_creacion
                                 )
                                 VALUES (
                                     '$newId',
                                     'IAJOB',
                                     '$safeSector',
                                     '$safeNivel',
+                                    '$safeMetaCargo',
+                                    '$tipoPreguntaDb',
                                     '$safeTexto',
                                     '$pistasJson'::jsonb,
-                                    '$configRespuestaJson'::jsonb
+                                    '$configRespuestaJson'::jsonb,
+                                    true,
+                                    now()
                                 )
                             """.trimIndent()
 
                             TransactionManager.current().exec(sql)
-                            println("💾 Insertada pregunta en BD: [${q.tipo}] $safeTexto (nivel=$safeNivel)")
+                            println("💾 Insertada pregunta en BD: [${q.tipo}] sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivel, texto=$safeTexto")
                             totalGuardadas++
                         }
                     }
 
                     result += JobWithSavedQuestionsDto(
                         job = job,
-                        preguntas = preguntasGeneradas.map { it.enunciado }
+                        preguntas = preguntasGeneradas.map { it.enunciado },
+                        generadoPorIA = true,
+                        motivo = "Se generaron preguntas con IA (IAJOB) para este nivel porque ya existía banco para el sector/meta_cargo, pero no para este nivel."
                     )
                 }
 
-                GenerateJobsResponse(
+                val responsePayload = GenerateJobsResponse(
                     message = "Se guardaron $totalGuardadas preguntas generadas automáticamente (IAJOB)",
                     totalEmpleosProcesados = result.size,
                     items = result
                 )
-            }.onSuccess { payload ->
-                call.respond(payload)
-            }.onFailure { e ->
+
+                call.respond(responsePayload)
+            } catch (e: Exception) {
                 e.printStackTrace()
                 call.respond(
                     HttpStatusCode.InternalServerError,
@@ -262,16 +513,9 @@ fun Route.jobsGeneratorRoutes(
 
         /**
          * GET /jobs/generated-questions
-         *
-         * Parámetros opcionales:
-         *   - nivel: jr | medio | sr
-         *   - sector: texto (busca exacto en columna sector)
-         *   - limit: cantidad máxima de preguntas (por defecto 50)
-         *
-         * Filtra solo tipo_banco = 'IAJOB'.
          */
         get("/generated-questions") {
-            val nivelFilter = call.request.queryParameters["nivel"]  // jr / medio / sr
+            val nivelFilter = call.request.queryParameters["nivel"]  // jr / mid / sr
             val sectorFilter = call.request.queryParameters["sector"]
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
 
@@ -321,8 +565,8 @@ fun Route.jobsGeneratorRoutes(
                         val sector = rs.getString("sector")
                         val nivel = rs.getString("nivel")
                         val texto = rs.getString("texto")
-                        val pistas = rs.getString("pistas")                   // JSON como string
-                        val configRespuesta = rs.getString("config_respuesta")// JSON como string
+                        val pistas = rs.getString("pistas")
+                        val configRespuesta = rs.getString("config_respuesta")
                         val activa = rs.getBoolean("activa")
                         val fechaCreacion = rs.getTimestamp("fecha_creacion")?.toInstant()?.toString() ?: ""
 

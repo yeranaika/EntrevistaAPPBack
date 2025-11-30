@@ -62,6 +62,7 @@ import org.jetbrains.exposed.sql.Database
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
@@ -134,6 +135,13 @@ fun Application.configureRouting(
                 }
             )
         }
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = 60_000   // hasta 60s para toda la request
+            connectTimeoutMillis = 10_000   // 10s para conectar
+            socketTimeoutMillis  = 60_000   // 60s sin datos en el socket
+        }
+
         expectSuccess = true
     }
 
