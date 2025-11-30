@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RespuestaPreguntaReq(
     val preguntaId: String,
-    val opcionesSeleccionadas: List<String>
+    val opcionesSeleccionadas: List<String> = emptyList(),
+    val textoLibre: String? = null
 )
 
 @Serializable
@@ -30,4 +31,19 @@ data class EnviarRespuestasRes(
     val correctas: Int,
     val puntaje: Int,
     val detalle: List<ResultadoPreguntaRes>
+)
+
+@Serializable
+data class IntentoPracticaRes(
+    val intentoId: String,
+    val pruebaId: String,
+    val fecha: String,
+    val puntaje: Int,
+    val totalPreguntas: Int,
+    val correctas: Int
+)
+
+@Serializable
+data class HistorialPracticaRes(
+    val items: List<IntentoPracticaRes>
 )

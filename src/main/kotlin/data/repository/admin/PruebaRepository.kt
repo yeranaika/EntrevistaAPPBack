@@ -20,15 +20,19 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
-import tables.cuestionario.preguntas.PreguntaTable
-import tables.cuestionario.prueba.PruebaPreguntaTable
-import tables.cuestionario.prueba.PruebaTable
+import org.jetbrains.exposed.sql.count
 import java.util.UUID
+
+import data.tables.cuestionario.preguntas.PreguntaTable
+import data.tables.cuestionario.prueba.PruebaTable
+import data.tables.cuestionario.prueba.PruebaPreguntaTable
+
 
 class PruebaRepository(
     private val db: Database,
     private val json: Json = Json { ignoreUnknownKeys = true }
 ) {
+
     data class ListParams(
         val activo: Boolean? = null,
         val nivel: Nivel? = null,
@@ -44,9 +48,9 @@ class PruebaRepository(
         PruebaTable.insert { st ->
             st[PruebaTable.id] = newId
             st[PruebaTable.tipoPrueba] = req.tipoPrueba
-            st[PruebaTable.area] = req.area?.name  // Convertir enum a string
-            st[PruebaTable.nivel] = req.nivel?.name  // Convertir enum a string
-            st[PruebaTable.metadata] = req.metadata?.let { json.encodeToString(it) }  // Convertir Map a JSON
+            st[PruebaTable.area] = req.area?.name
+            st[PruebaTable.nivel] = req.nivel?.name
+            st[PruebaTable.metadata] = req.metadata?.let { json.encodeToString(it) }
             st[PruebaTable.activo] = true
         }
 
@@ -58,48 +62,50 @@ class PruebaRepository(
             .toPruebaRes(json)
     }
 
-    suspend fun getPruebaConPreguntas(pruebaId: UUID): PruebaCompletaRes? = newSuspendedTransaction(db = db) {
-        // Obtener los datos de la prueba
-        val pruebaRow = PruebaTable
-            .selectAll()
-            .where { PruebaTable.id eq pruebaId }
-            .limit(1)
-            .singleOrNull()
-            ?: return@newSuspendedTransaction null
+    suspend fun getPruebaConPreguntas(pruebaId: UUID): PruebaCompletaRes? =
+        newSuspendedTransaction(db = db) {
+            val pruebaRow = PruebaTable
+                .selectAll()
+                .where { PruebaTable.id eq pruebaId }
+                .limit(1)
+                .singleOrNull()
+                ?: return@newSuspendedTransaction null
 
-        // Obtener las preguntas asociadas con JOIN
-        val preguntas = PruebaPreguntaTable
-            .join(
-                otherTable = PreguntaTable,
-                joinType = JoinType.INNER,
-                additionalConstraint = { PruebaPreguntaTable.preguntaId eq PreguntaTable.id }
-            )
-            .selectAll()
-            .where { PruebaPreguntaTable.pruebaId eq pruebaId }
-            .orderBy(PruebaPreguntaTable.orden to SortOrder.ASC)
-            .map { row ->
-                val opcionesJson = row[PruebaPreguntaTable.opciones]
-                val opciones = opcionesJson?.let {
-                    Json.decodeFromString<List<OpcionRespuesta>>(it)
+            val preguntas = PruebaPreguntaTable
+                .join(
+                    otherTable = PreguntaTable,
+                    joinType = JoinType.INNER,
+                    additionalConstraint = { PruebaPreguntaTable.preguntaId eq PreguntaTable.id }
+                )
+                .selectAll()
+                .where { PruebaPreguntaTable.pruebaId eq pruebaId }
+                .orderBy(PruebaPreguntaTable.orden to SortOrder.ASC)
+                .map { row ->
+                    val opcionesJson = row[PruebaPreguntaTable.opciones]
+                    val opciones = opcionesJson?.let {
+                        Json.decodeFromString<List<OpcionRespuesta>>(it)
+                    }
+
+                    PreguntaAsignadaResponse(
+                        pruebaPreguntaId = row[PruebaPreguntaTable.id].toString(),
+                        pruebaId = row[PruebaPreguntaTable.pruebaId].toString(),
+                        preguntaId = row[PruebaPreguntaTable.preguntaId].toString(),
+                        orden = row[PruebaPreguntaTable.orden],
+                        textoPregunta = row[PreguntaTable.texto],
+                        tipoPregunta = row[PreguntaTable.tipoBanco],
+                        opciones = opciones,
+                        claveCorrecta = row[PruebaPreguntaTable.claveCorrecta]
+                    )
                 }
 
-                PreguntaAsignadaResponse(
-                    pruebaPreguntaId = row[PruebaPreguntaTable.id].toString(),
-                    pruebaId = row[PruebaPreguntaTable.pruebaId].toString(),
-                    preguntaId = row[PruebaPreguntaTable.preguntaId].toString(),
-                    orden = row[PruebaPreguntaTable.orden],
-                    textoPregunta = row[PreguntaTable.texto],
-                    tipoPregunta = row[PreguntaTable.tipoBanco],
-                    opciones = opciones,
-                    claveCorrecta = row[PruebaPreguntaTable.claveCorrecta]
-                )
-            }
+            pruebaRow.toPruebaCompletaRes(json, preguntas)
+        }
 
-        pruebaRow.toPruebaCompletaRes(json, preguntas)
-    }
-
-    suspend fun update(id: UUID, req: data.models.cuestionario.ActualizarPruebaReq, adminId: String? = null): PruebaRes? = newSuspendedTransaction(db = db) {
-        // Verificar que la prueba existe
+    suspend fun update(
+        id: UUID,
+        req: data.models.cuestionario.ActualizarPruebaReq,
+        adminId: String? = null
+    ): PruebaRes? = newSuspendedTransaction(db = db) {
         val pruebaActual = PruebaTable
             .selectAll()
             .where { PruebaTable.id eq id }
@@ -107,12 +113,11 @@ class PruebaRepository(
             .singleOrNull()
             ?: return@newSuspendedTransaction null
 
-        // Preparar histórico automático si hay cambios
         val historicaActual = pruebaActual[PruebaTable.historica]?.let {
-            runCatching { json.decodeFromString<MutableMap<String, String>>(it) }.getOrNull() ?: mutableMapOf()
+            runCatching { json.decodeFromString<MutableMap<String, String>>(it) }
+                .getOrNull() ?: mutableMapOf()
         } ?: mutableMapOf()
 
-        // Registrar cambios en histórico
         val timestamp = java.time.OffsetDateTime.now().toString()
         val cambios = mutableListOf<String>()
 
@@ -120,10 +125,7 @@ class PruebaRepository(
         req.area?.let { cambios.add("area") }
         req.nivel?.let { cambios.add("nivel") }
         req.metadata?.let { cambios.add("metadata") }
-        req.activo?.let {
-            val cambio = if (it) "activada" else "desactivada"
-            cambios.add(cambio)
-        }
+        req.activo?.let { cambios.add(if (it) "activada" else "desactivada") }
 
         if (cambios.isNotEmpty()) {
             val cambioStr = cambios.joinToString(", ")
@@ -131,7 +133,6 @@ class PruebaRepository(
             historicaActual["edit_$timestamp"] = "Editado: $cambioStr$quien"
         }
 
-        // Actualizar solo los campos proporcionados
         PruebaTable.update({ PruebaTable.id eq id }) { st ->
             req.tipoPrueba?.let { st[PruebaTable.tipoPrueba] = it }
             req.area?.let { st[PruebaTable.area] = it.name }
@@ -144,7 +145,6 @@ class PruebaRepository(
             }
         }
 
-        // Retornar la prueba actualizada
         PruebaTable
             .selectAll()
             .where { PruebaTable.id eq id }
@@ -153,30 +153,30 @@ class PruebaRepository(
             .toPruebaRes(json)
     }
 
-    suspend fun list(params: ListParams): Pair<List<PruebaRes>, Long> = newSuspendedTransaction(db = db) {
-        var query = PruebaTable.selectAll()
+    suspend fun list(params: ListParams): Pair<List<PruebaRes>, Long> =
+        newSuspendedTransaction(db = db) {
+            var query = PruebaTable.selectAll()
 
-        // Aplicar filtros
-        params.activo?.let { activo ->
-            query = query.where { PruebaTable.activo eq activo }
-        }
-        params.nivel?.let { nivel ->
-            query = query.andWhere { PruebaTable.nivel eq nivel.name }
-        }
-        params.area?.let { area ->
-            query = query.andWhere { PruebaTable.area eq area.name }
-        }
-        params.tipoPrueba?.let { tipo ->
-            query = query.andWhere { PruebaTable.tipoPrueba eq tipo }
-        }
+            params.activo?.let { activo ->
+                query = query.andWhere { PruebaTable.activo eq activo }
+            }
+            params.nivel?.let { nivel ->
+                query = query.andWhere { PruebaTable.nivel eq nivel.name }
+            }
+            params.area?.let { area ->
+                query = query.andWhere { PruebaTable.area eq area.name }
+            }
+            params.tipoPrueba?.let { tipo ->
+                query = query.andWhere { PruebaTable.tipoPrueba eq tipo }
+            }
 
-        val total = query.count()
-        val items = query
-            .limit(params.size, offset = ((params.page - 1) * params.size).toLong())
-            .map { it.toPruebaRes(json) }
+            val total = query.count()
+            val items = query
+                .limit(params.size, offset = ((params.page - 1) * params.size).toLong())
+                .map { it.toPruebaRes(json) }
 
-        items to total
-    }
+            items to total
+        }
 }
 
 private fun ResultRow.toPruebaRes(json: Json) = PruebaRes(
@@ -193,7 +193,10 @@ private fun ResultRow.toPruebaRes(json: Json) = PruebaRes(
     activo = this[PruebaTable.activo]
 )
 
-private fun ResultRow.toPruebaCompletaRes(json: Json, preguntas: List<PreguntaAsignadaResponse>) = PruebaCompletaRes(
+private fun ResultRow.toPruebaCompletaRes(
+    json: Json,
+    preguntas: List<PreguntaAsignadaResponse>
+) = PruebaCompletaRes(
     pruebaId = this[PruebaTable.id].toString(),
     tipoPrueba = this[PruebaTable.tipoPrueba],
     area = this[PruebaTable.area]?.let { runCatching { AreaPrueba.valueOf(it) }.getOrNull() },
