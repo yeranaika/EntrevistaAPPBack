@@ -5,7 +5,7 @@ import data.models.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.ResultRow
-import tables.cuestionario.preguntas.PreguntaTable
+import data.tables.cuestionario.preguntas.PreguntaTable
 
 fun ResultRow.toPreguntaRes(json: Json): PreguntaRes {
     val tipoBancoStr = this[PreguntaTable.tipoBanco]

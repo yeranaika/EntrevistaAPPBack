@@ -1,10 +1,10 @@
 package routes.cuestionario.prueba_practica
 
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import org.jetbrains.exposed.sql.*
@@ -29,10 +29,10 @@ object PreguntaTable : Table("pregunta") {
     val preguntaId = uuid("pregunta_id")
     val tipoBanco = varchar("tipo_banco", 5)
     val sector = varchar("sector", 80)
-    val nivel = varchar("nivel", 4)
+    val nivel = varchar("nivel", 3)            // jr | mid | sr
     val texto = text("texto")
-    val pistas = text("pistas").nullable()           // jsonb en BD, lo leemos como String
-    val configRespuesta = text("config_respuesta")   // jsonb en BD, lo leemos como String
+    val pistas = text("pistas").nullable()      // jsonb en BD, se lee como String
+    val configRespuesta = text("config_respuesta") // jsonb en BD, se lee como String
     val activa = bool("activa")
     override val primaryKey = PrimaryKey(preguntaId)
 }
@@ -42,11 +42,10 @@ object PruebaPreguntaTable : Table("prueba_pregunta") {
     val pruebaId = uuid("prueba_id").references(PruebaTable.pruebaId, onDelete = ReferenceOption.CASCADE)
     val preguntaId = uuid("pregunta_id").references(PreguntaTable.preguntaId, onDelete = ReferenceOption.RESTRICT)
     val orden = integer("orden")
-    val opciones = text("opciones").nullable()       // lo dejamos aunque no lo usemos
+    val opciones = text("opciones").nullable()
     val claveCorrecta = varchar("clave_correcta", 40).nullable()
     override val primaryKey = PrimaryKey(pruebaPreguntaId)
 }
-
 
 // =============================
 //  DTOs
@@ -84,11 +83,10 @@ data class CrearPruebaNivelacionRes(
 )
 
 /**
- * POST /api/nivelacion/prueba/front
+ * POST /api/prueba-practica/front
  *
- * - Crea una prueba de nivelación
- * - Máximo 10 preguntas
- * - Filtra por sector + nivel (jr|mid|sr)
+ * Crea una prueba de práctica (tipo_banco = 'PR') con hasta 10 preguntas,
+ * filtradas por sector + nivel.
  */
 fun Route.pruebaFrontRoutes() {
 
@@ -118,24 +116,23 @@ fun Route.pruebaFrontRoutes() {
         val preguntasSeleccionadas = mutableListOf<PreguntaPruebaDto>()
 
         transaction {
-            // 1) Crear PRUEBA
-        val metaCargoSafe = req.metaCargo.take(80)  // limitamos metaCargo para que no rompa el largo total
+            // 1) Crear fila en PRUEBA
+            val metaCargoSafe = req.metaCargo.take(80)
 
-        val metadataJson = buildJsonObject {
-            put("metaCargo", JsonPrimitive(metaCargoSafe))
-            put("nivelSolicitado", JsonPrimitive(nivelNormalizado))
-        }.toString()
+            val metadataJson = buildJsonObject {
+                put("metaCargo", JsonPrimitive(metaCargoSafe))
+                put("nivelSolicitado", JsonPrimitive(nivelNormalizado))
+            }.toString()
 
             pruebaId = PruebaTable.insert {
-                // 'tipo_prueba' es VARCHAR(8) → usamos 'aprendiz' (8 letras) o el valor que ya usas en el sistema
-                it[tipoPrueba] = "aprendiz"
+                it[tipoPrueba] = "aprendiz"      // coincide con VARCHAR(8)
                 it[area] = req.sector
                 it[nivel] = nivelNormalizado
                 it[metadata] = metadataJson
                 it[activo] = true
             } get PruebaTable.pruebaId
 
-            // 2) Seleccionar preguntas desde PREGUNTA
+            // 2) Seleccionar preguntas activas de tipo PR
             val filasPreguntas = PreguntaTable
                 .selectAll()
                 .where {
@@ -144,7 +141,7 @@ fun Route.pruebaFrontRoutes() {
                     (PreguntaTable.nivel eq nivelNormalizado) and
                     (PreguntaTable.activa eq true)
                 }
-                .orderBy(Random())      // orden aleatorio
+                .orderBy(Random())      // Exposed Random()
                 .limit(MAX_PREGUNTAS)
                 .toList()
 
@@ -170,22 +167,21 @@ fun Route.pruebaFrontRoutes() {
                 val configJson = Json.parseToJsonElement(configStr).jsonObject
 
                 val tipo = configJson["tipo"]?.jsonPrimitive?.contentOrNull
-                val opciones = configJson["opciones"]
                 val respuestaCorrecta =
                     if (tipo == "seleccion_unica")
                         configJson["respuesta_correcta"]?.jsonPrimitive?.contentOrNull
                     else null
 
-                // 3) Insertar en PRUEBA_PREGUNTA
+                // 3) Guardar relación en PRUEBA_PREGUNTA
                 PruebaPreguntaTable.insert {
                     it[PruebaPreguntaTable.pruebaId] = pruebaId
                     it[PruebaPreguntaTable.preguntaId] = preguntaId
                     it[PruebaPreguntaTable.orden] = orden
-                   
+                    it[PruebaPreguntaTable.opciones] = null     // por ahora no la usamos
                     it[PruebaPreguntaTable.claveCorrecta] = respuestaCorrecta
                 }
 
-                // Configuración SIN respuesta_correcta para el FRONT
+                // Configuración sin 'respuesta_correcta' para mandar al front
                 val configSinClave = buildJsonObject {
                     configJson["tipo"]?.let { put("tipo", it) }
                     configJson["opciones"]?.let { put("opciones", it) }
@@ -212,7 +208,7 @@ fun Route.pruebaFrontRoutes() {
 
         val resp = CrearPruebaNivelacionRes(
             pruebaId = pruebaId.toString(),
-            tipoPrueba = "nivelacion",
+            tipoPrueba = "practica",        // ← sólo etiqueta para el front
             area = req.sector,
             nivel = nivelNormalizado,
             metadata = mapOf(

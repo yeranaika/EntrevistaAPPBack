@@ -15,7 +15,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq   // <-- IMPORT NECESARIO
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import tables.cuestionario.preguntas.PreguntaTable
+import data.tables.cuestionario.preguntas.PreguntaTable
 import java.time.OffsetDateTime
 import java.util.UUID
 

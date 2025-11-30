@@ -1,5 +1,4 @@
-// tables/cuestionario/preguntas/PreguntaTable.kt
-package tables.cuestionario.preguntas
+package data.tables.cuestionario.preguntas
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
@@ -15,7 +14,9 @@ class JsonColumnType : TextColumnType() {
 fun Table.jsonText(name: String): Column<String> = registerColumn(name, JsonColumnType())
 
 object PreguntaTable : Table("app.pregunta") {
-    val id           = uuid("pregunta_id")                  // PK UUID "a mano"
+    val preguntaId   = uuid("pregunta_id")                  // PK UUID "a mano"
+    // Alias para compatibilidad con el resto del c�digo
+    val id           = preguntaId
     val tipoBanco    = varchar("tipo_banco", 5)
     val nivel        = varchar("nivel", 3)
     val sector       = varchar("sector", 80).nullable()

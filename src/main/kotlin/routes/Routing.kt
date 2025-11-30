@@ -68,12 +68,14 @@ import kotlinx.serialization.json.Json
 // API JOB (JSearch) + OpenAI
 import services.JSearchService
 import services.InterviewQuestionService
-import routes.jobs.jobsRoutes
+import routes.jobs.jobsRoutes   
 import routes.jobs.jobsGeneratorRoutes
 import routes.jobs.jobsRequirementsRoutes
 import routes.jobs.jobsRequirementsBulkRoutes
 import routes.cuestionario.prueba_practica.pruebaFrontRoutes
 import routes.cuestionario.respuesta_practica.pruebaPracticaRespuestaRoutes
+
+import routes.cuestionario.intentos_practica.intentosPracticaRoutes
 
 import data.repository.admin.InformeGestionRepository
 import routes.admin.informeGestionRoutes
@@ -185,7 +187,7 @@ fun Application.configureRouting(
 
         // Intentos de prueba
         intentosRoutes()
-
+        intentosPracticaRoutes()
         // Rutas de cuestionario
         pruebaRoutes()
 
@@ -246,8 +248,12 @@ fun Application.configureRouting(
             testRepo = testNivelacionRepo
         )
 
+        pruebaPracticaRespuestaRoutes()
+
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
+
+
 
         informeGestionRoutes(informeRepo)
 
