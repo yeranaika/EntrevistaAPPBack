@@ -1,7 +1,7 @@
 package data.repository.sesiones
 
 import data.tables.sesiones.SesionPreguntaTable
-import tables.cuestionario.preguntas.PreguntaTable
+import data.tables.cuestionario.preguntas.PreguntaTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
