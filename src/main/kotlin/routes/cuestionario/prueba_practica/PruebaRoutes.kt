@@ -1,4 +1,4 @@
-package routes.cuestionario.prueba
+package routes.cuestionario.prueba_practica
 
 import com.example.data.models.CrearIntentoResponse
 import com.example.data.models.EstadoIntento
