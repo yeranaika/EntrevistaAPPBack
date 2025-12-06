@@ -1,3 +1,5 @@
+
+
 package data.models.cuestionario.prueba_practica
 
 import kotlinx.serialization.Serializable
@@ -30,7 +32,8 @@ data class EnviarRespuestasRes(
     val respondidas: Int,
     val correctas: Int,
     val puntaje: Int,
-    val detalle: List<ResultadoPreguntaRes>
+    val detalle: List<ResultadoPreguntaRes>,
+    val feedbackGeneral: String? = null      
 )
 
 @Serializable

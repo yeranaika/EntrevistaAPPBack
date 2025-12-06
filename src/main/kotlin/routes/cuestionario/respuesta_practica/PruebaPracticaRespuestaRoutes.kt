@@ -7,7 +7,6 @@ import data.models.cuestionario.prueba_practica.RespuestaPreguntaReq
 import data.tables.cuestionario.intentos_practica.IntentoPruebaTable
 import data.tables.cuestionario.prueba.PruebaPreguntaTable
 
-
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -20,12 +19,16 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import services.PracticeGlobalFeedbackService
+import services.ResultadoPreguntaResConTexto
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-fun Route.pruebaPracticaRespuestaRoutes() {
+fun Route.pruebaPracticaRespuestaRoutes(
+    feedbackService: PracticeGlobalFeedbackService
+) {
 
     authenticate("auth-jwt") {
 
@@ -70,6 +73,9 @@ fun Route.pruebaPracticaRespuestaRoutes() {
             var totalPreguntas = 0
             var correctas = 0
 
+            // Lista auxiliar para construir feedback por tema (incluye texto de la pregunta y respuesta del usuario)
+            val resultadosConTexto = mutableListOf<ResultadoPreguntaResConTexto>()
+
             val ahoraStr = OffsetDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
 
@@ -91,7 +97,39 @@ fun Route.pruebaPracticaRespuestaRoutes() {
                 detalleResultados = req.respuestas.map { r: RespuestaPreguntaReq ->
                     val row = mapaPorPreguntaId[r.preguntaId]
 
+                    val textoPregunta: String =
+                        if (row == null) {
+                            "Pregunta no encontrada en la base de datos (ID=${r.preguntaId})"
+                        } else {
+                            // TODO: reemplazar con la columna real de texto de la pregunta cuando hagas el join.
+                            // Por ahora dejamos un placeholder legible.
+                            "Pregunta asociada al ID ${r.preguntaId} (texto no cargado desde la tabla de preguntas en el backend)"
+                        }
+
+                    // Detectamos tipo según lo que viene de la respuesta
+                    val tipo = if (r.opcionesSeleccionadas.isNotEmpty()) {
+                        "opcion_multiple"
+                    } else {
+                        "abierta"
+                    }
+
+                    val respuestaUsuario: String? =
+                        if (tipo == "opcion_multiple") {
+                            if (r.opcionesSeleccionadas.isEmpty()) null
+                            else "Seleccionaste: ${r.opcionesSeleccionadas.joinToString(", ")}"
+                        } else {
+                            r.textoLibre
+                        }
+
                     if (row == null) {
+                        resultadosConTexto += ResultadoPreguntaResConTexto(
+                            preguntaId = r.preguntaId,
+                            textoPregunta = textoPregunta,
+                            correcta = false,
+                            tipo = tipo,
+                            respuestaUsuario = respuestaUsuario
+                        )
+
                         ResultadoPreguntaRes(
                             preguntaId = r.preguntaId,
                             correcta = false,
@@ -102,13 +140,23 @@ fun Route.pruebaPracticaRespuestaRoutes() {
                         val clave = row[PruebaPreguntaTable.claveCorrecta]
 
                         val esCorrecta = if (clave.isNullOrBlank()) {
-                            false
+                            // Para preguntas abiertas aún no hay corrección automática.
+                            // Puedes extender esto más adelante usando IA para corregir texto.
+                            tipo == "abierta" && !respuestaUsuario.isNullOrBlank()
                         } else {
                             r.opcionesSeleccionadas.size == 1 &&
-                                    r.opcionesSeleccionadas.first() == clave
+                                r.opcionesSeleccionadas.first() == clave
                         }
 
                         if (esCorrecta) buenas++
+
+                        resultadosConTexto += ResultadoPreguntaResConTexto(
+                            preguntaId = r.preguntaId,
+                            textoPregunta = textoPregunta,
+                            correcta = esCorrecta,
+                            tipo = tipo,
+                            respuestaUsuario = respuestaUsuario
+                        )
 
                         ResultadoPreguntaRes(
                             preguntaId = r.preguntaId,
@@ -144,13 +192,22 @@ fun Route.pruebaPracticaRespuestaRoutes() {
             val respondidas = req.respuestas.size
             val puntaje = if (totalPreguntas > 0) (correctas * 100) / totalPreguntas else 0
 
+            // ⬇️ Generamos el feedback general usando IA (OpenAI) a través de PracticeGlobalFeedbackService
+            val feedbackGeneral = feedbackService.generarFeedbackGeneral(
+                puntaje = puntaje,
+                totalPreguntas = totalPreguntas,
+                correctas = correctas,
+                preguntas = resultadosConTexto
+            )
+
             val res = EnviarRespuestasRes(
                 pruebaId = pruebaIdPath,
                 totalPreguntas = totalPreguntas,
                 respondidas = respondidas,
                 correctas = correctas,
                 puntaje = puntaje,
-                detalle = detalleResultados
+                detalle = detalleResultados,
+                feedbackGeneral = feedbackGeneral
             )
 
             call.respond(res)

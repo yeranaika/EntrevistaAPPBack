@@ -87,7 +87,8 @@ data class MixedQuestionsEnvelope(
 )
 
 /**
- * Servicio que llama a la API de OpenAI para generar preguntas de entrevista / test.
+ * Servicio que llama a la API de OpenAI para generar preguntas de entrevista / test
+ * y también feedback genérico de texto.
  */
 class InterviewQuestionService(
     private val httpClient: HttpClient,
@@ -360,13 +361,6 @@ class InterviewQuestionService(
     // 3) Versión para TEST DE NIVELACIÓN (lo que usa tu ruta)
     // ===========================================================
 
-    /**
-     * Genera preguntas de selección múltiple para tests de nivelación.
-     *
-     * ESTA es la función que espera `TestNivelacionRoutes.kt`:
-     * - devuelve GeneratedQuestionDto con:
-     *   enunciado, opciones, respuestaCorrecta (índice), explicacion, dificultad.
-     */
     suspend fun generateMultipleChoiceQuestions(
         job: JobNormalizedDto,
         cantidad: Int = 5
@@ -441,5 +435,42 @@ class InterviewQuestionService(
             println("⚠️ Contenido limpiado: $cleaned")
             emptyList()
         }
+    }
+
+    // ===========================================================
+    // 4) Método genérico para generar TEXTO (feedback, etc.)
+    // ===========================================================
+
+    /**
+     * Método genérico para pedirle a OpenAI que genere texto a partir de un prompt.
+     * Se usa, por ejemplo, para feedback de pruebas prácticas.
+     */
+    suspend fun generarTexto(prompt: String): String {
+        val requestBody = OpenAIChatRequest(
+            model = "gpt-4o-mini",
+            messages = listOf(
+                OpenAIChatMessage(
+                    role = "system",
+                    content = """
+                        Eres un asistente experto en feedback para entrevistas técnicas de TI.
+                        Siempre respondes en español, con un tono claro, profesional y motivador.
+                    """.trimIndent()
+                ),
+                OpenAIChatMessage(
+                    role = "user",
+                    content = prompt
+                )
+            ),
+            temperature = 0.6
+        )
+
+        val response: OpenAIChatResponse = httpClient.post(openAiUrl) {
+            header(HttpHeaders.Authorization, "Bearer $apiKey")
+            contentType(ContentType.Application.Json)
+            setBody(requestBody)
+        }.body()
+
+        return response.choices.firstOrNull()?.message?.content?.trim()
+            ?: "No se pudo generar feedback automático en este momento. Intenta nuevamente más tarde."
     }
 }
