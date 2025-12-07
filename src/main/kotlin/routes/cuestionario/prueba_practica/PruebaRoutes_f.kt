@@ -77,7 +77,8 @@ data class CrearPruebaNivelacionReq(
     val nombreUsuario: String? = null,
     val sector: String,
     val nivel: String,       // jr | mid | sr
-    val metaCargo: String
+    val metaCargo: String,
+    val tipoPrueba: String = "PR"   // PR = práctica, NV = nivelación
 )
 
 @Serializable
@@ -119,6 +120,17 @@ fun Route.pruebaFrontRoutes() {
         val nivelNormalizado = req.nivel.trim().lowercase()
         val nivelesValidos = setOf("jr", "mid", "sr")
 
+        val tipoBancoSolicitado = req.tipoPrueba.trim().uppercase()
+        val tiposBancoValidos = setOf("PR", "NV")
+        if (tipoBancoSolicitado !in tiposBancoValidos) {
+            return@post call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("error" to "tipoPrueba debe ser PR (práctica) o NV (nivelación)")
+            )
+        }
+
+        val etiquetaTipoPrueba = if (tipoBancoSolicitado == "NV") "nivel" else "practica"
+
         if (nivelNormalizado !in nivelesValidos) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
@@ -150,13 +162,15 @@ fun Route.pruebaFrontRoutes() {
             val metadataJson = buildJsonObject {
                 put("metaCargo", JsonPrimitive(metaCargoSafe))
                 put("nivelSolicitado", JsonPrimitive(nivelNormalizado))
+                put("tipoBanco", JsonPrimitive(tipoBancoSolicitado))
+                put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPrueba))
                 put("usuarioId", JsonPrimitive(req.usuarioId ?: ""))
                 put("nombreUsuario", JsonPrimitive(req.nombreUsuario ?: ""))
             }.toString()
 
             pruebaId = PruebaTable.insert {
                 // valor consistente con longitud (<=16)
-                it[tipoPrueba] = "practica"
+                it[tipoPrueba] = etiquetaTipoPrueba
                 it[area] = areaSafe
                 it[nivel] = nivelNormalizado
                 it[metadata] = metadataJson   // TEXT, sin límite desde Exposed
@@ -167,7 +181,7 @@ fun Route.pruebaFrontRoutes() {
             val filasPreguntas = PreguntaTable
                 .selectAll()
                 .where {
-                    (PreguntaTable.tipoBanco eq "PR") and
+                    (PreguntaTable.tipoBanco eq tipoBancoSolicitado) and
                     (PreguntaTable.sector eq req.sector) and
                     (PreguntaTable.nivel eq nivelNormalizado) and
                     (PreguntaTable.activa eq true)
@@ -247,14 +261,16 @@ fun Route.pruebaFrontRoutes() {
 
         val resp = CrearPruebaNivelacionRes(
             pruebaId = pruebaId.toString(),
-            tipoPrueba = "practica",        // etiqueta para el front
+            tipoPrueba = etiquetaTipoPrueba,        // etiqueta para el front
             area = req.sector,
             nivel = nivelNormalizado,
             metadata = mapOf(
                 "metaCargo" to req.metaCargo,
                 "usuarioId" to (req.usuarioId ?: ""),
                 "nombreUsuario" to (req.nombreUsuario ?: ""),
-                "nivelSolicitado" to nivelNormalizado
+                "nivelSolicitado" to nivelNormalizado,
+                "tipoBanco" to tipoBancoSolicitado,
+                "tipoPrueba" to etiquetaTipoPrueba
             ),
             preguntas = preguntasSeleccionadas
         )

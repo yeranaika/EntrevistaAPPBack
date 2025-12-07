@@ -177,20 +177,6 @@ CREATE TABLE pregunta (
     fecha_creacion   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE pregunta_nivelacion (
-    pregunta_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tipo_banco        VARCHAR(5)  NOT NULL DEFAULT 'NV',        -- siempre 'NV'
-    sector            VARCHAR(80),                              -- área (TI, Administración, etc.)
-    nivel             VARCHAR(3),                               -- 'jr', 'ssr', 'sr' o '1','2','3'
-    meta_cargo        VARCHAR(120),                             -- cargo objetivo
-    tipo_pregunta     VARCHAR(20)  NOT NULL DEFAULT 'opcion_multiple'
-                         CHECK (tipo_pregunta IN ('opcion_multiple','abierta')),
-    texto             TEXT        NOT NULL,                     -- enunciado
-    pistas            JSONB,                                    -- hints / tags opcionales
-    config_respuesta  JSONB,                                    -- opciones y/o criterios de corrección
-    activa            BOOLEAN     NOT NULL DEFAULT TRUE,
-    fecha_creacion    TIMESTAMPTZ NOT NULL DEFAULT now()
-);
 
 CREATE TABLE app.recovery_code (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1003,92 +989,92 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- SOPORTE TI (5 preguntas - nivel básico) -- NV
 -- ====================================================================================
 INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, texto, pistas, config_respuesta) VALUES
-('NV', 'TI', 1, 'Soporte TI', 'opcion_multiple',
+('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué es un sistema operativo?',
  '["Windows, Linux, macOS", "Software base"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un programa que gestiona el hardware y software del computador"},
    {"id":"B", "texto":"Un antivirus"},
    {"id":"C", "texto":"Una aplicación de office"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 1, 'Soporte TI', 'opcion_multiple',
+('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué significa IP en redes?',
  '["Dirección de red", "Internet Protocol"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Internet Provider"},
    {"id":"B", "texto":"Internet Protocol"},
    {"id":"C", "texto":"Internal Program"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 1, 'Soporte TI', 'opcion_multiple',
+('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Cuál es la función del protocolo DHCP?',
  '["Asigna direcciones", "Automático"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Asignar direcciones IP automáticamente"},
    {"id":"B", "texto":"Proteger contra virus"},
    {"id":"C", "texto":"Comprimir archivos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 1, 'Soporte TI', 'opcion_multiple',
+('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué comando usarías para verificar la conectividad de red en Windows?',
  '["Verificar conexión", "Ping..."]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"ipconfig"},
    {"id":"B", "texto":"ping"},
    {"id":"C", "texto":"netstat"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 1, 'Soporte TI', 'opcion_multiple',
+('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué es un firewall?',
  '["Protección de red", "Bloquea tráfico"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un sistema que controla el tráfico de red entrante y saliente"},
    {"id":"B", "texto":"Un tipo de cable de red"},
    {"id":"C", "texto":"Un servidor web"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
 
 -- ====================================================================================
 -- DEVOPS ENGINEER (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Desarrollo', 1, 'DevOps Engineer', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'DevOps Engineer', 'opcion_multiple',
  '¿Qué es Docker?',
  '["Contenedores", "Portable"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Una plataforma de contenedores"},
    {"id":"B", "texto":"Un lenguaje de programación"},
    {"id":"C", "texto":"Una base de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'DevOps Engineer', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Qué es CI/CD?',
  '["Integración continua", "Despliegue continuo"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Continuous Integration/Continuous Deployment"},
    {"id":"B", "texto":"Central Information Control Data"},
    {"id":"C", "texto":"Computer Integration Code Development"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'DevOps Engineer', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Qué es Kubernetes?',
  '["Orquestación", "K8s"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un sistema de orquestación de contenedores"},
    {"id":"B", "texto":"Un editor de código"},
    {"id":"C", "texto":"Un framework de testing"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'DevOps Engineer', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Para qué sirve Terraform?',
  '["Infrastructure as Code", "IaC"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Para definir infraestructura como código"},
    {"id":"B", "texto":"Para compilar código"},
    {"id":"C", "texto":"Para hacer testing"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 3, 'DevOps Engineer', 'abierta',
+('NV', 'Desarrollo', 'sr', 'DevOps Engineer', 'abierta',
  '¿Qué es una pipeline de CI/CD?',
  '["Automatización", "Build, test, deploy"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb
@@ -1097,43 +1083,43 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- SYSADMIN (5 preguntas - nivel básico/intermedio)
 -- ====================================================================================
-('NV', 'TI', 1, 'SysAdmin', 'opcion_multiple',
+('NV', 'TI', 'jr', 'SysAdmin', 'opcion_multiple',
  '¿Qué es un servidor?',
  '["Computador que provee servicios", "Siempre encendido"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un computador que provee servicios a otros equipos"},
    {"id":"B", "texto":"Un tipo de cable"},
    {"id":"C", "texto":"Una aplicación móvil"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 1, 'SysAdmin', 'opcion_multiple',
+('NV', 'TI', 'jr', 'SysAdmin', 'opcion_multiple',
  '¿Qué comando en Linux muestra los procesos en ejecución?',
  '["Ver procesos", "ps, top"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"ls"},
    {"id":"B", "texto":"ps"},
    {"id":"C", "texto":"cd"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 2, 'SysAdmin', 'opcion_multiple',
+('NV', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
  '¿Qué es un backup incremental?',
  '["Solo cambios", "Vs completo"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Copia solo los cambios desde el último backup"},
    {"id":"B", "texto":"Copia todos los archivos siempre"},
    {"id":"C", "texto":"Elimina archivos antiguos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 2, 'SysAdmin', 'opcion_multiple',
+('NV', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
  '¿Qué puerto usa SSH por defecto?',
  '["Secure Shell", "22"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"80"},
    {"id":"B", "texto":"22"},
    {"id":"C", "texto":"443"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'TI', 2, 'SysAdmin', 'abierta',
+('NV', 'TI', 'mid', 'SysAdmin', 'abierta',
  'Explica qué es un RAID y para qué sirve',
  '["Redundancia", "Varios discos"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
@@ -1142,39 +1128,39 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- DESARROLLADOR BACKEND (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Desarrollo', 1, 'Desarrollador Backend', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'Desarrollador Backend', 'opcion_multiple',
  '¿Qué es una API?',
  '["Application Programming Interface", "Comunicación entre apps"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Application Programming Interface"},
    {"id":"B", "texto":"Advanced Program Information"},
    {"id":"C", "texto":"Automatic Process Integration"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 1, 'Desarrollador Backend', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'Desarrollador Backend', 'opcion_multiple',
  '¿Qué es REST?',
  '["Arquitectura de APIs", "HTTP"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un estilo arquitectónico para APIs web"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un lenguaje de programación"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Backend', 'abierta',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Backend', 'abierta',
  '¿Qué diferencia hay entre SQL y NoSQL?',
  '["Estructurado vs No estructurado", "Relacional vs Documental"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Backend', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Backend', 'opcion_multiple',
  '¿Qué es un middleware?',
  '["Intermediario", "Entre request y response"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Software que procesa peticiones entre cliente y servidor"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un framework frontend"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 3, 'Desarrollador Backend', 'abierta',
+('NV', 'Desarrollo', 'sr', 'Desarrollador Backend', 'abierta',
  'Explica el patrón Repository en arquitectura de software',
  '["Separación de concerns", "Acceso a datos"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
@@ -1183,43 +1169,43 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- DESARROLLADOR FRONTEND (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Desarrollo', 1, 'Desarrollador Frontend', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Qué es HTML?',
  '["Lenguaje de marcado", "Estructura web"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"HyperText Markup Language"},
    {"id":"B", "texto":"High Tech Modern Language"},
    {"id":"C", "texto":"Home Tool Making Language"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 1, 'Desarrollador Frontend', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Para qué sirve CSS?',
  '["Estilos", "Diseño visual"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Para dar estilos y diseño a páginas web"},
    {"id":"B", "texto":"Para programar la lógica"},
    {"id":"C", "texto":"Para bases de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Frontend', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Qué es el DOM?',
  '["Document Object Model", "Árbol de elementos"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Document Object Model - representación de la página"},
    {"id":"B", "texto":"Data Operation Method"},
    {"id":"C", "texto":"Digital Online Manager"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Frontend', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Qué es React?',
  '["Librería JS", "Componentes"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Una librería de JavaScript para construir interfaces"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un servidor web"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 3, 'Desarrollador Frontend', 'abierta',
+('NV', 'Desarrollo', 'sr', 'Desarrollador Frontend', 'abierta',
  'Explica qué es el Virtual DOM y por qué React lo usa',
  '["Rendimiento", "Comparación"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
@@ -1228,43 +1214,43 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- DESARROLLADOR FULLSTACK (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Desarrollo', 1, 'Desarrollador Fullstack', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué significa Full Stack?',
  '["Frontend + Backend", "Completo"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Desarrollador que trabaja tanto en frontend como backend"},
    {"id":"B", "texto":"Desarrollador solo de bases de datos"},
    {"id":"C", "texto":"Desarrollador solo de diseño"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Fullstack', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es Node.js?',
  '["JavaScript en servidor", "Runtime"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un entorno de ejecución de JavaScript en el servidor"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un framework de CSS"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Fullstack', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es una SPA (Single Page Application)?',
  '["Una sola página", "Carga dinámica"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Aplicación que carga una sola página y actualiza contenido dinámicamente"},
    {"id":"B", "texto":"Aplicación con muchas páginas"},
    {"id":"C", "texto":"Aplicación móvil"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Fullstack', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es CORS?',
  '["Cross-Origin", "Seguridad"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Cross-Origin Resource Sharing - mecanismo de seguridad"},
    {"id":"B", "texto":"Central Online Resource System"},
    {"id":"C", "texto":"Computer Operating Resource Server"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 3, 'Desarrollador Fullstack', 'abierta',
+('NV', 'Desarrollo', 'sr', 'Desarrollador Fullstack', 'abierta',
  'Explica la diferencia entre autenticación y autorización',
  '["Quién eres vs Qué puedes hacer", "Login vs Permisos"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb
@@ -1273,43 +1259,43 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- DESARROLLADOR ANDROID (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Desarrollo', 1, 'Desarrollador Android', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué lenguaje es nativo para Android?',
  '["Kotlin, Java", "Android"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Kotlin y Java"},
    {"id":"B", "texto":"Python"},
    {"id":"C", "texto":"Ruby"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 1, 'Desarrollador Android', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es una Activity en Android?',
  '["Pantalla", "Componente UI"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Una pantalla/interfaz de usuario"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un servicio en background"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Android', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es un Intent en Android?',
  '["Mensajería", "Comunicación entre componentes"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un mensaje para comunicar componentes"},
    {"id":"B", "texto":"Una variable"},
    {"id":"C", "texto":"Un tipo de error"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'Desarrollador Android', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es el AndroidManifest.xml?',
  '["Configuración de app", "Permisos"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Archivo de configuración de la aplicación"},
    {"id":"B", "texto":"Código fuente principal"},
    {"id":"C", "texto":"Base de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 3, 'Desarrollador Android', 'abierta',
+('NV', 'Desarrollo', 'sr', 'Desarrollador Android', 'abierta',
  'Explica el ciclo de vida de una Activity',
  '["onCreate, onStart, onResume...", "Estados"]'::jsonb,
  '{"min_caracteres": 50, "max_caracteres": 400}'::jsonb
@@ -1318,39 +1304,39 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- QA AUTOMATION (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Desarrollo', 1, 'QA Automation', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'QA Automation', 'opcion_multiple',
  '¿Qué es el testing automatizado?',
  '["Scripts de prueba", "Automático"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Pruebas ejecutadas por scripts sin intervención manual"},
    {"id":"B", "texto":"Pruebas manuales"},
    {"id":"C", "texto":"Diseño de interfaces"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 1, 'QA Automation', 'opcion_multiple',
+('NV', 'Desarrollo', 'jr', 'QA Automation', 'opcion_multiple',
  '¿Qué es un test case?',
  '["Caso de prueba", "Escenario"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Un escenario de prueba con pasos y resultado esperado"},
    {"id":"B", "texto":"Un error en el código"},
    {"id":"C", "texto":"Una función del programa"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'QA Automation', 'opcion_multiple',
+('NV', 'Desarrollo', 'mid', 'QA Automation', 'opcion_multiple',
  '¿Qué es Selenium?',
  '["Automatización web", "Testing"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Herramienta para automatizar pruebas de aplicaciones web"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un lenguaje de programación"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Desarrollo', 2, 'QA Automation', 'abierta',
+('NV', 'Desarrollo', 'mid', 'QA Automation', 'abierta',
  'Diferencia entre testing unitario e integración',
  '["Función vs Múltiples componentes", "Aislado vs Conjunto"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Desarrollo', 3, 'QA Automation', 'abierta',
+('NV', 'Desarrollo', 'sr', 'QA Automation', 'abierta',
  '¿Qué es el patrón Page Object Model (POM)?',
  '["Patrón de diseño", "Mantenibilidad"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
@@ -1359,84 +1345,84 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- ANALISTA DE DATOS (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Analisis TI', 1, 'Analista de Datos', 'opcion_multiple',
+('NV', 'Analisis TI', 'jr', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es SQL?',
  '["Lenguaje de consultas", "Bases de datos"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Structured Query Language - para consultar bases de datos"},
    {"id":"B", "texto":"Simple Question Language"},
    {"id":"C", "texto":"System Quality Level"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 1, 'Analista de Datos', 'opcion_multiple',
+('NV', 'Analisis TI', 'jr', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es un dashboard?',
  '["Tablero de visualización", "Gráficos"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Panel visual que muestra métricas e indicadores clave"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un tipo de gráfico"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista de Datos', 'opcion_multiple',
+('NV', 'Analisis TI', 'mid', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es ETL?',
  '["Extract, Transform, Load", "Proceso de datos"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Extract, Transform, Load - proceso de integración de datos"},
    {"id":"B", "texto":"Error Testing Language"},
    {"id":"C", "texto":"External Tool Library"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista de Datos', 'abierta',
+('NV', 'Analisis TI', 'mid', 'Analista de Datos', 'abierta',
  'Explica qué es la normalización de datos',
  '["Estructurar datos", "Eliminar redundancia"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Analisis TI', 3, 'Analista de Datos', 'opcion_multiple',
+('NV', 'Analisis TI', 'sr', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es un Data Warehouse?',
  '["Almacén de datos", "Histórico"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Sistema centralizado para almacenar y analizar grandes volúmenes de datos"},
    {"id":"B", "texto":"Una hoja de cálculo"},
    {"id":"C", "texto":"Un tipo de gráfico"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
 
 -- ====================================================================================
 -- ANALISTA DE NEGOCIOS (5 preguntas - niveles variados)
 -- ====================================================================================
-('NV', 'Analisis TI', 1, 'Analista de Negocios', 'opcion_multiple',
+('NV', 'Analisis TI', 'jr', 'Analista de Negocios', 'opcion_multiple',
  '¿Qué es un requerimiento funcional?',
  '["Qué debe hacer el sistema", "Funcionalidades"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Descripción de una funcionalidad que el sistema debe tener"},
    {"id":"B", "texto":"Hardware necesario"},
    {"id":"C", "texto":"Costo del proyecto"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 1, 'Analista de Negocios', 'opcion_multiple',
+('NV', 'Analisis TI', 'jr', 'Analista de Negocios', 'opcion_multiple',
  '¿Qué es un stakeholder?',
  '["Interesado", "Afectado por el proyecto"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Persona u organización con interés en el proyecto"},
    {"id":"B", "texto":"Un tipo de software"},
    {"id":"C", "texto":"Una metodología"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista de Negocios', 'opcion_multiple',
+('NV', 'Analisis TI', 'mid', 'Analista de Negocios', 'opcion_multiple',
  '¿Qué es un caso de uso?',
  '["Interacción usuario-sistema", "Escenario"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Descripción de cómo un usuario interactúa con el sistema"},
    {"id":"B", "texto":"Un error en el software"},
    {"id":"C", "texto":"Una prueba técnica"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista de Negocios', 'abierta',
+('NV', 'Analisis TI', 'mid', 'Analista de Negocios', 'abierta',
  'Diferencia entre requerimiento funcional y no funcional',
  '["Qué hace vs Cómo lo hace", "Funcionalidad vs Calidad"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Analisis TI', 3, 'Analista de Negocios', 'abierta',
+('NV', 'Analisis TI', 'sr', 'Analista de Negocios', 'abierta',
  '¿Qué es el análisis de brecha (gap analysis)?',
  '["Estado actual vs deseado", "Diferencia"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb
@@ -1445,84 +1431,84 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- ANALISTA QA (5 preguntas - nivel básico/intermedio)
 -- ====================================================================================
-('NV', 'Analisis TI', 1, 'Analista QA', 'opcion_multiple',
+('NV', 'Analisis TI', 'jr', 'Analista QA', 'opcion_multiple',
  '¿Qué significa QA?',
  '["Quality Assurance", "Calidad"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Quality Assurance - Aseguramiento de Calidad"},
    {"id":"B", "texto":"Quick Access"},
    {"id":"C", "texto":"Question Answer"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 1, 'Analista QA', 'opcion_multiple',
+('NV', 'Analisis TI', 'jr', 'Analista QA', 'opcion_multiple',
  '¿Qué es un bug?',
  '["Error en software", "Defecto"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Error o defecto en el software"},
    {"id":"B", "texto":"Una funcionalidad nueva"},
    {"id":"C", "texto":"Un tipo de virus"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 1, 'Analista QA', 'opcion_multiple',
+('NV', 'Analisis TI', 'jr', 'Analista QA', 'opcion_multiple',
  '¿Qué es el testing de regresión?',
  '["Verificar que nada se rompió", "Después de cambios"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Pruebas para verificar que cambios no afectaron funcionalidad existente"},
    {"id":"B", "texto":"Pruebas solo de nuevas funciones"},
    {"id":"C", "texto":"Pruebas de rendimiento"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista QA', 'abierta',
+('NV', 'Analisis TI', 'mid', 'Analista QA', 'abierta',
  'Explica la diferencia entre verificación y validación',
  '["¿Lo hicimos bien? vs ¿Hicimos lo correcto?", "Proceso vs Producto"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista QA', 'opcion_multiple',
+('NV', 'Analisis TI', 'mid', 'Analista QA', 'opcion_multiple',
  '¿Qué es un plan de pruebas?',
  '["Documento", "Estrategia de testing"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Documento que define estrategia, alcance y recursos de testing"},
    {"id":"B", "texto":"Lista de bugs"},
    {"id":"C", "texto":"Manual de usuario"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
 
 -- ====================================================================================
 -- ANALISTA FUNCIONAL (5 preguntas - nivel intermedio)
 -- ====================================================================================
-('NV', 'Analisis TI', 2, 'Analista Funcional', 'opcion_multiple',
+('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'opcion_multiple',
  '¿Cuál es el rol principal de un Analista Funcional?',
  '["Puente negocio-TI", "Requerimientos"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Traducir necesidades de negocio a requerimientos técnicos"},
    {"id":"B", "texto":"Programar aplicaciones"},
    {"id":"C", "texto":"Gestionar servidores"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista Funcional', 'opcion_multiple',
+('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'opcion_multiple',
  '¿Qué es un diagrama de flujo?',
  '["Representación visual de proceso", "Pasos"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Representación gráfica de un proceso o algoritmo"},
    {"id":"B", "texto":"Una tabla de datos"},
    {"id":"C", "texto":"Un reporte"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista Funcional', 'opcion_multiple',
+('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'opcion_multiple',
  '¿Qué es la especificación funcional?',
  '["Documento detallado", "Cómo debe funcionar"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Documento que describe en detalle cómo debe funcionar el sistema"},
    {"id":"B", "texto":"Manual de usuario"},
    {"id":"C", "texto":"Código fuente"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Analisis TI', 2, 'Analista Funcional', 'abierta',
+('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'abierta',
  'Explica qué es el modelado de procesos de negocio',
  '["BPM", "Representar flujos"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Analisis TI', 3, 'Analista Funcional', 'abierta',
+('NV', 'Analisis TI', 'sr', 'Analista Funcional', 'abierta',
  '¿Qué técnicas usarías para elicitar requerimientos?',
  '["Entrevistas, talleres, observación", "Múltiples técnicas"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
@@ -1531,181 +1517,181 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- ASISTENTE ADMINISTRATIVO (5 preguntas - nivel básico)
 -- ====================================================================================
-('NV', 'Administracion', 1, 'Asistente Administrativo', 'opcion_multiple',
+('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es Microsoft Excel?',
  '["Hoja de cálculo", "Tablas y fórmulas"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Programa de hojas de cálculo"},
    {"id":"B", "texto":"Editor de imágenes"},
    {"id":"C", "texto":"Base de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 1, 'Asistente Administrativo', 'opcion_multiple',
+('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Para qué sirve una agenda digital?',
  '["Organizar tareas", "Calendario"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Para organizar eventos, reuniones y tareas"},
    {"id":"B", "texto":"Para editar videos"},
    {"id":"C", "texto":"Para programar"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 1, 'Asistente Administrativo', 'opcion_multiple',
+('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es un correo corporativo?',
  '["Email profesional", "Dominio de empresa"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Cuenta de email profesional con dominio de la empresa"},
    {"id":"B", "texto":"Correo personal"},
    {"id":"C", "texto":"Red social"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 1, 'Asistente Administrativo', 'opcion_multiple',
+('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es un acta de reunión?',
  '["Documento de registro", "Minuta"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Documento que registra lo tratado en una reunión"},
    {"id":"B", "texto":"Invitación a reunión"},
    {"id":"C", "texto":"Lista de asistentes"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 1, 'Asistente Administrativo', 'opcion_multiple',
+('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es la gestión documental?',
  '["Organización de archivos", "Sistema"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Sistema para organizar, almacenar y recuperar documentos"},
    {"id":"B", "texto":"Edición de textos"},
    {"id":"C", "texto":"Impresión de documentos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
 
 -- ====================================================================================
 -- ANALISTA CONTABLE (5 preguntas - nivel básico/intermedio)
 -- ====================================================================================
-('NV', 'Administracion', 1, 'Analista Contable', 'opcion_multiple',
+('NV', 'Administracion', 'jr', 'Analista Contable', 'opcion_multiple',
  '¿Qué es un balance general?',
  '["Estado financiero", "Activos, pasivos, patrimonio"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Estado financiero que muestra activos, pasivos y patrimonio"},
    {"id":"B", "texto":"Lista de empleados"},
    {"id":"C", "texto":"Presupuesto mensual"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 1, 'Analista Contable', 'abierta',
+('NV', 'Administracion', 'jr', 'Analista Contable', 'abierta',
  '¿Qué significa débito y crédito en contabilidad?',
  '["Partida doble", "Cargo y abono"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Analista Contable', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué es la conciliación bancaria?',
  '["Comparar registros", "Libro vs Banco"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Proceso de comparar registros contables con extractos bancarios"},
    {"id":"B", "texto":"Transferencia bancaria"},
    {"id":"C", "texto":"Solicitud de préstamo"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Analista Contable', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué son las cuentas por pagar?',
  '["Obligaciones", "Deudas"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Deudas u obligaciones que la empresa debe pagar"},
    {"id":"B", "texto":"Dinero que nos deben"},
    {"id":"C", "texto":"Ingresos futuros"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Analista Contable', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué es la depreciación?',
  '["Pérdida de valor", "Desgaste"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Pérdida de valor de un activo con el tiempo"},
    {"id":"B", "texto":"Aumento de precio"},
    {"id":"C", "texto":"Tipo de impuesto"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
 
 -- ====================================================================================
 -- ENCARGADO DE ADMINISTRACIÓN (5 preguntas - nivel intermedio)
 -- ====================================================================================
-('NV', 'Administracion', 2, 'Encargado de Administración', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es la gestión de recursos humanos?',
  '["Administrar personal", "Reclutamiento, capacitación"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Proceso de administrar el personal de la organización"},
    {"id":"B", "texto":"Compra de equipos"},
    {"id":"C", "texto":"Gestión financiera"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Encargado de Administración', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es un presupuesto?',
  '["Plan financiero", "Ingresos y gastos proyectados"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Plan que estima ingresos y gastos futuros"},
    {"id":"B", "texto":"Informe de ventas"},
    {"id":"C", "texto":"Lista de productos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Encargado de Administración', 'abierta',
+('NV', 'Administracion', 'mid', 'Encargado de Administración', 'abierta',
  'Explica qué es un indicador de gestión (KPI)',
  '["Key Performance Indicator", "Medir desempeño"]'::jsonb,
  '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Encargado de Administración', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es la cadena de suministro?',
  '["Supply Chain", "Proveedores a clientes"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Red de proveedores, fabricantes y distribuidores"},
    {"id":"B", "texto":"Lista de empleados"},
    {"id":"C", "texto":"Catálogo de productos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Encargado de Administración', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es el control interno?',
  '["Procesos de control", "Prevenir fraudes"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Sistema de políticas y procedimientos para proteger activos"},
    {"id":"B", "texto":"Auditoría externa"},
    {"id":"C", "texto":"Seguridad física"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
 
 -- ====================================================================================
 -- JEFE DE ADMINISTRACIÓN (5 preguntas - nivel intermedio/avanzado)
 -- ====================================================================================
-('NV', 'Administracion', 2, 'Jefe de Administración', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Jefe de Administración', 'opcion_multiple',
  '¿Qué es la planeación estratégica?',
  '["Objetivos a largo plazo", "Estrategia organizacional"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Proceso de definir objetivos y estrategias a largo plazo"},
    {"id":"B", "texto":"Plan de ventas mensual"},
    {"id":"C", "texto":"Lista de tareas diarias"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 2, 'Jefe de Administración', 'opcion_multiple',
+('NV', 'Administracion', 'mid', 'Jefe de Administración', 'opcion_multiple',
  '¿Qué es el análisis FODA?',
  '["Fortalezas, Oportunidades, Debilidades, Amenazas", "Diagnóstico estratégico"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Herramienta para analizar fortalezas, oportunidades, debilidades y amenazas"},
    {"id":"B", "texto":"Tipo de presupuesto"},
    {"id":"C", "texto":"Sistema contable"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 ),
-('NV', 'Administracion', 3, 'Jefe de Administración', 'abierta',
+('NV', 'Administracion', 'sr', 'Jefe de Administración', 'abierta',
  'Explica qué es el balanced scorecard (cuadro de mando integral)',
  '["Perspectivas múltiples", "Indicadores estratégicos"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
 ),
-('NV', 'Administracion', 3, 'Jefe de Administración', 'abierta',
+('NV', 'Administracion', 'sr', 'Jefe de Administración', 'abierta',
  '¿Qué es la gestión del cambio organizacional?',
  '["Change management", "Transición"]'::jsonb,
  '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
 ),
-('NV', 'Administracion', 3, 'Jefe de Administración', 'opcion_multiple',
+('NV', 'Administracion', 'sr', 'Jefe de Administración', 'opcion_multiple',
  '¿Qué es el ROI (Return on Investment)?',
  '["Retorno de inversión", "Rentabilidad"]'::jsonb,
  '{"opciones": [
    {"id":"A", "texto":"Métrica que mide la rentabilidad de una inversión"},
    {"id":"B", "texto":"Tipo de impuesto"},
    {"id":"C", "texto":"Estado financiero"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ]}'::jsonb
 );
 
 COMMIT;
