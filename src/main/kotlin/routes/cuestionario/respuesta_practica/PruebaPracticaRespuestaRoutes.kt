@@ -7,6 +7,9 @@ import data.models.cuestionario.prueba_practica.RespuestaPreguntaReq
 import data.tables.cuestionario.intentos_practica.IntentoPruebaTable
 import data.tables.cuestionario.prueba.PruebaPreguntaTable
 
+// ✅ USAMOS la tabla ligera que ya definiste en routes.cuestionario.prueba_practica
+import routes.cuestionario.prueba_practica.PruebaTable as PruebaFrontTable
+
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -14,10 +17,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import services.PracticeGlobalFeedbackService
 import services.ResultadoPreguntaResConTexto
@@ -73,13 +73,25 @@ fun Route.pruebaPracticaRespuestaRoutes(
             var totalPreguntas = 0
             var correctas = 0
 
-            // Lista auxiliar para construir feedback por tema (incluye texto de la pregunta y respuesta del usuario)
             val resultadosConTexto = mutableListOf<ResultadoPreguntaResConTexto>()
 
             val ahoraStr = OffsetDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
 
+            // 👉 Aquí podemos seguir detectando si es "practica" o "nivel" (por si luego lo quieres usar)
+            var tipoPruebaEtiqueta: String = "practica"
+
             transaction {
+                // 1) Miramos la tabla PRUEBA (la ligera, sin historica) para ver qué tipo es
+                val rowPrueba = PruebaFrontTable
+                    .selectAll()
+                    .where { PruebaFrontTable.pruebaId eq pruebaUuid }
+                    .singleOrNull()
+
+                tipoPruebaEtiqueta = rowPrueba?.get(PruebaFrontTable.tipoPrueba) ?: "practica"
+                // valores esperados: "practica" o "nivel"
+
+                // 2) Cargamos preguntas de esa prueba
                 val filas = PruebaPreguntaTable
                     .selectAll()
                     .where { PruebaPreguntaTable.pruebaId eq pruebaUuid }
@@ -101,12 +113,9 @@ fun Route.pruebaPracticaRespuestaRoutes(
                         if (row == null) {
                             "Pregunta no encontrada en la base de datos (ID=${r.preguntaId})"
                         } else {
-                            // TODO: reemplazar con la columna real de texto de la pregunta cuando hagas el join.
-                            // Por ahora dejamos un placeholder legible.
                             "Pregunta asociada al ID ${r.preguntaId} (texto no cargado desde la tabla de preguntas en el backend)"
                         }
 
-                    // Detectamos tipo según lo que viene de la respuesta
                     val tipo = if (r.opcionesSeleccionadas.isNotEmpty()) {
                         "opcion_multiple"
                     } else {
@@ -140,8 +149,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
                         val clave = row[PruebaPreguntaTable.claveCorrecta]
 
                         val esCorrecta = if (clave.isNullOrBlank()) {
-                            // Para preguntas abiertas aún no hay corrección automática.
-                            // Puedes extender esto más adelante usando IA para corregir texto.
+                            // abiertas: todavía sin corrección automática
                             tipo == "abierta" && !respuestaUsuario.isNullOrBlank()
                         } else {
                             r.opcionesSeleccionadas.size == 1 &&
@@ -173,6 +181,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
                     (correctas * 100) / totalPreguntas
                 } else 0
 
+                // ✅ Siempre guardamos el intento, sea práctica o nivel
                 IntentoPruebaTable.insert {
                     it[IntentoPruebaTable.intentoId] = UUID.randomUUID()
                     it[IntentoPruebaTable.pruebaId] = pruebaUuid
@@ -192,7 +201,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
             val respondidas = req.respuestas.size
             val puntaje = if (totalPreguntas > 0) (correctas * 100) / totalPreguntas else 0
 
-            // ⬇️ Generamos el feedback general usando IA (OpenAI) a través de PracticeGlobalFeedbackService
             val feedbackGeneral = feedbackService.generarFeedbackGeneral(
                 puntaje = puntaje,
                 totalPreguntas = totalPreguntas,

@@ -43,7 +43,6 @@ object PreguntaTable : Table("pregunta") {
     val nivel = varchar("nivel", 3)            // jr | mid | sr
 
     // tipo_pregunta en BD: por ejemplo "alternativa", "abierta", etc.
-    // Ajusta el largo si en tu esquema es distinto
     val tipoPregunta = varchar("tipo_pregunta", 20)
 
     val texto = text("texto")
@@ -78,7 +77,9 @@ data class CrearPruebaNivelacionReq(
     val sector: String,
     val nivel: String,       // jr | mid | sr
     val metaCargo: String,
-    val tipoPrueba: String = "PR"   // PR = práctica, NV = nivelación
+    // 👇 NO tiene default a "PR" ni "NV".
+    // Si el cliente no lo manda, lo tratamos como error 400.
+    val tipoPrueba: String? = null
 )
 
 @Serializable
@@ -107,8 +108,8 @@ data class CrearPruebaNivelacionRes(
 /**
  * POST /api/prueba-practica/front
  *
- * Crea una prueba de práctica usando preguntas del banco:
- *   - tipo_banco = 'PR'   (preguntas técnicas base)
+ * Crea una prueba usando preguntas del banco:
+ *   - tipo_banco = 'PR' o 'NV'
  *   - sector + nivel      (filtrado)
  * Máximo 10 preguntas, aleatorias.
  */
@@ -120,12 +121,26 @@ fun Route.pruebaFrontRoutes() {
         val nivelNormalizado = req.nivel.trim().lowercase()
         val nivelesValidos = setOf("jr", "mid", "sr")
 
-        val tipoBancoSolicitado = req.tipoPrueba.trim().uppercase()
+        // =========================
+        // Validar tipoPrueba: PR/NV
+        // =========================
+        val tipoBancoSolicitado = req.tipoPrueba
+            ?.trim()
+            ?.uppercase()
+
         val tiposBancoValidos = setOf("PR", "NV")
+
+        if (tipoBancoSolicitado == null) {
+            return@post call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("error" to "tipoPrueba es obligatorio y debe ser PR (práctica) o NV (nivelación)")
+            )
+        }
+
         if (tipoBancoSolicitado !in tiposBancoValidos) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "tipoPrueba debe ser PR (práctica) o NV (nivelación)")
+                mapOf("error" to "tipoPrueba inválido. Debe ser PR (práctica) o NV (nivelación)")
             )
         }
 
@@ -153,10 +168,7 @@ fun Route.pruebaFrontRoutes() {
         transaction {
             // 1) Crear fila en PRUEBA
 
-            // área (sector) limitado a 80 chars por la columna
             val areaSafe = req.sector.take(80)
-
-            // metaCargo lo limitamos a 80 solo para meterlo en metadata (si quieres)
             val metaCargoSafe = req.metaCargo.take(80)
 
             val metadataJson = buildJsonObject {
@@ -169,15 +181,14 @@ fun Route.pruebaFrontRoutes() {
             }.toString()
 
             pruebaId = PruebaTable.insert {
-                // valor consistente con longitud (<=16)
                 it[tipoPrueba] = etiquetaTipoPrueba
                 it[area] = areaSafe
                 it[nivel] = nivelNormalizado
-                it[metadata] = metadataJson   // TEXT, sin límite desde Exposed
+                it[metadata] = metadataJson
                 it[activo] = true
             } get PruebaTable.pruebaId
 
-            // 2) Seleccionar preguntas activas de tipo PR (banco original, NO IAJOB)
+            // 2) Seleccionar preguntas activas del banco solicitado (PR o NV)
             val filasPreguntas = PreguntaTable
                 .selectAll()
                 .where {
@@ -186,7 +197,7 @@ fun Route.pruebaFrontRoutes() {
                     (PreguntaTable.nivel eq nivelNormalizado) and
                     (PreguntaTable.activa eq true)
                 }
-                .orderBy(Random())      // Exposed Random()
+                .orderBy(Random())
                 .limit(MAX_PREGUNTAS)
                 .toList()
 
@@ -197,7 +208,7 @@ fun Route.pruebaFrontRoutes() {
                 val tipoBanco = row[PreguntaTable.tipoBanco]
                 val sector = row[PreguntaTable.sector]
                 val nivel = row[PreguntaTable.nivel]
-                val tipoPregunta = row[PreguntaTable.tipoPregunta]  // <-- leemos tipo_pregunta
+                val tipoPregunta = row[PreguntaTable.tipoPregunta]
                 val texto = row[PreguntaTable.texto]
                 val pistasStr = row[PreguntaTable.pistas]
                 val configStr = row[PreguntaTable.configRespuesta]
@@ -212,11 +223,8 @@ fun Route.pruebaFrontRoutes() {
 
                 val configJson = Json.parseToJsonElement(configStr).jsonObject
 
-                // Nuevo modelo: NO usamos "tipo" en el JSON.
-                // Inferimos si es cerrada mirando si tiene "opciones".
                 val tieneOpciones = configJson["opciones"] != null
 
-                // Truncamos a 40 chars para respetar la columna clave_correcta (VARCHAR(40))
                 val respuestaCorrecta: String? =
                     if (tieneOpciones)
                         configJson["respuesta_correcta"]
@@ -225,16 +233,14 @@ fun Route.pruebaFrontRoutes() {
                             ?.take(40)
                     else null
 
-                // 3) Guardar relación en PRUEBA_PREGUNTA
                 PruebaPreguntaTable.insert {
                     it[PruebaPreguntaTable.pruebaId] = pruebaId
                     it[PruebaPreguntaTable.preguntaId] = preguntaId
                     it[PruebaPreguntaTable.orden] = orden
-                    it[PruebaPreguntaTable.opciones] = null     // por ahora no la usamos
+                    it[PruebaPreguntaTable.opciones] = null
                     it[PruebaPreguntaTable.claveCorrecta] = respuestaCorrecta
                 }
 
-                // Configuración SIN 'respuesta_correcta' para mandar al front
                 val configSinClave = buildJsonObject {
                     configJson["opciones"]?.let { put("opciones", it) }
                     configJson["max_caracteres"]?.let { put("max_caracteres", it) }
@@ -248,7 +254,7 @@ fun Route.pruebaFrontRoutes() {
                         tipoBanco = tipoBanco,
                         sector = sector,
                         nivel = nivel,
-                        tipoPregunta = tipoPregunta,   // <-- se expone al front
+                        tipoPregunta = tipoPregunta,
                         pistas = pistasJson,
                         configRespuesta = configSinClave,
                         orden = orden
@@ -261,7 +267,7 @@ fun Route.pruebaFrontRoutes() {
 
         val resp = CrearPruebaNivelacionRes(
             pruebaId = pruebaId.toString(),
-            tipoPrueba = etiquetaTipoPrueba,        // etiqueta para el front
+            tipoPrueba = etiquetaTipoPrueba,
             area = req.sector,
             nivel = nivelNormalizado,
             metadata = mapOf(
