@@ -20,13 +20,42 @@ CREATE TABLE usuario (
     correo           VARCHAR(320) NOT NULL UNIQUE,
     contrasena_hash  VARCHAR(255) NOT NULL,
     nombre           VARCHAR(120),
+
+    -- Preferencias / estado de la cuenta
     idioma           VARCHAR(10)  NOT NULL DEFAULT 'es',
     estado           VARCHAR(19)  NOT NULL DEFAULT 'activo',
     fecha_creacion   TIMESTAMPTZ  NOT NULL DEFAULT now(),
     rol              VARCHAR(10)  NOT NULL DEFAULT 'user',
+
+    -- Datos de perfil / métricas
+    telefono           VARCHAR(20),
+    origen_registro    VARCHAR(20)  NOT NULL DEFAULT 'local',   -- local / google / otros
+    fecha_ultimo_login TIMESTAMPTZ,
+    fecha_nacimiento   DATE,
+    genero             VARCHAR(20),
+
+    -- Constraints
     CONSTRAINT chk_email_format CHECK (correo ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT chk_usuario_rol CHECK (rol IN ('user','admin'))
+    CONSTRAINT chk_usuario_rol CHECK (rol IN ('user','admin')),
+    CONSTRAINT chk_usuario_origen_registro CHECK (origen_registro IN ('local','google','otros')),
+    CONSTRAINT chk_usuario_telefono CHECK (telefono IS NULL OR telefono ~ '^\+?[0-9]{7,20}$'),
+    
+    CONSTRAINT chk_usuario_fecha_nacimiento CHECK (
+            fecha_nacimiento IS NULL OR(
+            fecha_nacimiento >= DATE '1900-01-01'
+            AND fecha_nacimiento <= (CURRENT_DATE - INTERVAL '14 years'))
+    ),
+
+    CONSTRAINT chk_usuario_genero CHECK (genero IS NULL OR genero IN (
+            'masculino',
+            'femenino',
+            'no_binario',
+            'otro',
+            'prefiere_no_decirlo'
+        )
+    )
 );
+
 
 CREATE TABLE refresh_token (
     refresh_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(),

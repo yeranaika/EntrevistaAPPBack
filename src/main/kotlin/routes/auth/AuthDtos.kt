@@ -10,6 +10,10 @@ data class RegisterReq(
     val password: String,
     val nombre: String? = null,
     val idioma: String? = null,
+    // NUEVOS OPCIONALES
+    val telefono: String? = null,
+    val fechaNacimiento: String? = null, // "YYYY-MM-DD"
+    val genero: String? = null,
     // Datos de perfil (opcionales)
     val nivelExperiencia: String? = null,
     val area: String? = null,

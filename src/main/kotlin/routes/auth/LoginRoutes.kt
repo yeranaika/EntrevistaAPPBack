@@ -9,11 +9,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import security.issueAccessToken
 import security.generateRefreshToken
-import security.verifyPassword   // 👈 usa tu helper Argon2 (y fallback si lo dejaste así)
-
-// data class LoginReq(val email: String, val password: String)
-// data class LoginOk(val accessToken: String, val refreshToken: String)
-// data class ErrorRes(val error: String)
+import security.verifyPassword   // tu helper de contraseña
 
 fun Route.loginRoutes(
     issuer: String,
@@ -25,7 +21,7 @@ fun Route.loginRoutes(
             val req = call.receive<LoginReq>()
 
             val email = req.email.trim().lowercase()
-            val password = req.password   // NO lo toques más
+            val password = req.password
 
             val log = call.application.environment.log
             log.info("Login attempt for email: $email")
@@ -39,9 +35,18 @@ fun Route.loginRoutes(
                 )
             }
 
+            // Opcional: validar que el usuario esté activo
+            if (user.estado != "activo") {
+                log.warn("User ${user.id} with status=${user.estado} tried to login")
+                return@post call.respond(
+                    HttpStatusCode.Forbidden,
+                    ErrorRes("inactive_user")
+                )
+            }
+
             log.info("User found: ${user.id}, checking password...")
 
-            val verified = verifyPassword(password, user.hash)   // 👈 AQUÍ el Argon2
+            val verified = verifyPassword(password, user.hash)
 
             if (!verified) {
                 log.warn("Password verification failed for user: ${user.id}")
@@ -52,6 +57,9 @@ fun Route.loginRoutes(
             }
 
             log.info("Password verified successfully for user: ${user.id}")
+
+            // ✅ Actualizar fecha_ultimo_login
+            AuthDeps.users.touchUltimoLogin(user.id)
 
             val access = issueAccessToken(
                 subject = user.id.toString(),

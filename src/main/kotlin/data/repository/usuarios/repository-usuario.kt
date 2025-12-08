@@ -6,6 +6,8 @@ import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 data class UserRow(
@@ -14,7 +16,14 @@ data class UserRow(
     val hash: String,
     val nombre: String?,
     val idioma: String?,
-    val rol: String
+    val rol: String,
+    // NUEVOS CAMPOS DEL MODELO
+    val estado: String = "activo",
+    val telefono: String? = null,
+    val origenRegistro: String = "local",
+    val fechaUltimoLogin: LocalDateTime? = null,
+    val fechaNacimiento: LocalDate? = null,
+    val genero: String? = null
 )
 
 private suspend fun <T> dbTx(block: suspend Transaction.() -> T): T =
@@ -39,21 +48,40 @@ class UserRepository {
         hash: String,
         nombre: String?,
         idioma: String?,
-        rol: String = "user"
+        rol: String = "user",
+        telefono: String? = null,
+        origenRegistro: String = "local",           // local / google / otros
+        fechaNacimiento: LocalDate? = null,
+        genero: String? = null
     ): UUID = dbTx {
         val id = UUID.randomUUID()
         try {
+            // Validación suave para que coincida con el CHECK de la BD
+            require(origenRegistro in setOf("local", "google", "otros")) {
+                "origenRegistro inválido: $origenRegistro"
+            }
+
             UsuarioTable.insert {
-                it[usuarioId] = id
-                it[correo] = email
+                it[usuarioId]      = id
+                it[correo]         = email
                 it[contrasenaHash] = hash
                 it[UsuarioTable.nombre] = nombre
+
                 if (idioma != null) it[UsuarioTable.idioma] = idioma
-                it[UsuarioTable.rol] = rol
+                it[UsuarioTable.rol]    = rol
+
+                if (telefono != null) it[UsuarioTable.telefono] = telefono
+                it[UsuarioTable.origenRegistro] = origenRegistro
+
+                if (fechaNacimiento != null) it[UsuarioTable.fechaNacimiento] = fechaNacimiento
+                if (genero != null)          it[UsuarioTable.genero] = genero
+
+                // fecha_creacion se llena con clientDefault o DEFAULT de la BD
             }
             id
         } catch (e: ExposedSQLException) {
-            if (e.sqlState == "23505") throw EmailAlreadyInUseException(email, e) // unique_violation
+            // unique_violation
+            if (e.sqlState == "23505") throw EmailAlreadyInUseException(email, e)
             throw e
         }
     }
@@ -126,6 +154,32 @@ class UserRepository {
         UsuarioTable.deleteWhere { UsuarioTable.usuarioId eq userId } > 0
     }
 
+    /** Actualiza fecha_ultimo_login al momento actual. */
+    suspend fun touchUltimoLogin(userId: UUID, fecha: LocalDateTime = LocalDateTime.now()): Int = dbTx {
+        UsuarioTable.update({ UsuarioTable.usuarioId eq userId }) {
+            it[fechaUltimoLogin] = fecha
+        }
+    }
+
+    /** Cambia el teléfono. */
+    suspend fun updateTelefono(userId: UUID, telefono: String?): Int = dbTx {
+        UsuarioTable.update({ UsuarioTable.usuarioId eq userId }) {
+            it[UsuarioTable.telefono] = telefono
+        }
+    }
+
+    /** Actualiza fecha de nacimiento y género. */
+    suspend fun updateDatosDemograficos(
+        userId: UUID,
+        fechaNacimiento: LocalDate?,
+        genero: String?
+    ): Int = dbTx {
+        UsuarioTable.update({ UsuarioTable.usuarioId eq userId }) {
+            it[UsuarioTable.fechaNacimiento] = fechaNacimiento
+            it[UsuarioTable.genero] = genero
+        }
+    }
+
     // ---------- Mapper ----------
     private fun ResultRow.toUserRow() = UserRow(
         id     = this[UsuarioTable.usuarioId],
@@ -133,6 +187,13 @@ class UserRepository {
         hash   = this[UsuarioTable.contrasenaHash],
         nombre = this[UsuarioTable.nombre],
         idioma = this[UsuarioTable.idioma],
-        rol    = this[UsuarioTable.rol]
+        rol    = this[UsuarioTable.rol],
+
+        estado         = this[UsuarioTable.estado],
+        telefono       = this[UsuarioTable.telefono],
+        origenRegistro = this[UsuarioTable.origenRegistro],
+        fechaUltimoLogin = this[UsuarioTable.fechaUltimoLogin],
+        fechaNacimiento  = this[UsuarioTable.fechaNacimiento],
+        genero           = this[UsuarioTable.genero]
     )
 }
