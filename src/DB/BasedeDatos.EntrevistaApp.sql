@@ -116,18 +116,39 @@ CREATE TABLE consentimiento_texto (
 );
 CREATE INDEX idx_consentimiento_texto_vigente ON consentimiento_texto (vigente);
 
+CREATE TABLE codigo_suscripcion (
+    codigo_id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    codigo           VARCHAR(32)  NOT NULL UNIQUE,  -- ej: 'PREM-ABC123XYZ'
+    label            VARCHAR(80),
+    duracion_dias    INTEGER      NOT NULL,         -- días que suma a la suscripción
+    max_usos         INTEGER      NOT NULL DEFAULT 1,
+    usos_realizados  INTEGER      NOT NULL DEFAULT 0,
+    fecha_creacion   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    fecha_expiracion TIMESTAMPTZ,
+    activo           BOOLEAN      NOT NULL DEFAULT TRUE
+);
+
+
 -- 2) Suscripciones y pagos
 CREATE TABLE suscripcion (
     suscripcion_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id       UUID NOT NULL REFERENCES usuario(usuario_id) ON DELETE CASCADE,
-    plan             VARCHAR(100)  NOT NULL DEFAULT 'free',
+    plan             VARCHAR(100) NOT NULL DEFAULT 'free',
     proveedor        VARCHAR(50),
-    estado           VARCHAR(20)  NOT NULL DEFAULT 'inactiva',
-    fecha_inicio     TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    estado           VARCHAR(20) NOT NULL DEFAULT 'inactiva',
+    fecha_inicio     TIMESTAMPTZ NOT NULL DEFAULT now(),
     fecha_renovacion TIMESTAMPTZ,
     fecha_expiracion TIMESTAMPTZ,
-    CONSTRAINT chk_estado_suscripcion CHECK (estado IN ('activa','inactiva','cancelada','suspendida','vencida'))
+    codigo_id        UUID NULL,  -- 👈 FK opcional al código
+
+    CONSTRAINT chk_estado_suscripcion
+        CHECK (estado IN ('activa','inactiva','cancelada','suspendida','vencida')),
+
+    CONSTRAINT fk_suscripcion_codigo
+        FOREIGN KEY (codigo_id) REFERENCES codigo_suscripcion(codigo_id)
 );
+
+
 
 CREATE TABLE pago (
     pago_id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
