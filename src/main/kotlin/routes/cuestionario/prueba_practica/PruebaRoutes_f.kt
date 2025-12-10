@@ -22,7 +22,7 @@ import java.util.UUID
 object PruebaTable : Table("prueba") {
     val pruebaId = uuid("prueba_id").clientDefault { UUID.randomUUID() }
 
-    // Aumentamos a 16 para tener holgura; valores: "practica", "nivel", "simulacion"
+    // En BD es VARCHAR(8) -> valores: "practica", "nivel", "blended"
     val tipoPrueba = varchar("tipo_prueba", 16)
 
     // sector → se guarda en area, limite 80
@@ -79,7 +79,7 @@ data class CrearPruebaNivelacionReq(
     val sector: String,
     val nivel: String,       // jr | mid | sr
     val metaCargo: String,
-    // Ahora puede ser: "PR", "NV" o "SIM"
+    // Ahora puede ser: "PR", "NV" o "BL" (blended: mezcla NV + PR)
     val tipoPrueba: String? = null
 )
 
@@ -111,7 +111,7 @@ data class CrearPruebaNivelacionRes(
  *
  * Crea una prueba usando preguntas del banco:
  *   - tipo_banco = 'PR' o 'NV' (modo clásico)
- *   - tipo_banco MIX (NV + PR) cuando tipoPrueba = 'SIM'
+ *   - tipo_banco MIX (NV + PR) cuando tipoPrueba = 'BL' (blended)
  *
  * Máximo 10 preguntas, aleatorias.
  */
@@ -124,33 +124,38 @@ fun Route.pruebaFrontRoutes() {
         val nivelesValidos = setOf("jr", "mid", "sr")
 
         // =========================
-        // Validar tipoPrueba: PR/NV/SIM
+        // Validar tipoPrueba: PR/NV/BL
         // =========================
         val tipoBancoSolicitado = req.tipoPrueba
             ?.trim()
             ?.uppercase()
 
-        // Ahora aceptamos también SIM para simulación
-        val tiposBancoValidos = setOf("PR", "NV", "SIM")
+        // Aceptamos también BL para blended (mezcla NV + PR)
+        val tiposBancoValidos = setOf("PR", "NV", "BL")
 
         if (tipoBancoSolicitado == null) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "tipoPrueba es obligatorio y debe ser PR (práctica), NV (nivelación) o SIM (simulación)")
+                mapOf(
+                    "error" to "tipoPrueba es obligatorio y debe ser PR (práctica), NV (nivelación) o BL (blended)"
+                )
             )
         }
 
         if (tipoBancoSolicitado !in tiposBancoValidos) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "tipoPrueba inválido. Debe ser PR (práctica), NV (nivelación) o SIM (simulación)")
+                mapOf(
+                    "error" to "tipoPrueba inválido. Debe ser PR (práctica), NV (nivelación) o BL (blended)"
+                )
             )
         }
 
+        // Lo que se guarda en la columna tipo_prueba (VARCHAR(8) en BD)
         val etiquetaTipoPrueba = when (tipoBancoSolicitado) {
-            "NV"  -> "nivel"
-            "PR"  -> "practica"
-            "SIM" -> "simulacion"
+            "NV"  -> "nivel"     // 5 caracteres
+            "PR"  -> "practica"  // 8 caracteres
+            "BL"  -> "blended"   // 7 caracteres -> cabe en varchar(8)
             else  -> "practica"
         }
 
@@ -170,8 +175,8 @@ fun Route.pruebaFrontRoutes() {
 
         val MAX_PREGUNTAS = 10
 
-        // Para metadata y respuesta: cuando es SIM lo marcamos como MIX
-        val tipoBancoMeta = if (tipoBancoSolicitado == "SIM") "MIX" else tipoBancoSolicitado
+        // Para metadata y respuesta: cuando es BL lo marcamos como MIX
+        val tipoBancoMeta = if (tipoBancoSolicitado == "BL") "MIX" else tipoBancoSolicitado
 
         lateinit var pruebaId: UUID
         val preguntasSeleccionadas = mutableListOf<PreguntaPruebaDto>()
@@ -201,8 +206,8 @@ fun Route.pruebaFrontRoutes() {
 
             // 2) Seleccionar preguntas
             val filasPreguntas: List<ResultRow> =
-                if (tipoBancoSolicitado == "SIM") {
-                    // ---------- MODO SIMULACIÓN ----------
+                if (tipoBancoSolicitado == "BL") {
+                    // ---------- MODO BLENDED (NV + PR) ----------
                     val maxPorTipo = MAX_PREGUNTAS / 2  // p.ej. 5 de NV y 5 de PR
 
                     // Preguntas de nivelación (NV)
