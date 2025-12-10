@@ -7,8 +7,11 @@ import data.models.cuestionario.prueba_practica.RespuestaPreguntaReq
 import data.tables.cuestionario.intentos_practica.IntentoPruebaTable
 import data.tables.cuestionario.prueba.PruebaPreguntaTable
 
-// ✅ USAMOS la tabla ligera que ya definiste en routes.cuestionario.prueba_practica
+// ✅ USAMOS la tabla ligera que definiste en PruebaRoutes_f.kt
 import routes.cuestionario.prueba_practica.PruebaTable as PruebaFrontTable
+
+// ✅ NUEVO: tu tabla real de respuestas
+import data.tables.cuestionario.respuestas.RespuestaPruebaTable
 
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -78,8 +81,15 @@ fun Route.pruebaPracticaRespuestaRoutes(
             val ahoraStr = OffsetDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
 
-            // 👉 Aquí podemos seguir detectando si es "practica" o "nivel" (por si luego lo quieres usar)
             var tipoPruebaEtiqueta: String = "practica"
+
+            // 🔹 Datos auxiliares para insertar en respuesta_prueba
+            data class RespuestaAGuardar(
+                val pruebaPreguntaId: UUID,
+                val respuestaUsuario: String?,
+                val correcta: Boolean
+            )
+            val respuestasAGuardar = mutableListOf<RespuestaAGuardar>()
 
             transaction {
                 // 1) Miramos la tabla PRUEBA (la ligera, sin historica) para ver qué tipo es
@@ -89,7 +99,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
                     .singleOrNull()
 
                 tipoPruebaEtiqueta = rowPrueba?.get(PruebaFrontTable.tipoPrueba) ?: "practica"
-                // valores esperados: "practica" o "nivel"
+                // valores esperados: "practica", "nivel", "simulacion"
 
                 // 2) Cargamos preguntas de esa prueba
                 val filas = PruebaPreguntaTable
@@ -99,6 +109,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
 
                 totalPreguntas = filas.size
 
+                // Mapa preguntaId (pregunta.uuid) -> fila de PRUEBA_PREGUNTA
                 val mapaPorPreguntaId: Map<String, ResultRow> =
                     filas.associateBy { row ->
                         row[PruebaPreguntaTable.preguntaId].toString()
@@ -109,31 +120,26 @@ fun Route.pruebaPracticaRespuestaRoutes(
                 detalleResultados = req.respuestas.map { r: RespuestaPreguntaReq ->
                     val row = mapaPorPreguntaId[r.preguntaId]
 
-                    val textoPregunta: String =
-                        if (row == null) {
-                            "Pregunta no encontrada en la base de datos (ID=${r.preguntaId})"
-                        } else {
-                            "Pregunta asociada al ID ${r.preguntaId} (texto no cargado desde la tabla de preguntas en el backend)"
-                        }
-
                     val tipo = if (r.opcionesSeleccionadas.isNotEmpty()) {
                         "opcion_multiple"
                     } else {
                         "abierta"
                     }
 
+                    // Texto que usamos tanto para feedback como para guardar en BD
                     val respuestaUsuario: String? =
                         if (tipo == "opcion_multiple") {
                             if (r.opcionesSeleccionadas.isEmpty()) null
-                            else "Seleccionaste: ${r.opcionesSeleccionadas.joinToString(", ")}"
+                            else r.opcionesSeleccionadas.joinToString(",")
                         } else {
                             r.textoLibre
                         }
 
                     if (row == null) {
+                        // Pregunta no encontrada para esta prueba: marcamos incorrecta y NO guardamos en respuesta_prueba
                         resultadosConTexto += ResultadoPreguntaResConTexto(
                             preguntaId = r.preguntaId,
-                            textoPregunta = textoPregunta,
+                            textoPregunta = "Pregunta no encontrada en la base de datos (ID=${r.preguntaId})",
                             correcta = false,
                             tipo = tipo,
                             respuestaUsuario = respuestaUsuario
@@ -158,12 +164,24 @@ fun Route.pruebaPracticaRespuestaRoutes(
 
                         if (esCorrecta) buenas++
 
+                        // Para feedback general (texto largo)
+                        val textoPregunta =
+                            "Pregunta asociada al ID ${r.preguntaId} (texto no cargado desde la tabla de preguntas en el backend)"
+
                         resultadosConTexto += ResultadoPreguntaResConTexto(
                             preguntaId = r.preguntaId,
                             textoPregunta = textoPregunta,
                             correcta = esCorrecta,
                             tipo = tipo,
                             respuestaUsuario = respuestaUsuario
+                        )
+
+                        // 🔹 Guardamos los datos necesarios para insertar luego en respuesta_prueba
+                        val pruebaPreguntaId = row[PruebaPreguntaTable.id]
+                        respuestasAGuardar += RespuestaAGuardar(
+                            pruebaPreguntaId = pruebaPreguntaId,
+                            respuestaUsuario = respuestaUsuario,
+                            correcta = esCorrecta
                         )
 
                         ResultadoPreguntaRes(
@@ -181,9 +199,11 @@ fun Route.pruebaPracticaRespuestaRoutes(
                     (correctas * 100) / totalPreguntas
                 } else 0
 
-                // ✅ Siempre guardamos el intento, sea práctica o nivel
+                // 3) Crear el INTENTO_PRUEBA
+                val intentoUuid = UUID.randomUUID()
+
                 IntentoPruebaTable.insert {
-                    it[IntentoPruebaTable.intentoId] = UUID.randomUUID()
+                    it[IntentoPruebaTable.intentoId] = intentoUuid
                     it[IntentoPruebaTable.pruebaId] = pruebaUuid
                     it[IntentoPruebaTable.usuarioIdCol] = usuarioId
                     it[IntentoPruebaTable.fechaInicio] = ahoraStr
@@ -195,6 +215,17 @@ fun Route.pruebaPracticaRespuestaRoutes(
                     it[IntentoPruebaTable.recomendaciones] = null
                     it[IntentoPruebaTable.creadoEn] = ahoraStr
                     it[IntentoPruebaTable.actualizadoEn] = ahoraStr
+                }
+
+                // 4) Insertar cada respuesta en RESPUESTA_PRUEBA
+                respuestasAGuardar.forEach { r ->
+                    RespuestaPruebaTable.insert {
+                        it[RespuestaPruebaTable.intentoId] = intentoUuid
+                        it[RespuestaPruebaTable.preguntaId] = r.pruebaPreguntaId
+                        it[RespuestaPruebaTable.respuestaUsuario] = r.respuestaUsuario
+                        it[RespuestaPruebaTable.correcta] = r.correcta
+                        it[RespuestaPruebaTable.feedbackInspecl] = null
+                    }
                 }
             }
 

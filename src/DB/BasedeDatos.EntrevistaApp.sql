@@ -1038,6 +1038,9 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- ====================================================================================
 -- SOPORTE TI (5 preguntas - nivel básico) -- NV
 -- ====================================================================================
+-- ====================================================================================
+-- SOPORTE TI (5 preguntas - nivel básico) -- NV
+-- ====================================================================================
 INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, texto, pistas, config_respuesta) VALUES
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué es un sistema operativo?',
@@ -1046,7 +1049,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un programa que gestiona el hardware y software del computador"},
    {"id":"B", "texto":"Un antivirus"},
    {"id":"C", "texto":"Una aplicación de office"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué significa IP en redes?',
@@ -1055,7 +1058,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Internet Provider"},
    {"id":"B", "texto":"Internet Protocol"},
    {"id":"C", "texto":"Internal Program"}
- ]}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Cuál es la función del protocolo DHCP?',
@@ -1064,7 +1067,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Asignar direcciones IP automáticamente"},
    {"id":"B", "texto":"Proteger contra virus"},
    {"id":"C", "texto":"Comprimir archivos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué comando usarías para verificar la conectividad de red en Windows?',
@@ -1073,7 +1076,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"ipconfig"},
    {"id":"B", "texto":"ping"},
    {"id":"C", "texto":"netstat"}
- ]}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué es un firewall?',
@@ -1082,7 +1085,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un sistema que controla el tráfico de red entrante y saliente"},
    {"id":"B", "texto":"Un tipo de cable de red"},
    {"id":"C", "texto":"Un servidor web"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1095,7 +1098,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Una plataforma de contenedores"},
    {"id":"B", "texto":"Un lenguaje de programación"},
    {"id":"C", "texto":"Una base de datos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Qué es CI/CD?',
@@ -1104,7 +1107,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Continuous Integration/Continuous Deployment"},
    {"id":"B", "texto":"Central Information Control Data"},
    {"id":"C", "texto":"Computer Integration Code Development"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Qué es Kubernetes?',
@@ -1113,7 +1116,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un sistema de orquestación de contenedores"},
    {"id":"B", "texto":"Un editor de código"},
    {"id":"C", "texto":"Un framework de testing"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Para qué sirve Terraform?',
@@ -1122,7 +1125,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Para definir infraestructura como código"},
    {"id":"B", "texto":"Para compilar código"},
    {"id":"C", "texto":"Para hacer testing"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'DevOps Engineer', 'abierta',
  '¿Qué es una pipeline de CI/CD?',
@@ -1140,7 +1143,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un computador que provee servicios a otros equipos"},
    {"id":"B", "texto":"Un tipo de cable"},
    {"id":"C", "texto":"Una aplicación móvil"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'SysAdmin', 'opcion_multiple',
  '¿Qué comando en Linux muestra los procesos en ejecución?',
@@ -1149,7 +1152,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"ls"},
    {"id":"B", "texto":"ps"},
    {"id":"C", "texto":"cd"}
- ]}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb
 ),
 ('NV', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
  '¿Qué es un backup incremental?',
@@ -1158,7 +1161,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Copia solo los cambios desde el último backup"},
    {"id":"B", "texto":"Copia todos los archivos siempre"},
    {"id":"C", "texto":"Elimina archivos antiguos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
  '¿Qué puerto usa SSH por defecto?',
@@ -1167,7 +1170,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"80"},
    {"id":"B", "texto":"22"},
    {"id":"C", "texto":"443"}
- ]}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb
 ),
 ('NV', 'TI', 'mid', 'SysAdmin', 'abierta',
  'Explica qué es un RAID y para qué sirve',
@@ -1185,7 +1188,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Application Programming Interface"},
    {"id":"B", "texto":"Advanced Program Information"},
    {"id":"C", "texto":"Automatic Process Integration"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'Desarrollador Backend', 'opcion_multiple',
  '¿Qué es REST?',
@@ -1194,7 +1197,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un estilo arquitectónico para APIs web"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un lenguaje de programación"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Backend', 'abierta',
  '¿Qué diferencia hay entre SQL y NoSQL?',
@@ -1208,7 +1211,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Software que procesa peticiones entre cliente y servidor"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un framework frontend"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Backend', 'abierta',
  'Explica el patrón Repository en arquitectura de software',
@@ -1226,7 +1229,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"HyperText Markup Language"},
    {"id":"B", "texto":"High Tech Modern Language"},
    {"id":"C", "texto":"Home Tool Making Language"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Para qué sirve CSS?',
@@ -1235,7 +1238,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Para dar estilos y diseño a páginas web"},
    {"id":"B", "texto":"Para programar la lógica"},
    {"id":"C", "texto":"Para bases de datos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Qué es el DOM?',
@@ -1244,7 +1247,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Document Object Model - representación de la página"},
    {"id":"B", "texto":"Data Operation Method"},
    {"id":"C", "texto":"Digital Online Manager"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Qué es React?',
@@ -1253,7 +1256,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Una librería de JavaScript para construir interfaces"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un servidor web"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Frontend', 'abierta',
  'Explica qué es el Virtual DOM y por qué React lo usa',
@@ -1271,7 +1274,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Desarrollador que trabaja tanto en frontend como backend"},
    {"id":"B", "texto":"Desarrollador solo de bases de datos"},
    {"id":"C", "texto":"Desarrollador solo de diseño"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es Node.js?',
@@ -1280,7 +1283,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un entorno de ejecución de JavaScript en el servidor"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un framework de CSS"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es una SPA (Single Page Application)?',
@@ -1289,7 +1292,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Aplicación que carga una sola página y actualiza contenido dinámicamente"},
    {"id":"B", "texto":"Aplicación con muchas páginas"},
    {"id":"C", "texto":"Aplicación móvil"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es CORS?',
@@ -1298,7 +1301,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Cross-Origin Resource Sharing - mecanismo de seguridad"},
    {"id":"B", "texto":"Central Online Resource System"},
    {"id":"C", "texto":"Computer Operating Resource Server"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Fullstack', 'abierta',
  'Explica la diferencia entre autenticación y autorización',
@@ -1316,7 +1319,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Kotlin y Java"},
    {"id":"B", "texto":"Python"},
    {"id":"C", "texto":"Ruby"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es una Activity en Android?',
@@ -1325,7 +1328,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Una pantalla/interfaz de usuario"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un servicio en background"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es un Intent en Android?',
@@ -1334,7 +1337,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un mensaje para comunicar componentes"},
    {"id":"B", "texto":"Una variable"},
    {"id":"C", "texto":"Un tipo de error"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es el AndroidManifest.xml?',
@@ -1343,7 +1346,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Archivo de configuración de la aplicación"},
    {"id":"B", "texto":"Código fuente principal"},
    {"id":"C", "texto":"Base de datos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Android', 'abierta',
  'Explica el ciclo de vida de una Activity',
@@ -1361,7 +1364,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Pruebas ejecutadas por scripts sin intervención manual"},
    {"id":"B", "texto":"Pruebas manuales"},
    {"id":"C", "texto":"Diseño de interfaces"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'QA Automation', 'opcion_multiple',
  '¿Qué es un test case?',
@@ -1370,7 +1373,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un escenario de prueba con pasos y resultado esperado"},
    {"id":"B", "texto":"Un error en el código"},
    {"id":"C", "texto":"Una función del programa"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'QA Automation', 'opcion_multiple',
  '¿Qué es Selenium?',
@@ -1379,7 +1382,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Herramienta para automatizar pruebas de aplicaciones web"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un lenguaje de programación"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'QA Automation', 'abierta',
  'Diferencia entre testing unitario e integración',
@@ -1402,7 +1405,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Structured Query Language - para consultar bases de datos"},
    {"id":"B", "texto":"Simple Question Language"},
    {"id":"C", "texto":"System Quality Level"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es un dashboard?',
@@ -1411,7 +1414,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Panel visual que muestra métricas e indicadores clave"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un tipo de gráfico"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es ETL?',
@@ -1420,7 +1423,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Extract, Transform, Load - proceso de integración de datos"},
    {"id":"B", "texto":"Error Testing Language"},
    {"id":"C", "texto":"External Tool Library"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Datos', 'abierta',
  'Explica qué es la normalización de datos',
@@ -1434,7 +1437,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Sistema centralizado para almacenar y analizar grandes volúmenes de datos"},
    {"id":"B", "texto":"Una hoja de cálculo"},
    {"id":"C", "texto":"Un tipo de gráfico"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1447,7 +1450,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Descripción de una funcionalidad que el sistema debe tener"},
    {"id":"B", "texto":"Hardware necesario"},
    {"id":"C", "texto":"Costo del proyecto"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista de Negocios', 'opcion_multiple',
  '¿Qué es un stakeholder?',
@@ -1456,7 +1459,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Persona u organización con interés en el proyecto"},
    {"id":"B", "texto":"Un tipo de software"},
    {"id":"C", "texto":"Una metodología"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Negocios', 'opcion_multiple',
  '¿Qué es un caso de uso?',
@@ -1465,7 +1468,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Descripción de cómo un usuario interactúa con el sistema"},
    {"id":"B", "texto":"Un error en el software"},
    {"id":"C", "texto":"Una prueba técnica"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Negocios', 'abierta',
  'Diferencia entre requerimiento funcional y no funcional',
@@ -1488,7 +1491,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Quality Assurance - Aseguramiento de Calidad"},
    {"id":"B", "texto":"Quick Access"},
    {"id":"C", "texto":"Question Answer"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista QA', 'opcion_multiple',
  '¿Qué es un bug?',
@@ -1497,7 +1500,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Error o defecto en el software"},
    {"id":"B", "texto":"Una funcionalidad nueva"},
    {"id":"C", "texto":"Un tipo de virus"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista QA', 'opcion_multiple',
  '¿Qué es el testing de regresión?',
@@ -1506,7 +1509,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Pruebas para verificar que cambios no afectaron funcionalidad existente"},
    {"id":"B", "texto":"Pruebas solo de nuevas funciones"},
    {"id":"C", "texto":"Pruebas de rendimiento"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista QA', 'abierta',
  'Explica la diferencia entre verificación y validación',
@@ -1520,7 +1523,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Documento que define estrategia, alcance y recursos de testing"},
    {"id":"B", "texto":"Lista de bugs"},
    {"id":"C", "texto":"Manual de usuario"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1533,7 +1536,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Traducir necesidades de negocio a requerimientos técnicos"},
    {"id":"B", "texto":"Programar aplicaciones"},
    {"id":"C", "texto":"Gestionar servidores"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'opcion_multiple',
  '¿Qué es un diagrama de flujo?',
@@ -1542,7 +1545,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Representación gráfica de un proceso o algoritmo"},
    {"id":"B", "texto":"Una tabla de datos"},
    {"id":"C", "texto":"Un reporte"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'opcion_multiple',
  '¿Qué es la especificación funcional?',
@@ -1551,7 +1554,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Documento que describe en detalle cómo debe funcionar el sistema"},
    {"id":"B", "texto":"Manual de usuario"},
    {"id":"C", "texto":"Código fuente"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'abierta',
  'Explica qué es el modelado de procesos de negocio',
@@ -1574,7 +1577,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Programa de hojas de cálculo"},
    {"id":"B", "texto":"Editor de imágenes"},
    {"id":"C", "texto":"Base de datos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Para qué sirve una agenda digital?',
@@ -1583,7 +1586,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Para organizar eventos, reuniones y tareas"},
    {"id":"B", "texto":"Para editar videos"},
    {"id":"C", "texto":"Para programar"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es un correo corporativo?',
@@ -1592,7 +1595,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Cuenta de email profesional con dominio de la empresa"},
    {"id":"B", "texto":"Correo personal"},
    {"id":"C", "texto":"Red social"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es un acta de reunión?',
@@ -1601,7 +1604,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Documento que registra lo tratado en una reunión"},
    {"id":"B", "texto":"Invitación a reunión"},
    {"id":"C", "texto":"Lista de asistentes"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es la gestión documental?',
@@ -1610,7 +1613,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Sistema para organizar, almacenar y recuperar documentos"},
    {"id":"B", "texto":"Edición de textos"},
    {"id":"C", "texto":"Impresión de documentos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1623,7 +1626,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Estado financiero que muestra activos, pasivos y patrimonio"},
    {"id":"B", "texto":"Lista de empleados"},
    {"id":"C", "texto":"Presupuesto mensual"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Analista Contable', 'abierta',
  '¿Qué significa débito y crédito en contabilidad?',
@@ -1637,7 +1640,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Proceso de comparar registros contables con extractos bancarios"},
    {"id":"B", "texto":"Transferencia bancaria"},
    {"id":"C", "texto":"Solicitud de préstamo"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué son las cuentas por pagar?',
@@ -1646,7 +1649,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Deudas u obligaciones que la empresa debe pagar"},
    {"id":"B", "texto":"Dinero que nos deben"},
    {"id":"C", "texto":"Ingresos futuros"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué es la depreciación?',
@@ -1655,7 +1658,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Pérdida de valor de un activo con el tiempo"},
    {"id":"B", "texto":"Aumento de precio"},
    {"id":"C", "texto":"Tipo de impuesto"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1668,7 +1671,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Proceso de administrar el personal de la organización"},
    {"id":"B", "texto":"Compra de equipos"},
    {"id":"C", "texto":"Gestión financiera"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es un presupuesto?',
@@ -1677,7 +1680,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Plan que estima ingresos y gastos futuros"},
    {"id":"B", "texto":"Informe de ventas"},
    {"id":"C", "texto":"Lista de productos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Encargado de Administración', 'abierta',
  'Explica qué es un indicador de gestión (KPI)',
@@ -1691,7 +1694,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Red de proveedores, fabricantes y distribuidores"},
    {"id":"B", "texto":"Lista de empleados"},
    {"id":"C", "texto":"Catálogo de productos"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es el control interno?',
@@ -1700,7 +1703,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Sistema de políticas y procedimientos para proteger activos"},
    {"id":"B", "texto":"Auditoría externa"},
    {"id":"C", "texto":"Seguridad física"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1713,7 +1716,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Proceso de definir objetivos y estrategias a largo plazo"},
    {"id":"B", "texto":"Plan de ventas mensual"},
    {"id":"C", "texto":"Lista de tareas diarias"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Jefe de Administración', 'opcion_multiple',
  '¿Qué es el análisis FODA?',
@@ -1722,7 +1725,7 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Herramienta para analizar fortalezas, oportunidades, debilidades y amenazas"},
    {"id":"B", "texto":"Tipo de presupuesto"},
    {"id":"C", "texto":"Sistema contable"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 ),
 ('NV', 'Administracion', 'sr', 'Jefe de Administración', 'abierta',
  'Explica qué es el balanced scorecard (cuadro de mando integral)',
@@ -1741,8 +1744,468 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Métrica que mide la rentabilidad de una inversión"},
    {"id":"B", "texto":"Tipo de impuesto"},
    {"id":"C", "texto":"Estado financiero"}
- ]}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb
 );
+
+-- =============================================================================
+-- INSERT PREGUNTAS HABILIDADES BLANDAS TI (4 preguntas - nivel básico)
+-- =============================================================================
+-- SOFT SKILLS - Soporte TI
+INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, texto, pistas, config_respuesta) VALUES
+('BL', 'Analista TI', 'jr', 'Soporte TI', 'opcion_multiple',
+ 'Un usuario muy molesto te llama porque “el computador no prende” justo antes de una reunión importante. ¿Cuál es la mejor forma de manejar la situación?',
+ '["Empatía primero", "Haz preguntas claras sobre lo que ve en pantalla"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Decirle que no puedes ayudar porque tienes muchos tickets"},
+    {"id":"B","texto":"Pedirle que lea el manual y volver a llamar si no resulta"},
+    {"id":"C","texto":"Escuchar la situación, reconocer la urgencia y guiarlo paso a paso con preguntas simples"},
+    {"id":"D","texto":"Derivarlo de inmediato a otra persona sin recopilar información"}
+  ], "respuesta_correcta":"C"}'::jsonb
+),
+
+('BL', 'Analista TI', 'jr', 'Soporte TI', 'abierta',
+ 'Cuenta una ocasión en la que ayudaste a un usuario no técnico a resolver un problema con su equipo. ¿Qué hiciste y qué resultado tuviste?',
+ '["Piensa en alguien real", "Describe qué hiciste tú y cómo terminó la situación"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Analista TI', 'mid', 'Soporte TI', 'opcion_multiple',
+ 'Tienes un incidente que afecta a toda una gerencia y varios tickets menores (por ejemplo, cambio de contraseña). ¿Cómo deberías priorizar?',
+ '["Impacto en el negocio", "Comunica tiempos a los demás usuarios"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Atender todos en orden de llegada para ser justo"},
+    {"id":"B","texto":"Atender primero los más rápidos para bajar la cola"},
+    {"id":"C","texto":"Priorizar el incidente crítico, informar a los demás usuarios sobre la demora y actualizar el estado de sus tickets"},
+    {"id":"D","texto":"Cerrar los tickets menores sin avisar para concentrarte en el incidente crítico"}
+  ], "respuesta_correcta":"C"}'::jsonb
+),
+
+('BL', 'Analista TI', 'sr', 'Soporte TI', 'abierta',
+ 'Describe una situación en la que lideraste la resolución de un problema crítico que afectaba la continuidad de las operaciones. ¿Cómo coordinaste al equipo y qué aprendieron?',
+ '["Piensa en un incidente crítico", "Cuenta qué hizo el equipo y qué hiciste tú"]'::jsonb,
+ '{"min_caracteres":120,"max_caracteres":1000,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - DevOps Engineer
+('BL', 'TI', 'jr', 'DevOps Engineer', 'opcion_multiple',
+ 'Estás automatizando un proceso sencillo y tu script rompe el pipeline de CI. ¿Qué deberías hacer?',
+ '["Piensa en responsabilidad", "Aprendizaje del error"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Borrar el script y hacer como si nada hubiera pasado"},
+    {"id":"B","texto":"Culpar a la herramienta de CI por ser poco estable"},
+    {"id":"C","texto":"Comunicar el problema, revertir el cambio, analizar la causa y proponer una corrección"},
+    {"id":"D","texto":"Esperar a que alguien más lo arregle"}
+  ], "respuesta_correcta":"C"}'::jsonb
+),
+
+('BL', 'TI', 'jr', 'DevOps Engineer', 'abierta',
+ 'Cuenta una experiencia en la que automatizaste una tarea manual (aunque fuera pequeña). ¿Qué problema resolviste y qué impacto tuvo en el equipo?',
+ '["Piensa en algo real", "Explica qué cambió después de automatizar"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'TI', 'mid', 'DevOps Engineer', 'opcion_multiple',
+ 'El equipo de desarrollo quiere hacer un cambio urgente en producción sin usar el pipeline de CI/CD porque “no hay tiempo”. ¿Cuál es la mejor respuesta?',
+ '["Riesgo vs velocidad", "Negocia sin ceder la calidad"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Aceptar y hacer el cambio manual sin registrar nada"},
+    {"id":"B","texto":"Negarte sin explicar los motivos"},
+    {"id":"C","texto":"Explicar los riesgos, buscar una alternativa rápida dentro del pipeline y dejar registro de la decisión tomada"},
+    {"id":"D","texto":"Decir que lo hagan ellos y no involucrarte"}
+  ], "respuesta_correcta":"C"}'::jsonb
+),
+
+('BL', 'TI', 'sr', 'DevOps Engineer', 'abierta',
+ 'Describe una situación en la que lideraste una mejora en la plataforma (por ejemplo, monitoreo, alertas o infraestructura como código) que redujo incidentes o tareas manuales. ¿Qué hiciste y qué resultados obtuviste?',
+ '["Piensa en una mejora real", "Cuenta antes y después del cambio"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - SysAdmin
+('BL', 'TI', 'jr', 'SysAdmin', 'opcion_multiple',
+ 'Un usuario interno reporta que “el sistema anda lento”, pero no entrega detalles. ¿Cómo deberías responder?',
+ '["Haz preguntas concretas", "Mantén buena actitud con el cliente interno"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Decirle que seguramente es su computador y cerrar el ticket"},
+    {"id":"B","texto":"Pedirle con calma más detalles (qué sistema, desde cuándo, qué ve en pantalla) y registrar la información en el ticket"},
+    {"id":"C","texto":"Pedirle que mande un correo a otro equipo"},
+    {"id":"D","texto":"Ignorar el ticket hasta que se vuelva crítico"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'jr', 'SysAdmin', 'abierta',
+ 'Cuenta una ocasión en la que registraste y seguiste un incidente hasta su cierre. ¿Cómo te aseguraste de dejar buena documentación para el equipo?',
+ '["Piensa en un incidente real", "Menciona registro, seguimiento y cierre"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
+ 'Se genera una mesa de incidentes por caída de un servicio crítico. ¿Cuál es tu mejor aporte como SysAdmin?',
+ '["Coordina con datos concretos", "Comunica avances"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Trabajar en silencio sin decir nada hasta tener la solución final"},
+    {"id":"B","texto":"Compartir métricas y logs relevantes, proponer hipótesis y comunicar claramente las acciones que estás realizando"},
+    {"id":"C","texto":"Esperar a que otro equipo resuelva porque es más rápido"},
+    {"id":"D","texto":"Buscar culpables en lugar de soluciones"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'sr', 'SysAdmin', 'abierta',
+ 'Describe una situación en la que tuviste que mantener la continuidad operativa de una infraestructura crítica (por ejemplo, durante un cambio, corte o falla). ¿Cómo organizaste al equipo y qué resultados lograste?',
+ '["Piensa en continuidad operativa", "Incluye decisiones que tomaste tú"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Desarrollador Backend
+('BL', 'Desarrollador', 'jr', 'Desarrollador Backend', 'opcion_multiple',
+ 'Estás trabajando remoto y detectas que tu implementación impactará a otro servicio backend. ¿Qué haces?',
+ '["Comunica antes de romper cosas", "Trabajo en equipo"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Hacer el cambio sin avisar y ver qué pasa"},
+    {"id":"B","texto":"Avisar al otro desarrollador, coordinar el cambio y acordar pruebas de integración"},
+    {"id":"C","texto":"Esperar a que el otro equipo encuentre el problema"},
+    {"id":"D","texto":"Cancelar el cambio sin informar"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'jr', 'Desarrollador Backend', 'abierta',
+ 'Cuenta una vez en la que pediste ayuda para resolver un bug complejo en backend. ¿Cómo lo abordaste y qué aprendiste?',
+ '["Piensa en un bug real", "Incluye qué cambiaste después de esa experiencia"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'mid', 'Desarrollador Backend', 'opcion_multiple',
+ 'QA reporta un bug crítico en una API que tú desarrollaste, cerca de una entrega. ¿Cuál es tu mejor reacción?',
+ '["Calidad y colaboración", "No se trata de culpar"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Decir que “en tu máquina funciona” y cerrar el bug"},
+    {"id":"B","texto":"Revisar el caso con QA, reproducir el problema, analizar la causa y proponer una solución con su impacto"},
+    {"id":"C","texto":"Ignorar el bug porque llega tarde"},
+    {"id":"D","texto":"Pedir que negocio lo acepte tal cual sin informar el riesgo"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'sr', 'Desarrollador Backend', 'abierta',
+ 'Describe una experiencia en la que lideraste la mejora de la calidad del backend (por ejemplo, pruebas, revisión de código o refactor). ¿Qué problema resolviste y qué impacto tuvo en el equipo?',
+ '["Piensa en una mejora concreta", "Cuenta antes y después"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Desarrollador Frontend
+('BL', 'Desarrollador', 'jr', 'Desarrollador Frontend', 'opcion_multiple',
+ 'El equipo de diseño te entrega una maqueta que en móvil se ve poco usable. ¿Qué haces?',
+ '["Trabajo con diseño", "No cambies todo solo"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Implementar igual la maqueta aunque sepas que será incómoda"},
+    {"id":"B","texto":"Modificar todo por tu cuenta sin avisar a diseño"},
+    {"id":"C","texto":"Pedir una reunión breve, mostrar ejemplos del problema en móvil y proponer ajustes a la maqueta"},
+    {"id":"D","texto":"Rechazar la maqueta sin dar detalles"}
+  ], "respuesta_correcta":"C"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'jr', 'Desarrollador Frontend', 'abierta',
+ 'Cuenta una situación en la que tuviste que ajustar una interfaz según comentarios de usuarios o diseño. ¿Qué cambiaste y qué resultado obtuviste?',
+ '["Piensa en feedback real", "Describe el cambio y su efecto"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
+ 'Trabajas con un desarrollador backend y surgen problemas por mal entendimiento de los contratos de la API. ¿Qué acción es más efectiva?',
+ '["Comunicación y acuerdos claros"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Seguir asumiendo cómo funciona la API y corregir sobre la marcha"},
+    {"id":"B","texto":"Definir en conjunto el contrato (request/response), documentarlo y adaptar el código de ambos lados"},
+    {"id":"C","texto":"Pedir que el backend se adapte solo a lo que tú necesitas"},
+    {"id":"D","texto":"Dejar de hablar con el otro desarrollador"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'sr', 'Desarrollador Frontend', 'abierta',
+ 'Describe una vez en la que lideraste la mejora de la experiencia de usuario (UX) en un producto o módulo. ¿Qué problema detectaste y cómo se vio el impacto en los usuarios?',
+ '["Piensa en una mejora de UX", "Menciona datos o señales del impacto si puedes"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Desarrollador Fullstack
+('BL', 'Desarrollador', 'jr', 'Desarrollador Fullstack', 'opcion_multiple',
+ 'En un sprint te asignan tareas de frontend y backend. ¿Cómo organizas tu trabajo?',
+ '["Piensa en dependencias y comunicación"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Hacer un poco de cada cosa sin terminar nada"},
+    {"id":"B","texto":"Revisar dependencias, acordar prioridades con el equipo y avanzar en bloques terminando tareas completas"},
+    {"id":"C","texto":"Hacer solo las tareas que más te gustan"},
+    {"id":"D","texto":"Esperar a que el Scrum Master te diga exactamente qué hacer"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'jr', 'Desarrollador Fullstack', 'abierta',
+ 'Cuenta una experiencia en la que tuviste que aprender algo nuevo (por ejemplo, una tecnología de frontend o backend) para sacar adelante una tarea. ¿Cómo lo hiciste?',
+ '["Piensa en un aprendizaje concreto", "Explica cómo te organizaste para aprender"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
+ 'Estás en medio de un desarrollo y negocio cambia prioridades del sprint. ¿Qué haces?',
+ '["Piensa en adaptación y comunicación con el equipo"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Ignorar el cambio y terminar lo que estabas haciendo"},
+    {"id":"B","texto":"Revisar con el equipo el impacto del cambio, reordenar el trabajo y comunicar qué quedará dentro o fuera del sprint"},
+    {"id":"C","texto":"Aceptar el cambio pero sin modificar el plan"},
+    {"id":"D","texto":"Decir que el cambio es imposible sin analizarlo"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Desarrollador', 'sr', 'Desarrollador Fullstack', 'abierta',
+ 'Describe un caso en el que ayudaste al equipo a mejorar la colaboración entre frontend, backend y DevOps. ¿Qué hiciste para alinear a todos?',
+ '["Piensa en un caso real", "Incluye reuniones, acuerdos o cambios de proceso que impulsaste"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Analista de Datos
+('BL', 'TI', 'jr', 'Analista de Datos', 'opcion_multiple',
+ 'Te piden un informe “para hoy” pero no está claro qué decisión se tomará con esos datos. ¿Qué haces?',
+ '["Piensa en entender el objetivo", "No es solo hacer gráficos"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Generar muchos gráficos y esperar que alguno sirva"},
+    {"id":"B","texto":"Hacer algunas preguntas breves para entender qué decisión quieren tomar y enfocar el análisis en eso"},
+    {"id":"C","texto":"Negarte a hacer el informe"},
+    {"id":"D","texto":"Enviar solo la tabla de datos sin comentarios"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'jr', 'Analista de Datos', 'abierta',
+ 'Cuenta una ocasión en la que detectaste un problema en la calidad de los datos (por ejemplo, duplicados o inconsistencias). ¿Cómo lo manejaste?',
+ '["Piensa en un caso real", "Incluye a quién avisaste y qué se hizo"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'TI', 'mid', 'Analista de Datos', 'opcion_multiple',
+ 'Detectas inconsistencias importantes en las fuentes de datos de un dashboard clave. ¿Cuál es la mejor acción?',
+ '["Calidad de datos primero", "Comunica el riesgo"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Ignorarlas porque el dashboard ya está en producción"},
+    {"id":"B","texto":"Documentar las inconsistencias, informar a los dueños de datos y proponer pasos para corregirlas"},
+    {"id":"C","texto":"Eliminar los datos problemáticos sin avisar"},
+    {"id":"D","texto":"Cambiar las métricas para que no se note"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'sr', 'Analista de Datos', 'abierta',
+ 'Describe una experiencia en la que un análisis tuyo generó un impacto importante (por ejemplo, cambio de estrategia o mejora de un proceso). ¿Qué descubriste y qué se hizo con esa información?',
+ '["Piensa en un caso con impacto", "Cuenta qué decisión cambió gracias al análisis"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Analista de Negocios
+('BL', 'Administracion', 'jr', 'Analista de Negocios', 'opcion_multiple',
+ 'Durante una reunión, distintas áreas usan nombres distintos para el mismo indicador. ¿Qué haces?',
+ '["Piensa en claridad y acuerdos", "Glosario común"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Anotar todo tal cual y dejar que cada área use su nombre"},
+    {"id":"B","texto":"Definir en conjunto un nombre y descripción, documentarlo y validarlo con todos"},
+    {"id":"C","texto":"Elegir tú un nombre sin consultar"},
+    {"id":"D","texto":"Suspender la reunión y no retomar el tema"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'jr', 'Analista de Negocios', 'abierta',
+ 'Cuenta una ocasión en la que ayudaste a un área a entender mejor sus indicadores o reportes. ¿Qué hiciste para explicarlos?',
+ '["Piensa en una explicación que diste", "Incluye cómo adaptaste el lenguaje"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Administracion', 'mid', 'Analista de Negocios', 'opcion_multiple',
+ 'Distintas áreas (ventas, operaciones, finanzas) tienen prioridades distintas para un mismo proyecto. ¿Cuál es tu mejor rol?',
+ '["Gestión de stakeholders", "Buscar alineamiento"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Apoyar solo a la que tenga más poder"},
+    {"id":"B","texto":"Facilitar una conversación para alinear objetivos, definir criterios en común y documentar acuerdos"},
+    {"id":"C","texto":"Hacer un informe distinto para cada área sin buscar un mínimo común"},
+    {"id":"D","texto":"No involucrarte en el conflicto"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'sr', 'Analista de Negocios', 'abierta',
+ 'Describe una experiencia en la que tu análisis ayudó a la gerencia a tomar una decisión crítica (por ejemplo, cambio de producto, inversión o reducción de costos). ¿Cómo lo presentaste?',
+ '["Piensa en una decisión importante", "Incluye cómo comunicaste los hallazgos"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Analista QA
+('BL', 'TI', 'jr', 'Analista QA', 'opcion_multiple',
+ 'En una daily, desarrollo y negocio no se ponen de acuerdo sobre la prioridad de un defecto. ¿Qué puedes aportar como QA?',
+ '["Piensa en riesgo y evidencias"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"No decir nada para no entrar en conflicto"},
+    {"id":"B","texto":"Aportar datos sobre el impacto del defecto, ejemplos de uso y ayudar a estimar el riesgo para decidir su prioridad"},
+    {"id":"C","texto":"Decir que todos los defectos son críticos siempre"},
+    {"id":"D","texto":"Apoyar automáticamente al que hable más fuerte"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'jr', 'Analista QA', 'abierta',
+ 'Cuenta una ocasión en la que detectaste un problema importante antes de que llegara a producción. ¿Cómo lo comunicaste al equipo?',
+ '["Piensa en un bug real o un riesgo", "Incluye la reacción del equipo"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'TI', 'mid', 'Analista QA', 'opcion_multiple',
+ 'Ves que el mismo tipo de defecto se repite en varios releases. ¿Qué deberías impulsar?',
+ '["Mejora continua", "No solo reportar otra vez"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Seguir reportando el mismo defecto cada vez"},
+    {"id":"B","texto":"Proponer un análisis de causa raíz y ajustar pruebas, criterios de aceptación o proceso"},
+    {"id":"C","texto":"Dejar de reportarlo porque es repetitivo"},
+    {"id":"D","texto":"Pedir más tiempo sin cambiar nada del proceso"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'sr', 'Analista QA', 'abierta',
+ 'Describe una experiencia en la que ayudaste a mejorar la cultura de calidad en tu equipo o empresa. ¿Qué hiciste diferente?',
+ '["Piensa en cambios de prácticas, reuniones o métricas", "Cuenta el impacto en el equipo"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Analista Funcional
+('BL', 'TI', 'jr', 'Analista Funcional', 'opcion_multiple',
+ 'Durante el levantamiento de requerimientos, los usuarios usan distintos términos para lo mismo. ¿Qué haces?',
+ '["Piensa en claridad de lenguaje", "Glosario compartido"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Anotar todo tal cual y dejar que desarrollo interprete"},
+    {"id":"B","texto":"Crear y validar con ellos un glosario común con términos y definiciones claras"},
+    {"id":"C","texto":"Elegir tú los nombres sin consultar"},
+    {"id":"D","texto":"Terminar la reunión y no retomar el tema"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'jr', 'Analista Funcional', 'abierta',
+ 'Cuenta una situación en la que tuviste que explicar un proceso o requisito complejo a alguien no técnico. ¿Cómo lo hiciste?',
+ '["Piensa en un caso real", "Incluye ejemplos o apoyos visuales si los usaste"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'TI', 'mid', 'Analista Funcional', 'opcion_multiple',
+ 'En un proyecto con alta presión, te piden recortar documentación de análisis. ¿Qué propones?',
+ '["Documentación mínima pero útil"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Eliminar toda la documentación para ganar tiempo"},
+    {"id":"B","texto":"Acordar con el equipo un set mínimo (flujos críticos, reglas clave, criterios de aceptación) y mantener al menos eso"},
+    {"id":"C","texto":"Negarte a avanzar sin documentar todo en detalle"},
+    {"id":"D","texto":"Documentar solo en tus notas personales"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'TI', 'sr', 'Analista Funcional', 'abierta',
+ 'Describe una experiencia en la que ayudaste a alinear a negocio, desarrollo y QA en torno al alcance de un proyecto complejo. ¿Cómo evitaste el “scope creep”?',
+ '["Piensa en un proyecto real", "Incluye acuerdos y mecanismos de control que usaste"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Asistente Administrativo
+('BL', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
+ 'Tu jefe te pide un informe “para ahora ya”, pero ya tienes otras tareas comprometidas para el día. ¿Qué haces?',
+ '["Piensa en gestión del tiempo y comunicación"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Intentar hacerlo todo sin avisar si algo no se cumple"},
+    {"id":"B","texto":"Explicar tu carga actual, pedir priorizar tareas y reorganizar tu día en base a eso"},
+    {"id":"C","texto":"Decir que no harás el informe porque estás ocupado"},
+    {"id":"D","texto":"Ignorar las otras tareas y hacer solo el informe"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'jr', 'Asistente Administrativo', 'abierta',
+ 'Cuenta una ocasión en la que debiste organizar muchas tareas al mismo tiempo en la oficina. ¿Cómo decidiste por dónde empezar?',
+ '["Piensa en un día ajetreado", "Incluye cómo priorizaste"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Administracion', 'mid', 'Asistente Administrativo', 'opcion_multiple',
+ 'Notas un error en un documento que ya fue enviado a un cliente. ¿Cuál es la mejor acción?',
+ '["Piensa en responsabilidad y relación con el cliente"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"No decir nada para evitar problemas"},
+    {"id":"B","texto":"Informar a tu jefe, proponer corregir el documento y enviar una versión actualizada si es necesario"},
+    {"id":"C","texto":"Echarle la culpa a otra persona"},
+    {"id":"D","texto":"Eliminar el documento del archivo y olvidarlo"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'sr', 'Asistente Administrativo', 'abierta',
+ 'Describe una experiencia en la que apoyaste a tu equipo o jefatura en un periodo de alta carga de trabajo (por ejemplo, cierre de mes o evento importante). ¿Qué hiciste para que todo saliera adelante?',
+ '["Piensa en un periodo de alta presión", "Incluye cómo ayudaste a organizar al equipo"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Analista Contable
+('BL', 'Administracion', 'jr', 'Analista Contable', 'opcion_multiple',
+ 'Durante el registro de facturas encuentras un monto que no cuadra con el documento enviado. ¿Qué haces?',
+ '["Piensa en exactitud y comunicación"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Ajustar el monto para que cuadre y seguir"},
+    {"id":"B","texto":"Revisar el documento, consultar la diferencia con quien corresponda y registrar correctamente el valor"},
+    {"id":"C","texto":"Ignorar el problema porque el monto es pequeño"},
+    {"id":"D","texto":"Registrar cualquier valor y corregir después si alguien reclama"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'jr', 'Analista Contable', 'abierta',
+ 'Cuenta una situación en la que detectaste un error contable o administrativo. ¿Cómo lo corregiste?',
+ '["Piensa en un error real", "Incluye qué hiciste para evitar que volviera a ocurrir"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
+ 'Durante el cierre contable, descubres una diferencia que no puedes explicar rápidamente. El plazo para entregar los estados es corto. ¿Qué haces?',
+ '["Piensa en ética y tiempos"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Ajustar la cifra para que cuadre sin investigar"},
+    {"id":"B","texto":"Informar la diferencia, investigar lo posible y acordar un plan para terminar el análisis si no alcanzas"},
+    {"id":"C","texto":"Retrasar la entrega sin informar a nadie"},
+    {"id":"D","texto":"Eliminar la cuenta con diferencia del estado financiero"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'sr', 'Analista Contable', 'abierta',
+ 'Describe una experiencia en la que tuviste que explicar información contable compleja a alguien sin conocimientos financieros (por ejemplo, un gerente o cliente). ¿Cómo lo hiciste comprensible?',
+ '["Piensa en una explicación importante", "Incluye ejemplos o metáforas si las usaste"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+),
+
+-- SOFT SKILLS - Encargado de Administración
+('BL', 'Administracion', 'jr', 'Encargado de Administración', 'opcion_multiple',
+ 'Debes mantener orden físico y digital de documentación legal y laboral. Notas que varios documentos no están actualizados. ¿Qué haces?',
+ '["Piensa en orden y proactividad"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Dejar los documentos como están para no generar trabajo extra"},
+    {"id":"B","texto":"Hacer un inventario, priorizar qué actualizar y proponer un plan para regularizar la documentación"},
+    {"id":"C","texto":"Eliminar los documentos antiguos sin revisar su importancia"},
+    {"id":"D","texto":"Esperar a que el directorio pida algo específico para recién ordenar"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'jr', 'Encargado de Administración', 'abierta',
+ 'Cuenta una ocasión en la que organizaste o mejoraste el orden de documentos o procesos administrativos en tu trabajo o estudios. ¿Qué cambió con tu mejora?',
+ '["Piensa en un cambio concreto", "Incluye antes y después"]'::jsonb,
+ '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+),
+
+('BL', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
+ 'Debes informar al Directorio sobre una desviación importante en el presupuesto. ¿Qué es lo más adecuado?',
+ '["Transparencia con propuesta de acción"]'::jsonb,
+ '{"opciones":[
+    {"id":"A","texto":"Ocultar la desviación para evitar preguntas difíciles"},
+    {"id":"B","texto":"Presentar la desviación con datos claros, explicar las causas y proponer acciones para corregirla"},
+    {"id":"C","texto":"Mencionar solo los resultados positivos y omitir los negativos"},
+    {"id":"D","texto":"Culpar a otra área sin mostrar información"}
+  ], "respuesta_correcta":"B"}'::jsonb
+),
+
+('BL', 'Administracion', 'sr', 'Encargado de Administración', 'abierta',
+ 'Describe una experiencia en la que tuviste que liderar al equipo administrativo en un periodo de alta presión (por ejemplo, auditoría, cierre de año o cambio importante). ¿Cómo lo manejaste?',
+ '["Piensa en un momento crítico", "Cuenta cómo apoyaste al equipo y qué resultados obtuvieron"]'::jsonb,
+ '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+);
+
 
 COMMIT;
 
