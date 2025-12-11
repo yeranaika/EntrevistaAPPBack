@@ -3,6 +3,7 @@ package data.models.cuestionario
 import com.example.data.models.OpcionRespuesta
 import data.models.Nivel
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 // ============================================
 // ENUMS PARA PRUEBAS
@@ -32,7 +33,9 @@ data class PreguntaAsignadaResponse(
     val textoPregunta: String,
     val tipoPregunta: String,
     val opciones: List<OpcionRespuesta>? = null,
-    val claveCorrecta: String? = null
+    val claveCorrecta: String? = null,
+    // JSON de config_evaluacion (NLP + STAR + etc.)
+    val configEvaluacion: JsonElement? = null
 )
 
 // ============================================
@@ -41,10 +44,10 @@ data class PreguntaAsignadaResponse(
 
 @Serializable
 data class CrearPruebaReq(
-    val tipoPrueba: String = "aprendiz",  // "aprendiz", etc.
+    val tipoPrueba: String = "aprendiz",
     val area: AreaPrueba? = null,
     val nivel: Nivel? = null,
-    val metadata: Map<String, String>? = null  // Cambiado a objeto
+    val metadata: Map<String, String>? = null
 )
 
 @Serializable

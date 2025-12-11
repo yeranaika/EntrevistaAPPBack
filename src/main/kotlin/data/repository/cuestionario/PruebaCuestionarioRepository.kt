@@ -8,6 +8,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ColumnSet
 import org.jetbrains.exposed.sql.JoinType
@@ -26,19 +27,13 @@ import data.tables.cuestionario.prueba.PruebaTable
 import data.tables.cuestionario.prueba.PruebaPreguntaTable
 import data.tables.cuestionario.preguntas.PreguntaTable
 
-
-
 private val opcionesSerializer = ListSerializer(OpcionRespuesta.serializer())
 
 class PruebaCuestionarioRepository(
-    private val db: org.jetbrains.exposed.sql.Database,
+    private val db: Database,
     private val json: Json
 ) {
 
-    /**
-     * Asocia una pregunta a una prueba con un orden y (opcionalmente)
-     * opciones y clave correcta.
-     */
     suspend fun asociarPregunta(
         pruebaId: UUID,
         preguntaId: UUID,
@@ -47,7 +42,6 @@ class PruebaCuestionarioRepository(
     ): PreguntaAsignadaResponse = newSuspendedTransaction(db = db) {
         require(payload.orden > 0) { "El orden debe ser mayor a 0" }
 
-        // Verificar que la pregunta existe y obtener sus datos
         val preguntaRow = PreguntaTable
             .selectAll()
             .where { PreguntaTable.id eq preguntaId }
@@ -55,7 +49,6 @@ class PruebaCuestionarioRepository(
             .singleOrNull()
             ?: throw IllegalArgumentException("Pregunta no encontrada")
 
-        // Verificar que no exista otra pregunta con el mismo orden en esa prueba
         val ordenOcupado = !PruebaPreguntaTable
             .selectAll()
             .where {
@@ -69,7 +62,6 @@ class PruebaCuestionarioRepository(
             throw IllegalStateException("El orden ${payload.orden} ya esta en uso para esta prueba")
         }
 
-        // Validaciones de consistencia BLOQUEANTES
         if (validarConsistencia) {
             val pruebaRow = PruebaTable
                 .selectAll()
@@ -84,14 +76,12 @@ class PruebaCuestionarioRepository(
             val nivelPregunta = preguntaRow[PreguntaTable.nivel]
             val tipoPregunta = preguntaRow[PreguntaTable.tipoBanco]
 
-            // VALIDACIÓN BLOQUEANTE: Nivel de pregunta debe coincidir con nivel de prueba
             if (nivelPrueba != null && nivelPregunta != nivelPrueba) {
                 throw IllegalArgumentException(
                     "Inconsistencia de nivel: La pregunta tiene nivel '$nivelPregunta' pero la prueba requiere nivel '$nivelPrueba'"
                 )
             }
 
-            // VALIDACIÓN BLOQUEANTE: Tipo de pregunta debe ser compatible con área de prueba
             if (areaPrueba != null && tipoPregunta != areaPrueba) {
                 throw IllegalArgumentException(
                     "Inconsistencia de área: La pregunta es tipo '$tipoPregunta' pero la prueba es área '$areaPrueba'"
@@ -219,7 +209,8 @@ private data class PreguntaAsignadaRow(
     val texto: String,
     val tipoPregunta: String,
     val opciones: List<OpcionRespuesta>?,
-    val claveCorrecta: String?
+    val claveCorrecta: String?,
+    val configEvaluacion: JsonElement?     // 👈 nuevo campo interno
 )
 
 private fun ResultRow.toAsignada(json: Json): PreguntaAsignadaRow {
@@ -229,15 +220,22 @@ private fun ResultRow.toAsignada(json: Json): PreguntaAsignadaRow {
             .getOrNull()
     }
 
+    // Leemos el JSONB de config_evaluacion como String y lo parseamos a JsonElement
+    val configEvalRaw: String? = this[PreguntaTable.configEvaluacion]
+    val configEvalJson: JsonElement? = configEvalRaw?.let { raw ->
+        runCatching { json.parseToJsonElement(raw) }.getOrNull()
+    }
+
     return PreguntaAsignadaRow(
         asignacionId = this[PruebaPreguntaTable.id],
         pruebaId = this[PruebaPreguntaTable.pruebaId],
         preguntaId = this[PruebaPreguntaTable.preguntaId],
         orden = this[PruebaPreguntaTable.orden],
         texto = this[PreguntaTable.texto],
-        tipoPregunta = this[PreguntaTable.tipoBanco],
+        tipoPregunta = this[PreguntaTable.tipoBanco],   // como lo tenías
         opciones = opciones,
-        claveCorrecta = this[PruebaPreguntaTable.claveCorrecta]
+        claveCorrecta = this[PruebaPreguntaTable.claveCorrecta],
+        configEvaluacion = configEvalJson
     )
 }
 
@@ -259,5 +257,6 @@ private fun PreguntaAsignadaRow.toResponse(): PreguntaAsignadaResponse =
         textoPregunta = texto,
         tipoPregunta = tipoPregunta,
         opciones = opciones,
-        claveCorrecta = claveCorrecta
+        claveCorrecta = claveCorrecta,
+        configEvaluacion = configEvaluacion
     )

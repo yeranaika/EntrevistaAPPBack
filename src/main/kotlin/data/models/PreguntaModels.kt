@@ -12,7 +12,7 @@ enum class Nivel { jr, mid, sr }
 data class CreatePreguntaReq(
     val tipoBanco: TipoBanco,
     val nivel: Nivel,
-    val sector: String? = null,
+    val sector: String,
     val texto: String,
     val pistas: Map<String, String>? = null,     // se guarda como JSON string
     val historica: Map<String, String>? = null,  // se guarda como JSON string

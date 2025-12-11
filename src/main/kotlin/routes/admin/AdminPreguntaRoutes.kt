@@ -40,6 +40,8 @@ fun Route.adminPreguntaRoutes(repo: PreguntaRepository) {
 
                 if (body.texto.isBlank())
                     return@post call.respond(HttpStatusCode.BadRequest, "texto requerido")
+                if (body.sector.isBlank())
+                    return@post call.respond(HttpStatusCode.BadRequest, "sector requerido")
 
                 val created = runCatching { repo.create(body) }
                     .getOrElse { ex ->
