@@ -1716,7 +1716,7 @@ INSERT INTO pregunta (
 -- ====================================================================================
 -- SOPORTE TI (5 preguntas - nivel básico) -- NV
 -- ====================================================================================
-INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, texto, pistas, config_respuesta) VALUES
+INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, texto, pistas, config_respuesta, config_evaluacion) VALUES
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué es un sistema operativo?',
  '["Windows, Linux, macOS", "Software base"]'::jsonb,
@@ -1724,7 +1724,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un programa que gestiona el hardware y software del computador"},
    {"id":"B", "texto":"Un antivirus"},
    {"id":"C", "texto":"Una aplicación de office"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un sistema operativo es el software fundamental que gestiona el hardware y software del computador, permitiendo que las aplicaciones funcionen.","explicacion_incorrecta":"No es un antivirus ni una aplicación de office, sino el software base que permite que todo funcione."}}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué significa IP en redes?',
@@ -1733,7 +1734,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Internet Provider"},
    {"id":"B", "texto":"Internet Protocol"},
    {"id":"C", "texto":"Internal Program"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"IP significa Internet Protocol, el protocolo fundamental para la comunicación en redes que define cómo se direccionan y transmiten los datos.","explicacion_incorrecta":"No es Internet Provider ni Internal Program, sino el protocolo estándar de comunicación en redes."}}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Cuál es la función del protocolo DHCP?',
@@ -1742,7 +1744,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Asignar direcciones IP automáticamente"},
    {"id":"B", "texto":"Proteger contra virus"},
    {"id":"C", "texto":"Comprimir archivos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"DHCP (Dynamic Host Configuration Protocol) asigna automáticamente direcciones IP y configuración de red a los dispositivos, facilitando la administración de redes.","explicacion_incorrecta":"No es para protección contra virus ni compresión de archivos, sino para automatizar la asignación de direcciones IP."}}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué comando usarías para verificar la conectividad de red en Windows?',
@@ -1751,7 +1754,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"ipconfig"},
    {"id":"B", "texto":"ping"},
    {"id":"C", "texto":"netstat"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El comando ping verifica la conectividad de red enviando paquetes ICMP a un host destino y esperando respuesta.","explicacion_incorrecta":"ipconfig muestra configuración de red y netstat muestra conexiones activas, pero ping es específico para verificar conectividad."}}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'Soporte TI', 'opcion_multiple',
  '¿Qué es un firewall?',
@@ -1760,7 +1764,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un sistema que controla el tráfico de red entrante y saliente"},
    {"id":"B", "texto":"Un tipo de cable de red"},
    {"id":"C", "texto":"Un servidor web"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un firewall es un sistema de seguridad que controla y filtra el tráfico de red entrante y saliente según reglas de seguridad predefinidas.","explicacion_incorrecta":"No es un cable de red ni un servidor web, sino un componente de seguridad que protege la red."}}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1773,7 +1778,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Una plataforma de contenedores"},
    {"id":"B", "texto":"Un lenguaje de programación"},
    {"id":"C", "texto":"Una base de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Docker es una plataforma de contenedores que permite empaquetar aplicaciones con todas sus dependencias en unidades portables y aisladas.","explicacion_incorrecta":"No es un lenguaje de programación ni una base de datos, sino una plataforma para crear y ejecutar contenedores."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Qué es CI/CD?',
@@ -1782,7 +1788,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Continuous Integration/Continuous Deployment"},
    {"id":"B", "texto":"Central Information Control Data"},
    {"id":"C", "texto":"Computer Integration Code Development"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"CI/CD significa Continuous Integration/Continuous Deployment, prácticas que automatizan la integración de código y su despliegue a producción.","explicacion_incorrecta":"No se refiere a control de datos ni desarrollo de código, sino a la automatización del ciclo de entrega de software."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Qué es Kubernetes?',
@@ -1791,7 +1798,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un sistema de orquestación de contenedores"},
    {"id":"B", "texto":"Un editor de código"},
    {"id":"C", "texto":"Un framework de testing"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Kubernetes (K8s) es un sistema de orquestación de contenedores que automatiza el despliegue, escalado y gestión de aplicaciones contenerizadas.","explicacion_incorrecta":"No es un editor de código ni un framework de testing, sino una plataforma para orquestar contenedores a escala."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'DevOps Engineer', 'opcion_multiple',
  '¿Para qué sirve Terraform?',
@@ -1800,12 +1808,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Para definir infraestructura como código"},
    {"id":"B", "texto":"Para compilar código"},
    {"id":"C", "texto":"Para hacer testing"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Terraform es una herramienta de Infrastructure as Code (IaC) que permite definir, provisionar y gestionar infraestructura mediante código declarativo.","explicacion_incorrecta":"No es para compilar código ni para testing, sino para automatizar la creación y gestión de infraestructura."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'DevOps Engineer', 'abierta',
  '¿Qué es una pipeline de CI/CD?',
  '["Automatización", "Build, test, deploy"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"Una pipeline de CI/CD es una secuencia automatizada de pasos que incluye compilación, pruebas y despliegue del código, permitiendo entregas rápidas y confiables.","explicacion_incorrecta":"No es simplemente un proceso manual ni una herramienta específica, sino un flujo automatizado completo desde el código hasta producción."},"feedback_generico":"Se espera que menciones la automatización del proceso de build, test y deploy del código."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1818,7 +1828,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un computador que provee servicios a otros equipos"},
    {"id":"B", "texto":"Un tipo de cable"},
    {"id":"C", "texto":"Una aplicación móvil"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un servidor es un computador diseñado para proveer servicios, recursos o datos a otros equipos (clientes) en una red.","explicacion_incorrecta":"No es un cable ni una aplicación móvil, sino un equipo dedicado a servir recursos a otros dispositivos."}}'::jsonb
 ),
 ('NV', 'TI', 'jr', 'SysAdmin', 'opcion_multiple',
  '¿Qué comando en Linux muestra los procesos en ejecución?',
@@ -1827,7 +1838,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"ls"},
    {"id":"B", "texto":"ps"},
    {"id":"C", "texto":"cd"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El comando ps (process status) muestra información sobre los procesos activos en el sistema Linux.","explicacion_incorrecta":"ls lista archivos y cd cambia de directorio, pero ps es el comando específico para ver procesos."}}'::jsonb
 ),
 ('NV', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
  '¿Qué es un backup incremental?',
@@ -1836,7 +1848,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Copia solo los cambios desde el último backup"},
    {"id":"B", "texto":"Copia todos los archivos siempre"},
    {"id":"C", "texto":"Elimina archivos antiguos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un backup incremental copia solo los archivos que han cambiado desde el último backup, ahorrando tiempo y espacio de almacenamiento.","explicacion_incorrecta":"No copia todo ni elimina archivos, solo respalda los cambios nuevos desde el último backup."}}'::jsonb
 ),
 ('NV', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
  '¿Qué puerto usa SSH por defecto?',
@@ -1845,12 +1858,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"80"},
    {"id":"B", "texto":"22"},
    {"id":"C", "texto":"443"}
- ], "respuesta_correcta":"B"}'::jsonb
+ ], "respuesta_correcta":"B"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"SSH (Secure Shell) usa el puerto 22 por defecto para conexiones seguras remotas.","explicacion_incorrecta":"El puerto 80 es para HTTP y 443 para HTTPS, mientras que SSH usa el puerto 22."}}'::jsonb
 ),
 ('NV', 'TI', 'mid', 'SysAdmin', 'abierta',
  'Explica qué es un RAID y para qué sirve',
  '["Redundancia", "Varios discos"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"RAID (Redundant Array of Independent Disks) combina múltiples discos duros para mejorar el rendimiento y/o proporcionar redundancia de datos, protegiendo contra fallos de disco.","explicacion_incorrecta":"No es simplemente juntar discos, sino configurarlos estratégicamente para redundancia o rendimiento."},"feedback_generico":"Se espera que menciones que RAID combina varios discos para redundancia y/o mejor rendimiento."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1863,7 +1878,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Application Programming Interface"},
    {"id":"B", "texto":"Advanced Program Information"},
    {"id":"C", "texto":"Automatic Process Integration"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"API significa Application Programming Interface, un conjunto de reglas y definiciones que permite la comunicación entre diferentes aplicaciones de software.","explicacion_incorrecta":"No es información de programa avanzada ni integración de procesos, sino una interfaz estándar para que las aplicaciones se comuniquen."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'Desarrollador Backend', 'opcion_multiple',
  '¿Qué es REST?',
@@ -1872,12 +1888,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un estilo arquitectónico para APIs web"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un lenguaje de programación"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"REST (Representational State Transfer) es un estilo arquitectónico para diseñar APIs web que utiliza HTTP y sus métodos estándar.","explicacion_incorrecta":"No es una base de datos ni un lenguaje de programación, sino un estilo arquitectónico para diseñar servicios web."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Backend', 'abierta',
  '¿Qué diferencia hay entre SQL y NoSQL?',
  '["Estructurado vs No estructurado", "Relacional vs Documental"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"SQL son bases de datos relacionales con esquema fijo y tablas relacionadas, mientras que NoSQL son bases de datos no relacionales con esquemas flexibles, diseñadas para datos no estructurados y escalabilidad horizontal.","explicacion_incorrecta":"No es solo una cuestión de nombre, sino diferencias fundamentales en estructura, escalabilidad y casos de uso."},"feedback_generico":"Se espera que menciones las diferencias en estructura (relacional vs no relacional) y flexibilidad de esquema."}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Backend', 'opcion_multiple',
  '¿Qué es un middleware?',
@@ -1886,12 +1904,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Software que procesa peticiones entre cliente y servidor"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un framework frontend"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un middleware es software que actúa como intermediario procesando peticiones entre el cliente y el servidor, permitiendo funcionalidades como autenticación, logging o validación.","explicacion_incorrecta":"No es una base de datos ni un framework frontend, sino una capa intermedia de procesamiento de peticiones."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Backend', 'abierta',
  'Explica el patrón Repository en arquitectura de software',
  '["Separación de concerns", "Acceso a datos"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"El patrón Repository abstrae la capa de acceso a datos, proporcionando una interfaz para operaciones CRUD sin exponer los detalles de implementación de la base de datos, mejorando la separación de responsabilidades y facilitando el testing.","explicacion_incorrecta":"No es simplemente acceder a la base de datos directamente, sino crear una capa de abstracción que separa la lógica de negocio del acceso a datos."},"feedback_generico":"Se espera que menciones la abstracción del acceso a datos y la separación de responsabilidades."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1904,7 +1924,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"HyperText Markup Language"},
    {"id":"B", "texto":"High Tech Modern Language"},
    {"id":"C", "texto":"Home Tool Making Language"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"HTML significa HyperText Markup Language, el lenguaje estándar de marcado para crear la estructura y contenido de páginas web.","explicacion_incorrecta":"No es un lenguaje de tecnología moderna ni una herramienta casera, sino el lenguaje fundamental para estructurar contenido web."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Para qué sirve CSS?',
@@ -1913,7 +1934,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Para dar estilos y diseño a páginas web"},
    {"id":"B", "texto":"Para programar la lógica"},
    {"id":"C", "texto":"Para bases de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"CSS (Cascading Style Sheets) se utiliza para definir la presentación visual, estilos y diseño de páginas web, separando el contenido de su apariencia.","explicacion_incorrecta":"No es para programar lógica ni gestionar bases de datos, sino exclusivamente para el diseño visual y estilos."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Qué es el DOM?',
@@ -1922,7 +1944,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Document Object Model - representación de la página"},
    {"id":"B", "texto":"Data Operation Method"},
    {"id":"C", "texto":"Digital Online Manager"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El DOM (Document Object Model) es una representación en forma de árbol de la estructura de una página web que permite a JavaScript interactuar y manipular los elementos HTML dinámicamente.","explicacion_incorrecta":"No es un método de operación de datos ni un gestor digital, sino la representación programática del documento HTML."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
  '¿Qué es React?',
@@ -1931,12 +1954,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Una librería de JavaScript para construir interfaces"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un servidor web"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"React es una librería de JavaScript desarrollada por Facebook para construir interfaces de usuario interactivas mediante componentes reutilizables.","explicacion_incorrecta":"No es una base de datos ni un servidor web, sino una librería específica para crear interfaces de usuario."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Frontend', 'abierta',
  'Explica qué es el Virtual DOM y por qué React lo usa',
  '["Rendimiento", "Comparación"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"El Virtual DOM es una representación ligera en memoria del DOM real. React lo usa para optimizar el rendimiento al comparar cambios en el Virtual DOM antes de actualizar el DOM real, minimizando las manipulaciones costosas y mejorando la velocidad de renderizado.","explicacion_incorrecta":"No es simplemente una copia del DOM, sino una estrategia de optimización que permite actualizaciones eficientes mediante comparación y actualización selectiva."},"feedback_generico":"Se espera que menciones la optimización de rendimiento mediante comparación de cambios antes de actualizar el DOM real."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1949,7 +1974,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Desarrollador que trabaja tanto en frontend como backend"},
    {"id":"B", "texto":"Desarrollador solo de bases de datos"},
    {"id":"C", "texto":"Desarrollador solo de diseño"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un desarrollador Full Stack trabaja tanto en frontend (interfaz de usuario) como en backend (servidor, base de datos, lógica de negocio), dominando el stack completo de tecnologías.","explicacion_incorrecta":"No es un especialista solo en bases de datos o diseño, sino alguien con habilidades en todas las capas del desarrollo web."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es Node.js?',
@@ -1958,7 +1984,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un entorno de ejecución de JavaScript en el servidor"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un framework de CSS"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Node.js es un entorno de ejecución que permite ejecutar JavaScript en el servidor, construido sobre el motor V8 de Chrome, ideal para aplicaciones escalables y en tiempo real.","explicacion_incorrecta":"No es una base de datos ni un framework de CSS, sino un runtime para ejecutar JavaScript fuera del navegador."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es una SPA (Single Page Application)?',
@@ -1967,7 +1994,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Aplicación que carga una sola página y actualiza contenido dinámicamente"},
    {"id":"B", "texto":"Aplicación con muchas páginas"},
    {"id":"C", "texto":"Aplicación móvil"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Una SPA (Single Page Application) carga una sola página HTML inicial y actualiza el contenido dinámicamente mediante JavaScript sin recargar la página completa, mejorando la experiencia del usuario.","explicacion_incorrecta":"No es una aplicación con muchas páginas ni necesariamente una app móvil, sino una aplicación web que funciona en una sola página."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
  '¿Qué es CORS?',
@@ -1976,12 +2004,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Cross-Origin Resource Sharing - mecanismo de seguridad"},
    {"id":"B", "texto":"Central Online Resource System"},
    {"id":"C", "texto":"Computer Operating Resource Server"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"CORS (Cross-Origin Resource Sharing) es un mecanismo de seguridad del navegador que controla cómo recursos de un dominio pueden ser solicitados desde otro dominio, protegiendo contra ataques.","explicacion_incorrecta":"No es un sistema central de recursos ni un servidor de recursos, sino un mecanismo de seguridad para peticiones cross-origin."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Fullstack', 'abierta',
  'Explica la diferencia entre autenticación y autorización',
  '["Quién eres vs Qué puedes hacer", "Login vs Permisos"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"La autenticación verifica quién eres (login con credenciales), mientras que la autorización determina qué puedes hacer (permisos y roles). La autenticación ocurre primero y la autorización después, controlando el acceso a recursos específicos.","explicacion_incorrecta":"No son lo mismo ni intercambiables; la autenticación es verificar identidad y la autorización es verificar permisos."},"feedback_generico":"Se espera que menciones que autenticación verifica identidad (quién eres) y autorización verifica permisos (qué puedes hacer)."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -1994,7 +2024,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Kotlin y Java"},
    {"id":"B", "texto":"Python"},
    {"id":"C", "texto":"Ruby"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Kotlin y Java son los lenguajes nativos oficiales para desarrollo Android. Kotlin es ahora el lenguaje preferido por Google, mientras que Java ha sido el lenguaje tradicional desde el inicio de Android.","explicacion_incorrecta":"Python y Ruby no son lenguajes nativos para Android, aunque existen frameworks que permiten usarlos."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es una Activity en Android?',
@@ -2003,7 +2034,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Una pantalla/interfaz de usuario"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un servicio en background"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Una Activity representa una pantalla o interfaz de usuario en Android. Es el componente fundamental para la interacción del usuario con la aplicación.","explicacion_incorrecta":"No es una base de datos ni un servicio en background, sino el componente visual principal para interacción con el usuario."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es un Intent en Android?',
@@ -2012,7 +2044,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un mensaje para comunicar componentes"},
    {"id":"B", "texto":"Una variable"},
    {"id":"C", "texto":"Un tipo de error"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un Intent es un objeto de mensajería que permite la comunicación entre componentes de Android (Activities, Services, BroadcastReceivers), facilitando el paso de datos y acciones.","explicacion_incorrecta":"No es una variable simple ni un tipo de error, sino un mecanismo de mensajería entre componentes de la aplicación."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'Desarrollador Android', 'opcion_multiple',
  '¿Qué es el AndroidManifest.xml?',
@@ -2021,12 +2054,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Archivo de configuración de la aplicación"},
    {"id":"B", "texto":"Código fuente principal"},
    {"id":"C", "texto":"Base de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El AndroidManifest.xml es el archivo de configuración esencial que declara componentes de la aplicación, permisos, características requeridas y metadatos importantes.","explicacion_incorrecta":"No es el código fuente principal ni una base de datos, sino el archivo descriptor que configura la aplicación Android."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'Desarrollador Android', 'abierta',
  'Explica el ciclo de vida de una Activity',
  '["onCreate, onStart, onResume...", "Estados"]'::jsonb,
- '{"min_caracteres": 50, "max_caracteres": 400}'::jsonb
+ '{"min_caracteres": 50, "max_caracteres": 400}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"El ciclo de vida de una Activity incluye los estados onCreate (creación), onStart (visible), onResume (interactiva), onPause (pierde foco), onStop (no visible) y onDestroy (destrucción). Estos callbacks permiten gestionar recursos y estado durante las transiciones de la Activity.","explicacion_incorrecta":"No es un proceso arbitrario, sino una secuencia específica de callbacks que gestiona el estado de la interfaz según la interacción del usuario."},"feedback_generico":"Se espera que menciones los principales métodos del ciclo de vida (onCreate, onStart, onResume, onPause, onStop, onDestroy) y su propósito."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2039,7 +2074,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Pruebas ejecutadas por scripts sin intervención manual"},
    {"id":"B", "texto":"Pruebas manuales"},
    {"id":"C", "texto":"Diseño de interfaces"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El testing automatizado utiliza scripts y herramientas para ejecutar pruebas de forma automática y repetible sin intervención manual, mejorando la eficiencia y consistencia de las pruebas.","explicacion_incorrecta":"No son pruebas manuales ni diseño de interfaces, sino la automatización del proceso de testing mediante scripts."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'jr', 'QA Automation', 'opcion_multiple',
  '¿Qué es un test case?',
@@ -2048,7 +2084,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Un escenario de prueba con pasos y resultado esperado"},
    {"id":"B", "texto":"Un error en el código"},
    {"id":"C", "texto":"Una función del programa"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un test case es un escenario de prueba que define condiciones, pasos a ejecutar y el resultado esperado para verificar que una funcionalidad trabaja correctamente.","explicacion_incorrecta":"No es un error en el código ni una función del programa, sino un conjunto documentado de pasos para verificar funcionalidad."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'QA Automation', 'opcion_multiple',
  '¿Qué es Selenium?',
@@ -2057,17 +2094,20 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Herramienta para automatizar pruebas de aplicaciones web"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un lenguaje de programación"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Selenium es un framework open source para automatizar pruebas de aplicaciones web, permitiendo simular interacciones del usuario en diferentes navegadores.","explicacion_incorrecta":"No es una base de datos ni un lenguaje de programación, sino una herramienta especializada en automatización de pruebas web."}}'::jsonb
 ),
 ('NV', 'Desarrollo', 'mid', 'QA Automation', 'abierta',
  'Diferencia entre testing unitario e integración',
  '["Función vs Múltiples componentes", "Aislado vs Conjunto"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"El testing unitario prueba componentes individuales de forma aislada (funciones, métodos), mientras que el testing de integración verifica que múltiples componentes funcionen correctamente juntos y se comuniquen adecuadamente.","explicacion_incorrecta":"No son lo mismo; el unitario se enfoca en piezas individuales mientras que integración verifica la interacción entre componentes."},"feedback_generico":"Se espera que menciones que unitario prueba componentes aislados y integración prueba componentes trabajando juntos."}'::jsonb
 ),
 ('NV', 'Desarrollo', 'sr', 'QA Automation', 'abierta',
  '¿Qué es el patrón Page Object Model (POM)?',
  '["Patrón de diseño", "Mantenibilidad"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"Page Object Model (POM) es un patrón de diseño que crea objetos que representan páginas web, encapsulando los elementos y acciones de cada página. Esto mejora la mantenibilidad, reutilización y legibilidad de los tests automatizados.","explicacion_incorrecta":"No es simplemente acceder a elementos del DOM, sino crear una capa de abstracción organizada por páginas que facilita el mantenimiento de tests."},"feedback_generico":"Se espera que menciones que POM encapsula elementos y acciones de páginas en objetos para mejorar mantenibilidad."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2080,7 +2120,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Structured Query Language - para consultar bases de datos"},
    {"id":"B", "texto":"Simple Question Language"},
    {"id":"C", "texto":"System Quality Level"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"SQL (Structured Query Language) es el lenguaje estándar para interactuar con bases de datos relacionales, permitiendo consultar, insertar, actualizar y eliminar datos de manera estructurada.","explicacion_incorrecta":"No es un lenguaje de preguntas simples ni un nivel de calidad, sino el lenguaje estándar para gestionar bases de datos relacionales."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es un dashboard?',
@@ -2089,7 +2130,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Panel visual que muestra métricas e indicadores clave"},
    {"id":"B", "texto":"Una base de datos"},
    {"id":"C", "texto":"Un tipo de gráfico"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un dashboard es un panel visual interactivo que consolida y muestra métricas e indicadores clave de desempeño (KPIs) en un solo lugar, facilitando el análisis y toma de decisiones.","explicacion_incorrecta":"No es una base de datos ni un tipo de gráfico específico, sino un panel completo que integra múltiples visualizaciones y métricas."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es ETL?',
@@ -2098,12 +2140,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Extract, Transform, Load - proceso de integración de datos"},
    {"id":"B", "texto":"Error Testing Language"},
    {"id":"C", "texto":"External Tool Library"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"ETL (Extract, Transform, Load) es el proceso de extraer datos de diversas fuentes, transformarlos a un formato útil y cargarlos en un sistema de destino, típicamente un data warehouse.","explicacion_incorrecta":"No es un lenguaje de testing ni una librería de herramientas, sino el proceso fundamental de integración y preparación de datos."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Datos', 'abierta',
  'Explica qué es la normalización de datos',
  '["Estructurar datos", "Eliminar redundancia"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"La normalización de datos es el proceso de organizar datos en una base de datos para reducir redundancia y dependencias, dividiendo tablas grandes en tablas más pequeñas y relacionadas para mejorar integridad y eficiencia.","explicacion_incorrecta":"No es simplemente limpiar datos, sino estructurarlos siguiendo reglas específicas (formas normales) para eliminar redundancia y mantener consistencia."},"feedback_generico":"Se espera que menciones la eliminación de redundancia y la estructuración de datos en tablas relacionadas."}'::jsonb
 ),
 ('NV', 'Analisis TI', 'sr', 'Analista de Datos', 'opcion_multiple',
  '¿Qué es un Data Warehouse?',
@@ -2112,7 +2156,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Sistema centralizado para almacenar y analizar grandes volúmenes de datos"},
    {"id":"B", "texto":"Una hoja de cálculo"},
    {"id":"C", "texto":"Un tipo de gráfico"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un Data Warehouse es un sistema centralizado que almacena grandes volúmenes de datos históricos de múltiples fuentes, optimizado para análisis y reportería empresarial mediante consultas complejas.","explicacion_incorrecta":"No es una hoja de cálculo ni un gráfico, sino una infraestructura completa diseñada para almacenamiento y análisis masivo de datos empresariales."}}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2125,7 +2170,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Descripción de una funcionalidad que el sistema debe tener"},
    {"id":"B", "texto":"Hardware necesario"},
    {"id":"C", "texto":"Costo del proyecto"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un requerimiento funcional describe qué debe hacer el sistema, especificando funcionalidades, comportamientos y operaciones que el sistema debe realizar para satisfacer las necesidades del negocio.","explicacion_incorrecta":"No es hardware ni costos, sino la descripción específica de funcionalidades y comportamientos del sistema."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista de Negocios', 'opcion_multiple',
  '¿Qué es un stakeholder?',
@@ -2134,7 +2180,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Persona u organización con interés en el proyecto"},
    {"id":"B", "texto":"Un tipo de software"},
    {"id":"C", "texto":"Una metodología"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un stakeholder es cualquier persona u organización que tiene interés, es afectada por, o puede influir en el proyecto o sistema, incluyendo usuarios, clientes, patrocinadores y equipos.","explicacion_incorrecta":"No es un software ni una metodología, sino las personas y organizaciones involucradas o afectadas por el proyecto."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Negocios', 'opcion_multiple',
  '¿Qué es un caso de uso?',
@@ -2143,17 +2190,20 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Descripción de cómo un usuario interactúa con el sistema"},
    {"id":"B", "texto":"Un error en el software"},
    {"id":"C", "texto":"Una prueba técnica"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un caso de uso describe una secuencia de interacciones entre un actor (usuario) y el sistema para lograr un objetivo específico, documentando el flujo principal y alternativo de acciones.","explicacion_incorrecta":"No es un error ni una prueba técnica, sino una descripción estructurada de cómo los usuarios interactúan con el sistema."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista de Negocios', 'abierta',
  'Diferencia entre requerimiento funcional y no funcional',
  '["Qué hace vs Cómo lo hace", "Funcionalidad vs Calidad"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"Los requerimientos funcionales describen qué debe hacer el sistema (funcionalidades específicas), mientras que los no funcionales describen cómo debe hacerlo (calidad, rendimiento, seguridad, usabilidad). Funcionales son capacidades, no funcionales son restricciones o atributos de calidad.","explicacion_incorrecta":"No son lo mismo; funcionales definen comportamientos del sistema y no funcionales definen características de calidad."},"feedback_generico":"Se espera que menciones que funcionales describen qué hace el sistema y no funcionales cómo lo hace (calidad, rendimiento)."}'::jsonb
 ),
 ('NV', 'Analisis TI', 'sr', 'Analista de Negocios', 'abierta',
  '¿Qué es el análisis de brecha (gap analysis)?',
  '["Estado actual vs deseado", "Diferencia"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"El análisis de brecha (gap analysis) compara el estado actual de un proceso o sistema con el estado deseado futuro, identificando las diferencias (gaps) y determinando las acciones necesarias para cerrar esas brechas y alcanzar los objetivos.","explicacion_incorrecta":"No es solo identificar problemas, sino comparar sistemáticamente el estado actual con el objetivo y planificar cómo cerrar la brecha."},"feedback_generico":"Se espera que menciones la comparación entre estado actual y deseado, identificando brechas y acciones para cerrarlas."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2166,7 +2216,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Quality Assurance - Aseguramiento de Calidad"},
    {"id":"B", "texto":"Quick Access"},
    {"id":"C", "texto":"Question Answer"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"QA significa Quality Assurance (Aseguramiento de Calidad), el proceso sistemático de garantizar que productos y servicios cumplan con estándares de calidad establecidos mediante prevención y detección de defectos.","explicacion_incorrecta":"No es acceso rápido ni preguntas y respuestas, sino el proceso de asegurar la calidad del software."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista QA', 'opcion_multiple',
  '¿Qué es un bug?',
@@ -2175,7 +2226,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Error o defecto en el software"},
    {"id":"B", "texto":"Una funcionalidad nueva"},
    {"id":"C", "texto":"Un tipo de virus"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un bug es un error o defecto en el software que causa comportamiento incorrecto, inesperado o no intencionado, impidiendo que el programa funcione como se esperaba.","explicacion_incorrecta":"No es una funcionalidad nueva ni un virus, sino un defecto que impide el funcionamiento correcto del software."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'jr', 'Analista QA', 'opcion_multiple',
  '¿Qué es el testing de regresión?',
@@ -2184,12 +2236,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Pruebas para verificar que cambios no afectaron funcionalidad existente"},
    {"id":"B", "texto":"Pruebas solo de nuevas funciones"},
    {"id":"C", "texto":"Pruebas de rendimiento"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El testing de regresión verifica que los cambios o nuevas funcionalidades no hayan afectado negativamente las funcionalidades existentes que previamente funcionaban correctamente.","explicacion_incorrecta":"No es solo para nuevas funciones ni para rendimiento, sino para asegurar que los cambios no rompieron funcionalidad previa."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista QA', 'abierta',
  'Explica la diferencia entre verificación y validación',
  '["¿Lo hicimos bien? vs ¿Hicimos lo correcto?", "Proceso vs Producto"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"La verificación pregunta \"¿Estamos construyendo el producto correctamente?\" (cumplimos especificaciones y estándares), mientras que la validación pregunta \"¿Estamos construyendo el producto correcto?\" (satisface necesidades del usuario). Verificación es proceso, validación es producto final.","explicacion_incorrecta":"No son sinónimos; verificación revisa cumplimiento de especificaciones y validación revisa satisfacción de necesidades del usuario."},"feedback_generico":"Se espera que menciones que verificación es cumplir especificaciones (proceso) y validación es cumplir necesidades (producto)."}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista QA', 'opcion_multiple',
  '¿Qué es un plan de pruebas?',
@@ -2198,7 +2252,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Documento que define estrategia, alcance y recursos de testing"},
    {"id":"B", "texto":"Lista de bugs"},
    {"id":"C", "texto":"Manual de usuario"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un plan de pruebas es un documento formal que define la estrategia, alcance, objetivos, recursos, cronograma y enfoque de las actividades de testing para un proyecto.","explicacion_incorrecta":"No es una simple lista de bugs ni un manual de usuario, sino un documento estratégico que guía todas las actividades de testing."}}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2211,7 +2266,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Traducir necesidades de negocio a requerimientos técnicos"},
    {"id":"B", "texto":"Programar aplicaciones"},
    {"id":"C", "texto":"Gestionar servidores"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El Analista Funcional actúa como puente entre el negocio y TI, traduciendo necesidades de negocio en requerimientos funcionales claros y documentados que el equipo técnico pueda implementar.","explicacion_incorrecta":"No programa ni gestiona servidores, sino que analiza necesidades y documenta requerimientos funcionales."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'opcion_multiple',
  '¿Qué es un diagrama de flujo?',
@@ -2220,7 +2276,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Representación gráfica de un proceso o algoritmo"},
    {"id":"B", "texto":"Una tabla de datos"},
    {"id":"C", "texto":"Un reporte"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un diagrama de flujo es una representación gráfica que muestra los pasos secuenciales de un proceso o algoritmo usando símbolos estandarizados para facilitar su comprensión y análisis.","explicacion_incorrecta":"No es una tabla de datos ni un reporte, sino una herramienta visual para representar procesos paso a paso."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'opcion_multiple',
  '¿Qué es la especificación funcional?',
@@ -2229,17 +2286,20 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Documento que describe en detalle cómo debe funcionar el sistema"},
    {"id":"B", "texto":"Manual de usuario"},
    {"id":"C", "texto":"Código fuente"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La especificación funcional es un documento detallado que describe cómo debe funcionar el sistema, incluyendo comportamientos, interfaces, reglas de negocio y flujos de trabajo necesarios para su implementación.","explicacion_incorrecta":"No es un manual de usuario ni código fuente, sino documentación técnica que guía el desarrollo del sistema."}}'::jsonb
 ),
 ('NV', 'Analisis TI', 'mid', 'Analista Funcional', 'abierta',
  'Explica qué es el modelado de procesos de negocio',
  '["BPM", "Representar flujos"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"El modelado de procesos de negocio (BPM) es la técnica de representar visualmente los flujos de trabajo y procesos organizacionales, identificando actividades, roles, decisiones e interacciones para analizar, optimizar y documentar cómo opera el negocio.","explicacion_incorrecta":"No es solo hacer diagramas, sino analizar y documentar sistemáticamente los procesos completos del negocio con sus actores y flujos."},"feedback_generico":"Se espera que menciones la representación visual de flujos de trabajo y procesos organizacionales para análisis y optimización."}'::jsonb
 ),
 ('NV', 'Analisis TI', 'sr', 'Analista Funcional', 'abierta',
  '¿Qué técnicas usarías para elicitar requerimientos?',
  '["Entrevistas, talleres, observación", "Múltiples técnicas"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"Para elicitar requerimientos se usan múltiples técnicas: entrevistas con stakeholders, talleres colaborativos, observación directa de usuarios, análisis de documentación existente, prototipos, encuestas y casos de uso. Cada técnica aporta perspectivas diferentes para capturar necesidades completas.","explicacion_incorrecta":"No es usar una sola técnica, sino combinar múltiples enfoques para obtener requerimientos completos y precisos de diferentes fuentes."},"feedback_generico":"Se espera que menciones al menos 3-4 técnicas como entrevistas, talleres, observación, análisis de documentos o prototipos."}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2252,7 +2312,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Programa de hojas de cálculo"},
    {"id":"B", "texto":"Editor de imágenes"},
    {"id":"C", "texto":"Base de datos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Microsoft Excel es un programa de hojas de cálculo que permite organizar datos en tablas, realizar cálculos mediante fórmulas, crear gráficos y analizar información de manera eficiente.","explicacion_incorrecta":"No es un editor de imágenes ni una base de datos, sino una aplicación especializada en cálculos y análisis de datos tabulares."}}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Para qué sirve una agenda digital?',
@@ -2261,7 +2322,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Para organizar eventos, reuniones y tareas"},
    {"id":"B", "texto":"Para editar videos"},
    {"id":"C", "texto":"Para programar"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Una agenda digital sirve para organizar y gestionar eventos, reuniones, tareas y recordatorios de forma electrónica, mejorando la productividad y organización personal o profesional.","explicacion_incorrecta":"No es para editar videos ni para programar, sino para gestionar el tiempo y organizar actividades."}}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es un correo corporativo?',
@@ -2270,7 +2332,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Cuenta de email profesional con dominio de la empresa"},
    {"id":"B", "texto":"Correo personal"},
    {"id":"C", "texto":"Red social"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un correo corporativo es una cuenta de email profesional que utiliza el dominio de la empresa (ej: nombre@empresa.com), proporcionando identidad corporativa y mayor profesionalismo en las comunicaciones.","explicacion_incorrecta":"No es un correo personal ni una red social, sino una herramienta de comunicación profesional con identidad empresarial."}}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es un acta de reunión?',
@@ -2279,7 +2342,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Documento que registra lo tratado en una reunión"},
    {"id":"B", "texto":"Invitación a reunión"},
    {"id":"C", "texto":"Lista de asistentes"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un acta de reunión es un documento formal que registra los temas tratados, decisiones tomadas, acuerdos alcanzados y acciones asignadas durante una reunión, sirviendo como registro oficial.","explicacion_incorrecta":"No es una invitación ni solo una lista de asistentes, sino un registro completo de lo discutido y decidido en la reunión."}}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
  '¿Qué es la gestión documental?',
@@ -2288,7 +2352,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Sistema para organizar, almacenar y recuperar documentos"},
    {"id":"B", "texto":"Edición de textos"},
    {"id":"C", "texto":"Impresión de documentos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La gestión documental es un sistema o proceso para organizar, almacenar, gestionar y recuperar documentos de manera eficiente, asegurando su disponibilidad, seguridad y trazabilidad.","explicacion_incorrecta":"No es solo edición o impresión, sino un sistema completo para administrar el ciclo de vida de los documentos organizacionales."}}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2301,12 +2366,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Estado financiero que muestra activos, pasivos y patrimonio"},
    {"id":"B", "texto":"Lista de empleados"},
    {"id":"C", "texto":"Presupuesto mensual"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El balance general es un estado financiero que muestra la situación económica de una empresa en un momento específico, presentando sus activos, pasivos y patrimonio, reflejando la ecuación contable fundamental.","explicacion_incorrecta":"No es una lista de empleados ni un presupuesto, sino un reporte financiero que muestra la posición patrimonial de la empresa."}}'::jsonb
 ),
 ('NV', 'Administracion', 'jr', 'Analista Contable', 'abierta',
  '¿Qué significa débito y crédito en contabilidad?',
  '["Partida doble", "Cargo y abono"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"En contabilidad, débito (debe o cargo) y crédito (haber o abono) son los dos lados de la partida doble. Débito aumenta activos y gastos, mientras que crédito aumenta pasivos, patrimonio e ingresos. Cada transacción afecta al menos dos cuentas manteniendo el balance.","explicacion_incorrecta":"No son simplemente entrada y salida de dinero, sino conceptos del sistema de partida doble que registran efectos en diferentes tipos de cuentas."},"feedback_generico":"Se espera que menciones la partida doble y cómo débito y crédito afectan diferentes tipos de cuentas."}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué es la conciliación bancaria?',
@@ -2315,7 +2382,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Proceso de comparar registros contables con extractos bancarios"},
    {"id":"B", "texto":"Transferencia bancaria"},
    {"id":"C", "texto":"Solicitud de préstamo"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La conciliación bancaria es el proceso de comparar y ajustar los registros contables de la empresa con los extractos bancarios para identificar diferencias, verificar saldos y detectar errores o transacciones pendientes.","explicacion_incorrecta":"No es una transferencia ni un préstamo, sino un procedimiento de control para verificar la exactitud de los registros bancarios."}}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué son las cuentas por pagar?',
@@ -2324,7 +2392,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Deudas u obligaciones que la empresa debe pagar"},
    {"id":"B", "texto":"Dinero que nos deben"},
    {"id":"C", "texto":"Ingresos futuros"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Las cuentas por pagar son obligaciones o deudas que la empresa debe pagar a proveedores, acreedores u otros terceros por bienes o servicios recibidos a crédito, representando un pasivo corriente.","explicacion_incorrecta":"No es dinero que nos deben (eso sería cuentas por cobrar) ni ingresos futuros, sino obligaciones de pago pendientes."}}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
  '¿Qué es la depreciación?',
@@ -2333,7 +2402,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Pérdida de valor de un activo con el tiempo"},
    {"id":"B", "texto":"Aumento de precio"},
    {"id":"C", "texto":"Tipo de impuesto"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La depreciación es la pérdida de valor de un activo fijo con el tiempo debido a uso, desgaste u obsolescencia, registrándose contablemente como gasto para distribuir el costo del activo a lo largo de su vida útil.","explicacion_incorrecta":"No es un aumento de precio ni un impuesto, sino el reconocimiento contable de la pérdida de valor de activos fijos."}}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2346,7 +2416,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Proceso de administrar el personal de la organización"},
    {"id":"B", "texto":"Compra de equipos"},
    {"id":"C", "texto":"Gestión financiera"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La gestión de recursos humanos es el proceso de administrar el capital humano de la organización, incluyendo reclutamiento, selección, capacitación, desarrollo, evaluación y retención del personal para alcanzar objetivos organizacionales.","explicacion_incorrecta":"No es compra de equipos ni solo gestión financiera, sino la administración integral del personal de la organización."}}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es un presupuesto?',
@@ -2355,12 +2426,14 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Plan que estima ingresos y gastos futuros"},
    {"id":"B", "texto":"Informe de ventas"},
    {"id":"C", "texto":"Lista de productos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un presupuesto es un plan financiero que estima ingresos y gastos futuros para un período determinado, permitiendo controlar recursos, tomar decisiones y medir desempeño financiero.","explicacion_incorrecta":"No es un informe de ventas ni una lista de productos, sino una proyección financiera planificada para un período específico."}}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Encargado de Administración', 'abierta',
  'Explica qué es un indicador de gestión (KPI)',
  '["Key Performance Indicator", "Medir desempeño"]'::jsonb,
- '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb
+ '{"min_caracteres": 30, "max_caracteres": 300}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"Un KPI (Key Performance Indicator) es un indicador clave de desempeño que mide cuantitativamente el logro de objetivos estratégicos, permitiendo evaluar el rendimiento de procesos, áreas o proyectos y tomar decisiones basadas en datos.","explicacion_incorrecta":"No es solo un número o métrica cualquiera, sino un indicador específicamente seleccionado que refleja factores críticos de éxito para los objetivos estratégicos."},"feedback_generico":"Se espera que menciones que KPI es un indicador que mide el desempeño en relación a objetivos estratégicos clave."}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es la cadena de suministro?',
@@ -2369,7 +2442,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Red de proveedores, fabricantes y distribuidores"},
    {"id":"B", "texto":"Lista de empleados"},
    {"id":"C", "texto":"Catálogo de productos"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La cadena de suministro (supply chain) es la red completa de organizaciones, personas, actividades y recursos involucrados en el flujo de productos o servicios desde proveedores hasta clientes finales.","explicacion_incorrecta":"No es una lista de empleados ni un catálogo, sino el sistema completo de flujo de materiales, información y dinero entre proveedores y clientes."}}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
  '¿Qué es el control interno?',
@@ -2378,7 +2452,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Sistema de políticas y procedimientos para proteger activos"},
    {"id":"B", "texto":"Auditoría externa"},
    {"id":"C", "texto":"Seguridad física"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El control interno es un sistema integrado de políticas, procedimientos y prácticas implementados por la organización para proteger activos, asegurar la exactitud de información financiera, promover eficiencia operativa y cumplir con regulaciones.","explicacion_incorrecta":"No es solo auditoría externa ni seguridad física, sino un sistema completo de controles organizacionales internos."}}'::jsonb
 ),
 
 -- ====================================================================================
@@ -2391,7 +2466,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Proceso de definir objetivos y estrategias a largo plazo"},
    {"id":"B", "texto":"Plan de ventas mensual"},
    {"id":"C", "texto":"Lista de tareas diarias"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La planeación estratégica es el proceso sistemático de definir la visión, misión, objetivos y estrategias organizacionales a largo plazo, determinando cómo la organización alcanzará sus metas y se posicionará en el futuro.","explicacion_incorrecta":"No es un plan de ventas mensual ni tareas diarias, sino el proceso de definir el rumbo estratégico a largo plazo de la organización."}}'::jsonb
 ),
 ('NV', 'Administracion', 'mid', 'Jefe de Administración', 'opcion_multiple',
  '¿Qué es el análisis FODA?',
@@ -2400,17 +2476,20 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Herramienta para analizar fortalezas, oportunidades, debilidades y amenazas"},
    {"id":"B", "texto":"Tipo de presupuesto"},
    {"id":"C", "texto":"Sistema contable"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El análisis FODA es una herramienta estratégica que evalúa Fortalezas y Debilidades internas de la organización, junto con Oportunidades y Amenazas externas del entorno, para formular estrategias competitivas.","explicacion_incorrecta":"No es un presupuesto ni un sistema contable, sino una herramienta de diagnóstico estratégico para evaluar la posición competitiva."}}'::jsonb
 ),
 ('NV', 'Administracion', 'sr', 'Jefe de Administración', 'abierta',
  'Explica qué es el balanced scorecard (cuadro de mando integral)',
  '["Perspectivas múltiples", "Indicadores estratégicos"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"El Balanced Scorecard es un sistema de gestión estratégica que evalúa el desempeño organizacional desde cuatro perspectivas: financiera, clientes, procesos internos y aprendizaje/crecimiento. Traduce la estrategia en objetivos e indicadores medibles, permitiendo un seguimiento integral más allá de métricas puramente financieras.","explicacion_incorrecta":"No es solo un tablero de indicadores financieros, sino un marco completo que balancea múltiples perspectivas estratégicas para gestión integral."},"feedback_generico":"Se espera que menciones las cuatro perspectivas y cómo integra indicadores estratégicos más allá de lo financiero."}'::jsonb
 ),
 ('NV', 'Administracion', 'sr', 'Jefe de Administración', 'abierta',
  '¿Qué es la gestión del cambio organizacional?',
  '["Change management", "Transición"]'::jsonb,
- '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb
+ '{"min_caracteres": 40, "max_caracteres": 400}'::jsonb,
+ '{"tipo_item":"open","nlp":{"explicacion_correcta":"La gestión del cambio organizacional es el proceso estructurado de planificar, implementar y acompañar transformaciones en la organización, abordando aspectos técnicos y humanos para minimizar resistencia, asegurar adopción exitosa y lograr la transición de un estado actual a uno deseado.","explicacion_incorrecta":"No es simplemente anunciar cambios, sino gestionar sistemáticamente la transición considerando personas, procesos y cultura organizacional."},"feedback_generico":"Se espera que menciones el proceso de planificar e implementar transformaciones manejando resistencia y asegurando adopción."}'::jsonb
 ),
 ('NV', 'Administracion', 'sr', 'Jefe de Administración', 'opcion_multiple',
  '¿Qué es el ROI (Return on Investment)?',
@@ -2419,7 +2498,8 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
    {"id":"A", "texto":"Métrica que mide la rentabilidad de una inversión"},
    {"id":"B", "texto":"Tipo de impuesto"},
    {"id":"C", "texto":"Estado financiero"}
- ], "respuesta_correcta":"A"}'::jsonb
+ ], "respuesta_correcta":"A"}'::jsonb,
+ '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El ROI (Return on Investment) es una métrica financiera que mide la rentabilidad de una inversión, calculando el beneficio obtenido en relación al costo invertido, expresado típicamente como porcentaje para evaluar eficiencia de inversiones.","explicacion_incorrecta":"No es un impuesto ni un estado financiero, sino un indicador que cuantifica el retorno generado por una inversión."}}'::jsonb
 );
 
 -- =============================================================================
