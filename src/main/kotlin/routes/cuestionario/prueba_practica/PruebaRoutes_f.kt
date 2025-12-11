@@ -22,7 +22,7 @@ import java.util.UUID
 object PruebaTable : Table("prueba") {
     val pruebaId = uuid("prueba_id").clientDefault { UUID.randomUUID() }
 
-    // En BD es VARCHAR(8) -> valores: "practica", "nivel", "blended"
+    // En BD suele ser VARCHAR(8): "practica", "nivel", "blended", "simulacion", etc.
     val tipoPrueba = varchar("tipo_prueba", 16)
 
     // sector → se guarda en area, limite 80
@@ -40,7 +40,8 @@ object PruebaTable : Table("prueba") {
 
 object PreguntaTable : Table("pregunta") {
     val preguntaId = uuid("pregunta_id")
-    val tipoBanco = varchar("tipo_banco", 5)      // PR / NV
+    // Bancos: PR (práctica), NV (nivelación), BL (blandas)
+    val tipoBanco = varchar("tipo_banco", 5)
     val sector = varchar("sector", 80)
     val nivel = varchar("nivel", 3)               // jr | mid | sr | "1","2","3" en NV
 
@@ -52,7 +53,7 @@ object PreguntaTable : Table("pregunta") {
     // jsonb en BD, las manejamos como String
     val pistas = text("pistas").nullable()
     val configRespuesta = text("config_respuesta")
-    val configEvaluacion = text("config_evaluacion").nullable()   // <--- NUEVA COLUMNA
+    val configEvaluacion = text("config_evaluacion").nullable()   // meta NLP / STAR
 
     val activa = bool("activa")
 
@@ -83,8 +84,28 @@ data class CrearPruebaNivelacionReq(
     val sector: String,
     val nivel: String,       // jr | mid | sr
     val metaCargo: String,
-    // Ahora puede ser: "PR", "NV" o "BL" (blended: mezcla NV + PR)
-    val tipoPrueba: String? = null
+    /**
+     * Qué tipo de prueba quieres:
+     *
+     * - "PR"  → solo banco PR
+     * - "NV"  → solo banco NV
+     * - "BL"  → solo banco BL (habilidades blandas)
+     * - "MIX" → mezcla PR + NV + BL
+     * - "ENT" → alias de MIX para simulación de entrevista
+     */
+    val tipoPrueba: String? = null,
+    /**
+     * Cantidades deseadas PARA MIX / ENT.
+     * - Si las dejas nulas ⇒ se usa el comportamiento antiguo (distribución automática).
+     * - Si las rellenas ⇒ se valida que:
+     *      cantPR + cantNV + cantBL ∈ (0, MAX_PREGUNTAS]
+     *      y que ninguna sea negativa.
+     *
+     * Para PR / NV / BL se ignoran aunque vengan.
+     */
+    val cantidadPR: Int? = null,
+    val cantidadNV: Int? = null,
+    val cantidadBL: Int? = null
 )
 
 @Serializable
@@ -97,7 +118,7 @@ data class PreguntaPruebaDto(
     val tipoPregunta: String,
     val pistas: JsonElement? = null,
     val configRespuesta: JsonElement,
-    // opcional: mandamos la meta de evaluación (NLP + STAR) si la quieres usar en el front o para debug
+    // opcional: meta de evaluación (NLP + STAR)
     val configEvaluacion: JsonElement? = null,
     val orden: Int
 )
@@ -116,10 +137,16 @@ data class CrearPruebaNivelacionRes(
  * POST /api/prueba-practica/front
  *
  * Crea una prueba usando preguntas del banco:
- *   - tipo_banco = 'PR' o 'NV' (modo clásico)
- *   - tipo_banco MIX (NV + PR) cuando tipoPrueba = 'BL' (blended)
+ *   - tipoPrueba = "PR"  → solo tipo_banco = 'PR'
+ *   - tipoPrueba = "NV"  → solo tipo_banco = 'NV'
+ *   - tipoPrueba = "BL"  → solo tipo_banco = 'BL'
+ *   - tipoPrueba = "MIX" o "ENT" → mezcla PR + NV + BL
  *
  * Máximo 10 preguntas, aleatorias.
+ *
+ * Para MIX / ENT:
+ *   - Si NO envías cantidadPR/cantidadNV/cantidadBL → distribución automática.
+ *   - Si SÍ envías alguna cantidad → respeta esas cantidades (con validaciones).
  */
 fun Route.pruebaFrontRoutes() {
 
@@ -130,39 +157,40 @@ fun Route.pruebaFrontRoutes() {
         val nivelesValidos = setOf("jr", "mid", "sr")
 
         // =========================
-        // Validar tipoPrueba: PR/NV/BL
+        // Validar tipoPrueba
         // =========================
-        val tipoBancoSolicitado = req.tipoPrueba
+        val modoPrueba = req.tipoPrueba
             ?.trim()
             ?.uppercase()
 
-        // Aceptamos también BL para blended (mezcla NV + PR)
-        val tiposBancoValidos = setOf("PR", "NV", "BL")
+        val modosValidos = setOf("PR", "NV", "BL", "MIX", "ENT")
 
-        if (tipoBancoSolicitado == null) {
+        if (modoPrueba == null) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
                 mapOf(
-                    "error" to "tipoPrueba es obligatorio y debe ser PR (práctica), NV (nivelación) o BL (blended)"
+                    "error" to "tipoPrueba es obligatorio y debe ser PR, NV, BL, MIX o ENT"
                 )
             )
         }
 
-        if (tipoBancoSolicitado !in tiposBancoValidos) {
+        if (modoPrueba !in modosValidos) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
                 mapOf(
-                    "error" to "tipoPrueba inválido. Debe ser PR (práctica), NV (nivelación) o BL (blended)"
+                    "error" to "tipoPrueba inválido. Debe ser PR, NV, BL, MIX o ENT"
                 )
             )
         }
 
-        // Lo que se guarda en la columna tipo_prueba (VARCHAR(8) en BD)
-        val etiquetaTipoPrueba = when (tipoBancoSolicitado) {
-            "NV"  -> "nivel"     // 5 caracteres
-            "PR"  -> "practica"  // 8 caracteres
-            "BL"  -> "blended"   // 7 caracteres -> cabe en varchar(8)
-            else  -> "practica"
+        // Lo que se guarda en la columna tipo_prueba (tipo de PRUEBA, no de banco)
+        val etiquetaTipoPrueba = when (modoPrueba) {
+            "NV" -> "nivel"
+            // PR y BL son pruebas prácticas (técnicas o blandas)
+            "PR", "BL" -> "practica"
+            // MIX / ENT las tratamos como pruebas mezcladas / simulación
+            "MIX", "ENT" -> "blended"   // o "simulacion" si en tu BD usas ese valor
+            else -> "practica"
         }
 
         if (nivelNormalizado !in nivelesValidos) {
@@ -181,8 +209,50 @@ fun Route.pruebaFrontRoutes() {
 
         val MAX_PREGUNTAS = 10
 
-        // Para metadata y respuesta: cuando es BL lo marcamos como MIX
-        val tipoBancoMeta = if (tipoBancoSolicitado == "BL") "MIX" else tipoBancoSolicitado
+        // ¿Se están usando cantidades personalizadas para MIX / ENT?
+        val usarCustomCantidades =
+            (modoPrueba == "MIX" || modoPrueba == "ENT") &&
+                    (req.cantidadPR != null || req.cantidadNV != null || req.cantidadBL != null)
+
+        // Valores seguros de cantidades (solo se usarán en MIX / ENT)
+        val cantPR = if (usarCustomCantidades) req.cantidadPR ?: 0 else 0
+        val cantNV = if (usarCustomCantidades) req.cantidadNV ?: 0 else 0
+        val cantBL = if (usarCustomCantidades) req.cantidadBL ?: 0 else 0
+
+        // Validación de cantidades SOLO cuando se envíen en MIX / ENT
+        if (usarCustomCantidades) {
+            if (cantPR < 0 || cantNV < 0 || cantBL < 0) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Las cantidades por banco no pueden ser negativas")
+                )
+            }
+
+            val totalSolicitado = cantPR + cantNV + cantBL
+
+            if (totalSolicitado <= 0) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "La suma de cantidades PR+NV+BL debe ser mayor que 0")
+                )
+            }
+
+            if (totalSolicitado > MAX_PREGUNTAS) {
+                return@post call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "La suma de cantidades PR+NV+BL no puede superar $MAX_PREGUNTAS")
+                )
+            }
+        }
+
+        // En metadata:
+        // - si es PR/NV/BL guardamos ese banco
+        // - si es MIX/ENT guardamos "MIX"
+        val tipoBancoMeta = when (modoPrueba) {
+            "PR", "NV", "BL" -> modoPrueba
+            "MIX", "ENT" -> "MIX"
+            else -> modoPrueba
+        }
 
         lateinit var pruebaId: UUID
         val preguntasSeleccionadas = mutableListOf<PreguntaPruebaDto>()
@@ -212,48 +282,111 @@ fun Route.pruebaFrontRoutes() {
 
             // 2) Seleccionar preguntas
             val filasPreguntas: List<ResultRow> =
-                if (tipoBancoSolicitado == "BL") {
-                    // ---------- MODO BLENDED (NV + PR) ----------
-                    val maxPorTipo = MAX_PREGUNTAS / 2  // p.ej. 5 de NV y 5 de PR
+                if (modoPrueba == "MIX" || modoPrueba == "ENT") {
+                    // ---------- MODO MIX / ENT (PR + NV + BL) ----------
+                    if (usarCustomCantidades) {
+                        // Usar cantidades personalizadas
+                        val nvRows =
+                            if (cantNV > 0)
+                                PreguntaTable
+                                    .selectAll()
+                                    .where {
+                                        (PreguntaTable.tipoBanco eq "NV") and
+                                        (PreguntaTable.sector eq req.sector) and
+                                        (PreguntaTable.nivel eq nivelNormalizado) and
+                                        (PreguntaTable.activa eq true)
+                                    }
+                                    .orderBy(Random())
+                                    .limit(cantNV)
+                                    .toList()
+                            else emptyList()
 
-                    // Preguntas de nivelación (NV)
-                    val nivelacionRows = PreguntaTable
-                        .selectAll()
-                        .where {
-                            (PreguntaTable.tipoBanco eq "NV") and
-                            (PreguntaTable.sector eq req.sector) and
-                            (PreguntaTable.nivel eq nivelNormalizado) and
-                            (PreguntaTable.activa eq true)
-                        }
-                        .orderBy(Random())
-                        .limit(maxPorTipo)
-                        .toList()
+                        val prRows =
+                            if (cantPR > 0)
+                                PreguntaTable
+                                    .selectAll()
+                                    .where {
+                                        (PreguntaTable.tipoBanco eq "PR") and
+                                        (PreguntaTable.sector eq req.sector) and
+                                        (PreguntaTable.nivel eq nivelNormalizado) and
+                                        (PreguntaTable.activa eq true)
+                                    }
+                                    .orderBy(Random())
+                                    .limit(cantPR)
+                                    .toList()
+                            else emptyList()
 
-                    // Preguntas de práctica técnica (PR)
-                    val practicaRows = PreguntaTable
-                        .selectAll()
-                        .where {
-                            (PreguntaTable.tipoBanco eq "PR") and
-                            (PreguntaTable.sector eq req.sector) and
-                            (PreguntaTable.nivel eq nivelNormalizado) and
-                            (PreguntaTable.activa eq true)
-                        }
-                        .orderBy(Random())
-                        .limit(maxPorTipo)
-                        .toList()
+                        val blRows =
+                            if (cantBL > 0)
+                                PreguntaTable
+                                    .selectAll()
+                                    .where {
+                                        (PreguntaTable.tipoBanco eq "BL") and
+                                        (PreguntaTable.sector eq req.sector) and
+                                        (PreguntaTable.nivel eq nivelNormalizado) and
+                                        (PreguntaTable.activa eq true)
+                                    }
+                                    .orderBy(Random())
+                                    .limit(cantBL)
+                                    .toList()
+                            else emptyList()
 
-                    // Si luego agregas soft skills, las sumas aquí:
-                    // val softRows = ...
+                        // No hace falta hacer .take(MAX_PREGUNTAS) porque ya validamos
+                        // que cantPR+cantNV+cantBL <= MAX_PREGUNTAS
+                        (nvRows + prRows + blRows)
+                            .shuffled()
+                    } else {
+                        // Distribución automática (comportamiento antiguo)
+                        val maxPorBanco = MAX_PREGUNTAS / 3  // ej: 3 NV, 3 PR, 3 BL (queda 1 libre)
 
-                    (nivelacionRows + practicaRows)
-                        .shuffled()
-                        .take(MAX_PREGUNTAS)
+                        val nvRows = PreguntaTable
+                            .selectAll()
+                            .where {
+                                (PreguntaTable.tipoBanco eq "NV") and
+                                (PreguntaTable.sector eq req.sector) and
+                                (PreguntaTable.nivel eq nivelNormalizado) and
+                                (PreguntaTable.activa eq true)
+                            }
+                            .orderBy(Random())
+                            .limit(maxPorBanco)
+                            .toList()
+
+                        val prRows = PreguntaTable
+                            .selectAll()
+                            .where {
+                                (PreguntaTable.tipoBanco eq "PR") and
+                                (PreguntaTable.sector eq req.sector) and
+                                (PreguntaTable.nivel eq nivelNormalizado) and
+                                (PreguntaTable.activa eq true)
+                            }
+                            .orderBy(Random())
+                            .limit(maxPorBanco)
+                            .toList()
+
+                        val blRows = PreguntaTable
+                            .selectAll()
+                            .where {
+                                (PreguntaTable.tipoBanco eq "BL") and
+                                (PreguntaTable.sector eq req.sector) and
+                                (PreguntaTable.nivel eq nivelNormalizado) and
+                                (PreguntaTable.activa eq true)
+                            }
+                            .orderBy(Random())
+                            .limit(maxPorBanco)
+                            .toList()
+
+                        (nvRows + prRows + blRows)
+                            .shuffled()
+                            .take(MAX_PREGUNTAS)
+                    }
                 } else {
-                    // ---------- MODO PR / NV CLÁSICO ----------
+                    // ---------- MODO PR / NV / BL CLÁSICO ----------
+                    // Aquí NO usamos cantidades aunque vengan en el request,
+                    // para no romper los flujos existentes de práctica/nivelación.
                     PreguntaTable
                         .selectAll()
                         .where {
-                            (PreguntaTable.tipoBanco eq tipoBancoSolicitado) and
+                            (PreguntaTable.tipoBanco eq modoPrueba) and
                             (PreguntaTable.sector eq req.sector) and
                             (PreguntaTable.nivel eq nivelNormalizado) and
                             (PreguntaTable.activa eq true)
@@ -318,6 +451,9 @@ fun Route.pruebaFrontRoutes() {
                     configJson["opciones"]?.let { put("opciones", it) }
                     configJson["max_caracteres"]?.let { put("max_caracteres", it) }
                     configJson["min_caracteres"]?.let { put("min_caracteres", it) }
+                    // Para preguntas abiertas de blandas
+                    configJson["formato"]?.let { put("formato", it) }
+                    // Si más adelante agregas otro campo como "tipo", también se puede mandar
                     configJson["tipo"]?.let { put("tipo", it) }
                 }
 
@@ -331,7 +467,7 @@ fun Route.pruebaFrontRoutes() {
                         tipoPregunta = tipoPregunta,
                         pistas = pistasJson,
                         configRespuesta = configSinClave,
-                        configEvaluacion = configEvaluacionJson,   // <- meta NLP + STAR (puedes ignorarla en Android si no la usas aún)
+                        configEvaluacion = configEvaluacionJson,
                         orden = orden
                     )
                 )

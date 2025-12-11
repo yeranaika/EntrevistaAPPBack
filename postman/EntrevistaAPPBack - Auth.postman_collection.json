@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "578f86a7-e4dc-4a76-bad8-23248a229c2d",
-		"name": "EntrevistaAPPBack - Auth",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-		"_exporter_id": "39039898"
+		"_postman_id": "1ae3ddf1-ca88-4a54-9af5-4150970845e7",
+		"name": "EntrevistaAPPBack - Auth Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39385584"
 	},
 	"item": [
 		{
@@ -44,7 +44,22 @@
 									"mode": "raw",
 									"raw": ""
 								},
-								"url": "http://127.0.0.1:8080/auth/google/start"
+								"url": {
+									"raw": "http://127.0.0.1:8080/auth/google/start",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"google",
+										"start"
+									]
+								}
 							},
 							"response": []
 						}
@@ -79,7 +94,21 @@
 							"mode": "raw",
 							"raw": "{\n  \"email\": \"testuser1@example.com\",\n  \"password\": \"Password123\",\n  \"nombre\": \"Test User\",\n  \"idioma\": \"es\",\n  \"telefono\": \"+56912345678\",\n  \"fechaNacimiento\": \"1995-05-20\",\n  \"genero\": \"masculino\",\n  \"nivelExperiencia\": \"jr\",\n  \"area\": \"Analista TI\",\n  \"pais\": \"CL\",\n  \"notaObjetivos\": \"Quiero practicar entrevistas TI\",\n  \"flagsAccesibilidad\": null\n}\n"
 						},
-						"url": "http://127.0.0.1:8080/auth/register"
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/register",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"register"
+							]
+						}
 					},
 					"response": []
 				},
@@ -117,7 +146,18 @@
 							"mode": "raw",
 							"raw": "{\n  \"email\": \"admin@entrevista.com\",\n  \"password\": \"admin1234\"\n}"
 						},
-						"url": "http://localhost:8080/auth/login"
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						}
 					},
 					"response": []
 				},
@@ -150,7 +190,21 @@
 							"mode": "raw",
 							"raw": "{\n  \"email\": \"demo1@correo.com\"\n}"
 						},
-						"url": "http://127.0.0.1:8080/auth/request-reset"
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/request-reset",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"request-reset"
+							]
+						}
 					},
 					"response": []
 				},
@@ -183,7 +237,21 @@
 							"mode": "raw",
 							"raw": "{\n  \"refreshToken\": \"fUFcrL7cNQrafxYSWiMnVr-_uDGVTKFH5-7FjU2P7y8\"\n}"
 						},
-						"url": "http://127.0.0.1:8080/auth/refresh"
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/refresh",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"refresh"
+							]
+						}
 					},
 					"response": []
 				}
@@ -203,9 +271,13 @@
 							"request": {
 								"auth": {
 									"type": "bearer",
-									"bearer": {
-										"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
-									}
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg",
+											"type": "string"
+										}
+									]
 								},
 								"method": "GET",
 								"header": [
@@ -224,7 +296,21 @@
 										}
 									}
 								},
-								"url": "http://127.0.0.1:8080/me/perfil"
+								"url": {
+									"raw": "http://127.0.0.1:8080/me/perfil",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"me",
+										"perfil"
+									]
+								}
 							},
 							"response": []
 						},
@@ -256,7 +342,21 @@
 										}
 									}
 								},
-								"url": "http://127.0.0.1:8080/me/perfil"
+								"url": {
+									"raw": "http://127.0.0.1:8080/me/perfil",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"me",
+										"perfil"
+									]
+								}
 							},
 							"response": []
 						},
@@ -268,9 +368,13 @@
 							"request": {
 								"auth": {
 									"type": "bearer",
-									"bearer": {
-										"token": "{{accessToken}}"
-									}
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
 								},
 								"method": "GET",
 								"header": [
@@ -289,7 +393,20 @@
 										}
 									}
 								},
-								"url": "http://127.0.0.1:8080/me"
+								"url": {
+									"raw": "http://127.0.0.1:8080/me",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"me"
+									]
+								}
 							},
 							"response": []
 						},
@@ -298,9 +415,13 @@
 							"request": {
 								"auth": {
 									"type": "bearer",
-									"bearer": {
-										"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg"
-									}
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzIzMzgwMSwiZXhwIjoxNzYzMjM0NzAxLCJyb2xlIjoiYWRtaW4ifQ.lOsZttubRPxzacuNPqFGzvyxdM00I85wq4VQOp3o3S94-mjyIXPdyrASzWGlVQPjv9gOq-E8eZjgA-OyHKpAxg",
+											"type": "string"
+										}
+									]
 								},
 								"method": "PUT",
 								"header": [
@@ -319,7 +440,20 @@
 										}
 									}
 								},
-								"url": "http://127.0.0.1:8080/me"
+								"url": {
+									"raw": "http://127.0.0.1:8080/me",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"me"
+									]
+								}
 							},
 							"response": []
 						}
@@ -353,7 +487,21 @@
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/recordatorios/preferencias"
+						"url": {
+							"raw": "http://127.0.0.1:8080/recordatorios/preferencias",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"recordatorios",
+								"preferencias"
+							]
+						}
 					},
 					"response": []
 				},
@@ -376,7 +524,21 @@
 								"type": "text"
 							}
 						],
-						"url": "http://127.0.0.1:8080/recordatorios/preferencias"
+						"url": {
+							"raw": "http://127.0.0.1:8080/recordatorios/preferencias",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"recordatorios",
+								"preferencias"
+							]
+						}
 					},
 					"response": []
 				}
@@ -403,9 +565,13 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": {
-								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q"
-							}
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q",
+									"type": "string"
+								}
+							]
 						},
 						"method": "POST",
 						"header": [
@@ -429,7 +595,21 @@
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/me/consent"
+						"url": {
+							"raw": "http://127.0.0.1:8080/me/consent",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"me",
+								"consent"
+							]
+						}
 					},
 					"response": []
 				},
@@ -451,9 +631,13 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": {
-								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMzE3NCwiZXhwIjoxNzYyMDM0MDc0fQ.iXOnOB9-fJksMvjWOKHReH2dImWa7SNxM_fGDgnp7yDGzKo7bEUJVgUo_xJ_u777gSJNIzZVnHO0JFCWxqGZvw"
-							}
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMzE3NCwiZXhwIjoxNzYyMDM0MDc0fQ.iXOnOB9-fJksMvjWOKHReH2dImWa7SNxM_fGDgnp7yDGzKo7bEUJVgUo_xJ_u777gSJNIzZVnHO0JFCWxqGZvw",
+									"type": "string"
+								}
+							]
 						},
 						"method": "POST",
 						"header": [],
@@ -466,7 +650,22 @@
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/me/consent/revoke"
+						"url": {
+							"raw": "http://127.0.0.1:8080/me/consent/revoke",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"me",
+								"consent",
+								"revoke"
+							]
+						}
 					},
 					"response": []
 				},
@@ -491,9 +690,13 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": {
-								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q"
-							}
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjQ3NjE4NmU1LWUxMDUtNDBlNy1hNTZiLThmYjUwNTE1OTJmNyIsImlhdCI6MTc2MzMwODgzNiwiZXhwIjoxNzYzMzA5NzM2LCJyb2xlIjoiYWRtaW4ifQ.wufIzdytrnOt_1FxEGw48iN3TqX3FVuTpCE99kslWvyKdjGfa6NgewIoGdDnh5VnDicFMOMp6ij53Cmt5oVF4Q",
+									"type": "string"
+								}
+							]
 						},
 						"method": "GET",
 						"header": [],
@@ -506,7 +709,22 @@
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/me/consent/latest"
+						"url": {
+							"raw": "http://127.0.0.1:8080/me/consent/latest",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"me",
+								"consent",
+								"latest"
+							]
+						}
 					},
 					"response": []
 				},
@@ -531,9 +749,13 @@
 					"request": {
 						"auth": {
 							"type": "bearer",
-							"bearer": {
-								"token": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMzE3NCwiZXhwIjoxNzYyMDM0MDc0fQ.iXOnOB9-fJksMvjWOKHReH2dImWa7SNxM_fGDgnp7yDGzKo7bEUJVgUo_xJ_u777gSJNIzZVnHO0JFCWxqGZvw"
-							}
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjI3YmQyNTVmLTcyNjctNDAxNy1iMDBkLTlmNTk3NTU3N2U3MCIsImlhdCI6MTc2MjAzMzE3NCwiZXhwIjoxNzYyMDM0MDc0fQ.iXOnOB9-fJksMvjWOKHReH2dImWa7SNxM_fGDgnp7yDGzKo7bEUJVgUo_xJ_u777gSJNIzZVnHO0JFCWxqGZvw",
+									"type": "string"
+								}
+							]
 						},
 						"method": "GET",
 						"header": [],
@@ -546,7 +768,21 @@
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/consent/current"
+						"url": {
+							"raw": "http://127.0.0.1:8080/consent/current",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"consent",
+								"current"
+							]
+						}
 					},
 					"response": []
 				}
@@ -560,7 +796,20 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "http://127.0.0.1:8080/health"
+						"url": {
+							"raw": "http://127.0.0.1:8080/health",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"health"
+							]
+						}
 					},
 					"response": []
 				}
@@ -605,7 +854,21 @@
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/intentos/mis-intentos"
+						"url": {
+							"raw": "http://127.0.0.1:8080/intentos/mis-intentos",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"intentos",
+								"mis-intentos"
+							]
+						}
 					},
 					"response": []
 				},
@@ -623,7 +886,23 @@
 								"type": "text"
 							}
 						],
-						"url": "http://127.0.0.1:8080/cuestionario/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/intentos"
+						"url": {
+							"raw": "http://127.0.0.1:8080/cuestionario/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/intentos",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"cuestionario",
+								"pruebas",
+								"4e2c10a9-c301-497b-8a2f-f937d2a402fa",
+								"intentos"
+							]
+						}
 					},
 					"response": []
 				},
@@ -638,7 +917,23 @@
 								"type": "text"
 							}
 						],
-						"url": "http://127.0.0.1:8080/cuestionario/intentos/859117b9-05cb-446f-9688-ef8e7c437f52/siguiente"
+						"url": {
+							"raw": "http://127.0.0.1:8080/cuestionario/intentos/859117b9-05cb-446f-9688-ef8e7c437f52/siguiente",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"cuestionario",
+								"intentos",
+								"859117b9-05cb-446f-9688-ef8e7c437f52",
+								"siguiente"
+							]
+						}
 					},
 					"response": []
 				},
@@ -662,7 +957,23 @@
 								}
 							}
 						},
-						"url": "http://127.0.0.1:8080/cuestionario/intentos/48e98587-0250-42cb-841a-15a8a0d6e754/respuestas"
+						"url": {
+							"raw": "http://127.0.0.1:8080/cuestionario/intentos/48e98587-0250-42cb-841a-15a8a0d6e754/respuestas",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"cuestionario",
+								"intentos",
+								"48e98587-0250-42cb-841a-15a8a0d6e754",
+								"respuestas"
+							]
+						}
 					},
 					"response": []
 				},
@@ -677,7 +988,23 @@
 								"type": "text"
 							}
 						],
-						"url": "http://127.0.0.1:8080/cuestionario/intentos/859117b9-05cb-446f-9688-ef8e7c437f52/finalizar"
+						"url": {
+							"raw": "http://127.0.0.1:8080/cuestionario/intentos/859117b9-05cb-446f-9688-ef8e7c437f52/finalizar",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"cuestionario",
+								"intentos",
+								"859117b9-05cb-446f-9688-ef8e7c437f52",
+								"finalizar"
+							]
+						}
 					},
 					"response": []
 				}
@@ -718,7 +1045,21 @@
 									"mode": "raw",
 									"raw": "{\n  \"email\": \"addmm@correo.com\",\n  \"password\": \"AdminSegura123\"\n}"
 								},
-								"url": "http://127.0.0.1:8080/auth/login"
+								"url": {
+									"raw": "http://127.0.0.1:8080/auth/login",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"login"
+									]
+								}
 							},
 							"response": []
 						},
@@ -740,7 +1081,21 @@
 									"mode": "raw",
 									"raw": "{\n  \"correo\": \"adminnn@correo.com\",\n  \"contrasena\": \"admin1234\",\n  \"nombre\": \"admin principal\",\n  \"idioma\": \"es\",\n  \"rol\": \"admin\"\n}\n"
 								},
-								"url": "http://127.0.0.1:8080/admin/users"
+								"url": {
+									"raw": "http://127.0.0.1:8080/admin/users",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"users"
+									]
+								}
 							},
 							"response": []
 						}
@@ -767,7 +1122,21 @@
 									"mode": "raw",
 									"raw": "{\n  \"tipoBanco\": \"tec\",\n  \"nivel\": \"jr\",\n  \"texto\": \"¿Qué es una corutina en Kotlin y cuándo usarla?\"\n}\n"
 								},
-								"url": "http://127.0.0.1:8080/admin/preguntas"
+								"url": {
+									"raw": "http://127.0.0.1:8080/admin/preguntas",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"preguntas"
+									]
+								}
 							},
 							"response": []
 						},
@@ -789,7 +1158,23 @@
 									"mode": "raw",
 									"raw": "{\r\n  \"area\": \"TI\",\r\n  \"metaCargo\": \"Desarrollador Android Jr\",\r\n  \"nivel\": \"jr\",\r\n  \"pasos\": [\r\n    {\r\n      \"titulo\": \"Repasar fundamentos de Kotlin\",\r\n      \"descripcion\": \"Variables, funciones, colecciones, corrutinas básicas.\",\r\n      \"sesionesPorSemana\": 3\r\n    },\r\n    {\r\n      \"titulo\": \"Practicar entrevistas de Android\",\r\n      \"descripcion\": \"Ciclo de vida, ViewModel, arquitectura MVVM.\",\r\n      \"sesionesPorSemana\": 2\r\n    },\r\n    {\r\n      \"titulo\": \"Entrevistas simuladas\",\r\n      \"descripcion\": \"Simular entrevistas de 30-45 minutos respondiendo en voz alta.\",\r\n      \"sesionesPorSemana\": 1\r\n    }\r\n  ]\r\n}\r\n"
 								},
-								"url": "http://127.0.0.1:8080/admin/usuarios/30c96614-5836-4432-b376-972b4ebebaed/plan-practica"
+								"url": {
+									"raw": "http://127.0.0.1:8080/admin/usuarios/30c96614-5836-4432-b376-972b4ebebaed/plan-practica",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"usuarios",
+										"30c96614-5836-4432-b376-972b4ebebaed",
+										"plan-practica"
+									]
+								}
 							},
 							"response": []
 						},
@@ -814,7 +1199,21 @@
 									"mode": "raw",
 									"raw": "{\n  \"tipoBanco\": \"tec\",\n  \"nivel\": \"jr\",\n  \"texto\": \"¿Qué es una corutina en Kotlin y cuándo usarla?\"\n}\n"
 								},
-								"url": "http://127.0.0.1:8080/admin/preguntas"
+								"url": {
+									"raw": "http://127.0.0.1:8080/admin/preguntas",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"preguntas"
+									]
+								}
 							},
 							"response": []
 						},
@@ -838,7 +1237,23 @@
 										}
 									}
 								},
-								"url": "http://127.0.0.1:8080/cuestionario/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/preguntas"
+								"url": {
+									"raw": "http://127.0.0.1:8080/cuestionario/pruebas/4e2c10a9-c301-497b-8a2f-f937d2a402fa/preguntas",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"cuestionario",
+										"pruebas",
+										"4e2c10a9-c301-497b-8a2f-f937d2a402fa",
+										"preguntas"
+									]
+								}
 							},
 							"response": []
 						},
@@ -853,7 +1268,18 @@
 										"type": "text"
 									}
 								],
-								"url": "http://localhost:8080/admin/preguntas"
+								"url": {
+									"raw": "http://localhost:8080/admin/preguntas",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"preguntas"
+									]
+								}
 							},
 							"response": []
 						},
@@ -882,7 +1308,19 @@
 										}
 									}
 								},
-								"url": "http://localhost:8080/admin/preguntas/91da30db-8833-48a2-a5d3-7755e8d7d482"
+								"url": {
+									"raw": "http://localhost:8080/admin/preguntas/91da30db-8833-48a2-a5d3-7755e8d7d482",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"preguntas",
+										"91da30db-8833-48a2-a5d3-7755e8d7d482"
+									]
+								}
 							},
 							"response": []
 						},
@@ -911,7 +1349,18 @@
 										}
 									}
 								},
-								"url": "http://localhost:8080/admin/pruebas"
+								"url": {
+									"raw": "http://localhost:8080/admin/pruebas",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"pruebas"
+									]
+								}
 							},
 							"response": []
 						}
@@ -938,7 +1387,22 @@
 									"mode": "raw",
 									"raw": "{\n  \"version\": \"v1.0\",\n  \"title\": \"Consentimiento de uso de datos\",\n  \"body\": \"Texto completo del consentimiento que verán los usuarios.\"\n}\n"
 								},
-								"url": "http://127.0.0.1:8080/admin/consent/text"
+								"url": {
+									"raw": "http://127.0.0.1:8080/admin/consent/text",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8080",
+									"path": [
+										"admin",
+										"consent",
+										"text"
+									]
+								}
 							},
 							"response": []
 						}
@@ -965,7 +1429,20 @@
 							"mode": "raw",
 							"raw": ""
 						},
-						"url": "http://127.0.0.1:8080/plan-practica"
+						"url": {
+							"raw": "http://127.0.0.1:8080/plan-practica",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"plan-practica"
+							]
+						}
 					},
 					"response": []
 				}
@@ -995,7 +1472,20 @@
 							"mode": "raw",
 							"raw": ""
 						},
-						"url": "http://127.0.0.1:8080/plan-practica"
+						"url": {
+							"raw": "http://127.0.0.1:8080/plan-practica",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"plan-practica"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1017,7 +1507,21 @@
 							"mode": "raw",
 							"raw": "{\r\n  \"area\": \"TI\",\r\n  \"metaCargo\": \"Desarrollador Android Jr\",\r\n  \"nivel\": \"jr\"\r\n}\r\n"
 						},
-						"url": "http://127.0.0.1:8080/perfil/objetivo"
+						"url": {
+							"raw": "http://127.0.0.1:8080/perfil/objetivo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"perfil",
+								"objetivo"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1044,7 +1548,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/jobs/DevOps%20Engineer/skills"
+						"url": {
+							"raw": "http://localhost:8080/jobs/DevOps%20Engineer/skills",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"jobs",
+								"DevOps%20Engineer",
+								"skills"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1073,7 +1589,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/auth/forgot-password"
+						"url": {
+							"raw": "http://localhost:8080/auth/forgot-password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"forgot-password"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1082,7 +1609,22 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "http://127.0.0.1:8080/auth/google/callback"
+						"url": {
+							"raw": "http://127.0.0.1:8080/auth/google/callback",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"google",
+								"callback"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1115,7 +1657,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/auth/reset-password"
+						"url": {
+							"raw": "http://localhost:8080/auth/reset-password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1147,7 +1700,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/billing/google/verify",
+						"url": {
+							"raw": "http://localhost:8080/billing/google/verify",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"billing",
+								"google",
+								"verify"
+							]
+						},
 						"description": "Generated from cURL: curl -X POST http://localhost:8080/billing/google/verify \\\r\n  -H \"Authorization: Bearer <JWT>\" \\\r\n  -H \"Content-Type: application/json\" \\\r\n  -d '{\r\n        \"product_id\": \"tu.suscripcion.id\",\r\n        \"purchase_token\": \"token-generado-por-play\",\r\n        \"purchase_time\": 1731212345678\r\n      }'\r\n"
 					},
 					"response": []
@@ -1163,7 +1728,18 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/billing/status"
+						"url": {
+							"raw": "http://localhost:8080/billing/status",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"billing",
+								"status"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1192,7 +1768,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/billing/admin/codes"
+						"url": {
+							"raw": "http://localhost:8080/billing/admin/codes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"billing",
+								"admin",
+								"codes"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1221,7 +1809,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/billing/code/redeem"
+						"url": {
+							"raw": "http://localhost:8080/billing/code/redeem",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"billing",
+								"code",
+								"redeem"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1244,7 +1844,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/auth/login"
+						"url": {
+							"raw": "http://localhost:8080/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"login"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1273,7 +1884,17 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/sesiones"
+						"url": {
+							"raw": "http://localhost:8080/sesiones",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"sesiones"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1293,7 +1914,19 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/sesiones/2f810426-f6b2-434f-b49a-42fb7c2c020e/preguntas"
+						"url": {
+							"raw": "http://localhost:8080/sesiones/2f810426-f6b2-434f-b49a-42fb7c2c020e/preguntas",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"sesiones",
+								"2f810426-f6b2-434f-b49a-42fb7c2c020e",
+								"preguntas"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1322,7 +1955,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/sesiones/b85e4191-25df-4d43-afc0-f79961c0480d/responder"
+						"url": {
+							"raw": "http://localhost:8080/sesiones/b85e4191-25df-4d43-afc0-f79961c0480d/responder",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"sesiones",
+								"b85e4191-25df-4d43-afc0-f79961c0480d",
+								"responder"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1351,7 +1996,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/sesiones/b85e4191-25df-4d43-afc0-f79961c0480d/responder"
+						"url": {
+							"raw": "http://localhost:8080/sesiones/b85e4191-25df-4d43-afc0-f79961c0480d/responder",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"sesiones",
+								"b85e4191-25df-4d43-afc0-f79961c0480d",
+								"responder"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1371,7 +2028,19 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/sesiones/b85e4191-25df-4d43-afc0-f79961c0480d/finalizar"
+						"url": {
+							"raw": "http://localhost:8080/sesiones/b85e4191-25df-4d43-afc0-f79961c0480d/finalizar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"sesiones",
+								"b85e4191-25df-4d43-afc0-f79961c0480d",
+								"finalizar"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1390,7 +2059,17 @@
 								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjBjYjZlMjBjLWU4YjQtNDljMi1hYzgwLWEwZmQ5OTU2ZjY4MiIsImlhdCI6MTc2Mzc1MjQwOCwiZXhwIjoxNzYzNzUzMzA4LCJyb2xlIjoiYWRtaW4ifQ.tkbVxBUmM55BzG4GNq4_Z_mOfv82rR-DugYI1S4cn0tsFuwb0CMfD2ZarLUZ9Pmo-SDWBRQafBv4s5vbSr7SIg"
 							}
 						],
-						"url": "http://localhost:8080/historial"
+						"url": {
+							"raw": "http://localhost:8080/historial",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"historial"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1434,7 +2113,18 @@
 								"value": "Bearer eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJhdWQiOiJhcHAtZW50cmV2aXN0YSIsInN1YiI6IjBjYjZlMjBjLWU4YjQtNDljMi1hYzgwLWEwZmQ5OTU2ZjY4MiIsImlhdCI6MTc2Mzc1MzUwNSwiZXhwIjoxNzYzNzU0NDA1LCJyb2xlIjoiYWRtaW4ifQ.DxzNG88XwnWAweSv_HJDPec3TtPfjRqSZ6xxr-2_sG0GAPY2fsYFKkvHwWKsn7hVUZOLk3PaEQu0aSVSVi5L3Q"
 							}
 						],
-						"url": "http://localhost:8080/historial/85d68e8c-d9ae-4bc0-8c07-d5d8d15c39ad"
+						"url": {
+							"raw": "http://localhost:8080/historial/85d68e8c-d9ae-4bc0-8c07-d5d8d15c39ad",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"historial",
+								"85d68e8c-d9ae-4bc0-8c07-d5d8d15c39ad"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1463,7 +2153,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/soporte/tickets"
+						"url": {
+							"raw": "http://localhost:8080/soporte/tickets",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"soporte",
+								"tickets"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1478,7 +2179,18 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/soporte/tickets"
+						"url": {
+							"raw": "http://localhost:8080/soporte/tickets",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"soporte",
+								"tickets"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1545,7 +2257,18 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/me/objetivo"
+						"url": {
+							"raw": "http://localhost:8080/me/objetivo",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"me",
+								"objetivo"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1560,7 +2283,18 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/me/objetivo"
+						"url": {
+							"raw": "http://localhost:8080/me/objetivo",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"me",
+								"objetivo"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1575,7 +2309,17 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/me"
+						"url": {
+							"raw": "http://localhost:8080/me",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"me"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1590,7 +2334,17 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/plan-practica"
+						"url": {
+							"raw": "http://localhost:8080/plan-practica",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"plan-practica"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1619,7 +2373,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/admin/preguntas-nivelacion"
+						"url": {
+							"raw": "http://localhost:8080/admin/preguntas-nivelacion",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"admin",
+								"preguntas-nivelacion"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1643,7 +2408,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/admin/preguntas-nivelacion"
+						"url": {
+							"raw": "http://localhost:8080/admin/preguntas-nivelacion",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"admin",
+								"preguntas-nivelacion"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1667,7 +2443,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/tests/nivelacion/responder"
+						"url": {
+							"raw": "http://localhost:8080/tests/nivelacion/responder",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tests",
+								"nivelacion",
+								"responder"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1682,7 +2470,19 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:8080/tests/nivelacion/historial"
+						"url": {
+							"raw": "http://localhost:8080/tests/nivelacion/historial",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tests",
+								"nivelacion",
+								"historial"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1706,7 +2506,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/tests/nivelacion/generate-from-job"
+						"url": {
+							"raw": "http://localhost:8080/tests/nivelacion/generate-from-job",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tests",
+								"nivelacion",
+								"generate-from-job"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1730,7 +2542,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/tests/nivelacion/generate-from-job"
+						"url": {
+							"raw": "http://localhost:8080/tests/nivelacion/generate-from-job",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tests",
+								"nivelacion",
+								"generate-from-job"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1793,7 +2617,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/tests/nivelacion/responder"
+						"url": {
+							"raw": "http://localhost:8080/tests/nivelacion/responder",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tests",
+								"nivelacion",
+								"responder"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1827,7 +2663,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/auth/cuenta"
+						"url": {
+							"raw": "http://localhost:8080/auth/cuenta",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"cuenta"
+							]
+						}
 					},
 					"response": []
 				},
@@ -1835,7 +2682,10 @@
 					"name": "New Request",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": ""
+						}
 					},
 					"response": []
 				}
@@ -1864,7 +2714,19 @@
 								}
 							}
 						},
-						"url": "http://localhost:8080/jobs/requirements/bulk"
+						"url": {
+							"raw": "http://localhost:8080/jobs/requirements/bulk",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"jobs",
+								"requirements",
+								"bulk"
+							]
+						}
 					},
 					"response": []
 				}
@@ -1886,14 +2748,26 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"usuarioId\": \"7a7f4cd5-0152-4b23-8d62-3ec6933c4869\",\r\n  \"nombreUsuario\": \"admin\",\r\n  \"sector\": \"TI\",\r\n  \"nivel\": \"jr\",\r\n  \"metaCargo\": \"Soporte TI\",\r\n  \"tipoPrueba\": \"NV\"\r\n}",
+							"raw": "{\r\n  \"usuarioId\": \"7a7f4cd5-0152-4b23-8d62-3ec6933c4869\",\r\n  \"nombreUsuario\": \"admin\",\r\n  \"sector\": \"TI\",\r\n  \"nivel\": \"jr\",\r\n  \"metaCargo\": \"Soporte TI\",\r\n  \"tipoPrueba\": \"ENT\",\r\n  \"cantidadPR\": 4,\r\n  \"cantidadNV\": 4,\r\n  \"cantidadBL\": 2\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
 						},
-						"url": "http://localhost:8080/api/prueba-practica/front"
+						"url": {
+							"raw": "http://localhost:8080/api/prueba-practica/front",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"prueba-practica",
+								"front"
+							]
+						}
 					},
 					"response": []
 				}

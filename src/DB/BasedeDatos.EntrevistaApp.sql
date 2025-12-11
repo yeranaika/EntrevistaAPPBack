@@ -2505,461 +2505,578 @@ INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, text
 -- =============================================================================
 -- INSERT PREGUNTAS HABILIDADES BLANDAS TI (4 preguntas - nivel básico)
 -- =============================================================================
+
+INSERT INTO pregunta (
+  tipo_banco,
+  sector,
+  nivel,
+  meta_cargo,
+  tipo_pregunta,
+  texto,
+  pistas,
+  config_respuesta,
+  config_evaluacion
+) VALUES
+
 -- SOFT SKILLS - Soporte TI
-INSERT INTO pregunta (tipo_banco, sector, nivel, meta_cargo, tipo_pregunta, texto, pistas, config_respuesta) VALUES
-('BL', 'Analista TI', 'jr', 'Soporte TI', 'opcion_multiple',
- 'Un usuario muy molesto te llama porque “el computador no prende” justo antes de una reunión importante. ¿Cuál es la mejor forma de manejar la situación?',
- '["Empatía primero", "Haz preguntas claras sobre lo que ve en pantalla"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Analista TI', 'jr', 'Soporte TI', 'opcion_multiple',
+  'Un usuario muy molesto te llama porque el computador no prende justo antes de una reunión importante. ¿Cuál es la mejor forma de manejar la situación?',
+  '["Empatía primero", "Haz preguntas claras sobre lo que ve en pantalla"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Decirle que no puedes ayudar porque tienes muchos tickets"},
     {"id":"B","texto":"Pedirle que lea el manual y volver a llamar si no resulta"},
     {"id":"C","texto":"Escuchar la situación, reconocer la urgencia y guiarlo paso a paso con preguntas simples"},
     {"id":"D","texto":"Derivarlo de inmediato a otra persona sin recopilar información"}
-  ], "respuesta_correcta":"C"}'::jsonb
+  ],"respuesta_correcta":"C"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La respuesta esperada muestra empatía, reconocimiento de la urgencia y guía paso a paso con preguntas claras.","explicacion_incorrecta":"Respuestas que evitan ayudar, derivan sin contexto o mandan a leer manuales sin guía suelen aumentar la frustración del usuario."}}'::jsonb
 ),
 
-('BL', 'Analista TI', 'jr', 'Soporte TI', 'abierta',
- 'Cuenta una ocasión en la que ayudaste a un usuario no técnico a resolver un problema con su equipo. ¿Qué hiciste y qué resultado tuviste?',
- '["Piensa en alguien real", "Describe qué hiciste tú y cómo terminó la situación"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Analista TI', 'jr', 'Soporte TI', 'abierta',
+  'Cuenta una ocasión en la que ayudaste a un usuario no técnico a resolver un problema con su equipo. ¿Qué hiciste y qué resultado tuviste?',
+  '["Piensa en alguien real", "Describe qué hiciste tú y cómo terminó la situación"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["situación o contexto del usuario no técnico","acciones que realizaste para ayudar","comunicación simple o lenguaje no técnico","resultado o impacto positivo"]},"feedback_generico":"Se espera un ejemplo concreto donde expliques la situación, qué hiciste tú, cómo lo explicaste y cuál fue el resultado para la persona usuaria."}'::jsonb
 ),
 
-('BL', 'Analista TI', 'mid', 'Soporte TI', 'opcion_multiple',
- 'Tienes un incidente que afecta a toda una gerencia y varios tickets menores (por ejemplo, cambio de contraseña). ¿Cómo deberías priorizar?',
- '["Impacto en el negocio", "Comunica tiempos a los demás usuarios"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Analista TI', 'mid', 'Soporte TI', 'opcion_multiple',
+  'Tienes un incidente que afecta a toda una gerencia y varios tickets menores, por ejemplo cambio de contraseña. ¿Cómo deberías priorizar?',
+  '["Impacto en el negocio", "Comunica tiempos a los demás usuarios"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Atender todos en orden de llegada para ser justo"},
     {"id":"B","texto":"Atender primero los más rápidos para bajar la cola"},
     {"id":"C","texto":"Priorizar el incidente crítico, informar a los demás usuarios sobre la demora y actualizar el estado de sus tickets"},
     {"id":"D","texto":"Cerrar los tickets menores sin avisar para concentrarte en el incidente crítico"}
-  ], "respuesta_correcta":"C"}'::jsonb
+  ],"respuesta_correcta":"C"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La priorización debe basarse en el impacto al negocio, sin olvidar informar a los demás usuarios sobre tiempos y estado.","explicacion_incorrecta":"Atender solo por orden de llegada o cerrar tickets sin avisar no gestiona bien el impacto ni la comunicación."}}'::jsonb
 ),
 
-('BL', 'Analista TI', 'sr', 'Soporte TI', 'abierta',
- 'Describe una situación en la que lideraste la resolución de un problema crítico que afectaba la continuidad de las operaciones. ¿Cómo coordinaste al equipo y qué aprendieron?',
- '["Piensa en un incidente crítico", "Cuenta qué hizo el equipo y qué hiciste tú"]'::jsonb,
- '{"min_caracteres":120,"max_caracteres":1000,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Analista TI', 'sr', 'Soporte TI', 'abierta',
+  'Describe una situación en la que lideraste la resolución de un problema crítico que afectaba la continuidad de las operaciones. ¿Cómo coordinaste al equipo y qué aprendieron?',
+  '["Piensa en un incidente crítico", "Cuenta qué hizo el equipo y qué hiciste tú"]'::jsonb,
+  '{"min_caracteres":120,"max_caracteres":1000,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["contexto del incidente crítico","coordinación del equipo o roles","acciones concretas que se tomaron","comunicación con personas interesadas","lecciones aprendidas o mejoras posteriores"]},"feedback_generico":"Se espera que relates una situación crítica, cómo lideraste al equipo, cómo se coordinó la respuesta y qué aprendizajes obtuvieron para futuras incidencias."}'::jsonb
 ),
 
 -- SOFT SKILLS - DevOps Engineer
-('BL', 'TI', 'jr', 'DevOps Engineer', 'opcion_multiple',
- 'Estás automatizando un proceso sencillo y tu script rompe el pipeline de CI. ¿Qué deberías hacer?',
- '["Piensa en responsabilidad", "Aprendizaje del error"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'jr', 'DevOps Engineer', 'opcion_multiple',
+  'Estás automatizando un proceso sencillo y tu script rompe el pipeline de integración continua. ¿Qué deberías hacer?',
+  '["Piensa en responsabilidad", "Aprendizaje del error"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Borrar el script y hacer como si nada hubiera pasado"},
-    {"id":"B","texto":"Culpar a la herramienta de CI por ser poco estable"},
+    {"id":"B","texto":"Culpar a la herramienta de integración continua por ser poco estable"},
     {"id":"C","texto":"Comunicar el problema, revertir el cambio, analizar la causa y proponer una corrección"},
     {"id":"D","texto":"Esperar a que alguien más lo arregle"}
-  ], "respuesta_correcta":"C"}'::jsonb
+  ],"respuesta_correcta":"C"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La respuesta esperada incluye comunicación, reversión del cambio, análisis de causa raíz y propuesta de corrección.","explicacion_incorrecta":"Ocultar el problema o culpar a la herramienta dificulta el aprendizaje y afecta la confianza del equipo."}}'::jsonb
 ),
 
-('BL', 'TI', 'jr', 'DevOps Engineer', 'abierta',
- 'Cuenta una experiencia en la que automatizaste una tarea manual (aunque fuera pequeña). ¿Qué problema resolviste y qué impacto tuvo en el equipo?',
- '["Piensa en algo real", "Explica qué cambió después de automatizar"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'jr', 'DevOps Engineer', 'abierta',
+  'Cuenta una experiencia en la que automatizaste una tarea manual, aunque fuera pequeña. ¿Qué problema resolviste y qué impacto tuvo en el equipo?',
+  '["Piensa en algo real", "Explica qué cambió después de automatizar"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["tarea manual inicial","acción de automatización o herramienta usada","impacto en tiempo o errores","beneficio para el equipo o proceso"]},"feedback_generico":"Se espera un ejemplo de cómo pasaste de una tarea manual a una automatizada y el efecto en eficiencia o calidad para el equipo."}'::jsonb
 ),
 
-('BL', 'TI', 'mid', 'DevOps Engineer', 'opcion_multiple',
- 'El equipo de desarrollo quiere hacer un cambio urgente en producción sin usar el pipeline de CI/CD porque “no hay tiempo”. ¿Cuál es la mejor respuesta?',
- '["Riesgo vs velocidad", "Negocia sin ceder la calidad"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'mid', 'DevOps Engineer', 'opcion_multiple',
+  'El equipo de desarrollo quiere hacer un cambio urgente en producción sin usar el pipeline de integración y entrega continua porque dicen que no hay tiempo. ¿Cuál es la mejor respuesta?',
+  '["Riesgo frente a velocidad", "Negocia sin ceder la calidad"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Aceptar y hacer el cambio manual sin registrar nada"},
     {"id":"B","texto":"Negarte sin explicar los motivos"},
     {"id":"C","texto":"Explicar los riesgos, buscar una alternativa rápida dentro del pipeline y dejar registro de la decisión tomada"},
     {"id":"D","texto":"Decir que lo hagan ellos y no involucrarte"}
-  ], "respuesta_correcta":"C"}'::jsonb
+  ],"respuesta_correcta":"C"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera que expliques los riesgos, busques una alternativa rápida dentro del pipeline y mantengas trazabilidad de la decisión.","explicacion_incorrecta":"Cambios manuales sin registro o sin explicar riesgos comprometen la estabilidad y la gobernanza."}}'::jsonb
 ),
 
-('BL', 'TI', 'sr', 'DevOps Engineer', 'abierta',
- 'Describe una situación en la que lideraste una mejora en la plataforma (por ejemplo, monitoreo, alertas o infraestructura como código) que redujo incidentes o tareas manuales. ¿Qué hiciste y qué resultados obtuviste?',
- '["Piensa en una mejora real", "Cuenta antes y después del cambio"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'sr', 'DevOps Engineer', 'abierta',
+  'Describe una situación en la que lideraste una mejora en la plataforma, por ejemplo monitoreo, alertas o infraestructura como código, que redujo incidentes o tareas manuales. ¿Qué hiciste y qué resultados obtuviste?',
+  '["Piensa en una mejora real", "Cuenta antes y después del cambio"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["problema o dolor inicial como incidentes o tareas manuales","acción de mejora como monitoreo, alertas o infraestructura como código","resultado medible como menos incidentes o menos tareas manuales","colaboración con otros equipos si aplica"]},"feedback_generico":"Se espera que relates una iniciativa concreta de mejora de plataforma y cómo impactó en estabilidad o carga operacional."}'::jsonb
 ),
 
 -- SOFT SKILLS - SysAdmin
-('BL', 'TI', 'jr', 'SysAdmin', 'opcion_multiple',
- 'Un usuario interno reporta que “el sistema anda lento”, pero no entrega detalles. ¿Cómo deberías responder?',
- '["Haz preguntas concretas", "Mantén buena actitud con el cliente interno"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'jr', 'SysAdmin', 'opcion_multiple',
+  'Un usuario interno reporta que el sistema anda lento, pero no entrega detalles. ¿Cómo deberías responder?',
+  '["Haz preguntas concretas", "Mantén buena actitud con el cliente interno"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Decirle que seguramente es su computador y cerrar el ticket"},
-    {"id":"B","texto":"Pedirle con calma más detalles (qué sistema, desde cuándo, qué ve en pantalla) y registrar la información en el ticket"},
+    {"id":"B","texto":"Pedirle con calma más detalles, por ejemplo qué sistema, desde cuándo y qué ve en pantalla, y registrar la información en el ticket"},
     {"id":"C","texto":"Pedirle que mande un correo a otro equipo"},
     {"id":"D","texto":"Ignorar el ticket hasta que se vuelva crítico"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera una respuesta con actitud de servicio, preguntas concretas y registro adecuado del incidente.","explicacion_incorrecta":"Ignorar, derivar sin información o culpar al usuario deteriora la relación y dificulta el diagnóstico."}}'::jsonb
 ),
 
-('BL', 'TI', 'jr', 'SysAdmin', 'abierta',
- 'Cuenta una ocasión en la que registraste y seguiste un incidente hasta su cierre. ¿Cómo te aseguraste de dejar buena documentación para el equipo?',
- '["Piensa en un incidente real", "Menciona registro, seguimiento y cierre"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'jr', 'SysAdmin', 'abierta',
+  'Cuenta una ocasión en la que registraste y seguiste un incidente hasta su cierre. ¿Cómo te aseguraste de dejar buena documentación para el equipo?',
+  '["Piensa en un incidente real", "Menciona registro, seguimiento y cierre"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["registro inicial del incidente","actualización de estado o comunicaciones","documentación de causa y solución","uso posterior de la documentación como lecciones o base de conocimiento"]},"feedback_generico":"Se espera que describas cómo registraste, diste seguimiento y documentaste un incidente hasta su cierre."}'::jsonb
 ),
 
-('BL', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
- 'Se genera una mesa de incidentes por caída de un servicio crítico. ¿Cuál es tu mejor aporte como SysAdmin?',
- '["Coordina con datos concretos", "Comunica avances"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'mid', 'SysAdmin', 'opcion_multiple',
+  'Se genera una mesa de incidentes por caída de un servicio crítico. ¿Cuál es tu mejor aporte como administrador de sistemas?',
+  '["Coordina con datos concretos", "Comunica avances"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Trabajar en silencio sin decir nada hasta tener la solución final"},
-    {"id":"B","texto":"Compartir métricas y logs relevantes, proponer hipótesis y comunicar claramente las acciones que estás realizando"},
+    {"id":"B","texto":"Compartir métricas y registros relevantes, proponer hipótesis y comunicar claramente las acciones que estás realizando"},
     {"id":"C","texto":"Esperar a que otro equipo resuelva porque es más rápido"},
     {"id":"D","texto":"Buscar culpables en lugar de soluciones"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"En una mesa de incidentes se espera aportar datos, hipótesis y comunicación clara de acciones.","explicacion_incorrecta":"Trabajar aislado, no comunicar o enfocarse en culpables no ayuda a resolver ni a coordinar."}}'::jsonb
 ),
 
-('BL', 'TI', 'sr', 'SysAdmin', 'abierta',
- 'Describe una situación en la que tuviste que mantener la continuidad operativa de una infraestructura crítica (por ejemplo, durante un cambio, corte o falla). ¿Cómo organizaste al equipo y qué resultados lograste?',
- '["Piensa en continuidad operativa", "Incluye decisiones que tomaste tú"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'sr', 'SysAdmin', 'abierta',
+  'Describe una situación en la que tuviste que mantener la continuidad operativa de una infraestructura crítica, por ejemplo durante un cambio, corte o falla. ¿Cómo organizaste al equipo y qué resultados lograste?',
+  '["Piensa en continuidad operativa", "Incluye decisiones que tomaste tú"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["contexto de criticidad o riesgo","planificación o acciones de mitigación","coordinación de equipo o turnos","resultado en términos de continuidad o minimización de impacto"]},"feedback_generico":"Se espera un ejemplo de cómo organizaste al equipo y las acciones que permitieron mantener o recuperar la continuidad operativa."}'::jsonb
 ),
 
 -- SOFT SKILLS - Desarrollador Backend
-('BL', 'Desarrollador', 'jr', 'Desarrollador Backend', 'opcion_multiple',
- 'Estás trabajando remoto y detectas que tu implementación impactará a otro servicio backend. ¿Qué haces?',
- '["Comunica antes de romper cosas", "Trabajo en equipo"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Desarrollador', 'jr', 'Desarrollador Backend', 'opcion_multiple',
+  'Estás trabajando remoto y detectas que tu implementación impactará a otro servicio de backend. ¿Qué haces?',
+  '["Comunica antes de romper cosas", "Trabajo en equipo"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Hacer el cambio sin avisar y ver qué pasa"},
     {"id":"B","texto":"Avisar al otro desarrollador, coordinar el cambio y acordar pruebas de integración"},
     {"id":"C","texto":"Esperar a que el otro equipo encuentre el problema"},
     {"id":"D","texto":"Cancelar el cambio sin informar"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La coordinación previa y las pruebas de integración son clave para evitar interrupciones entre servicios.","explicacion_incorrecta":"Cambiar sin avisar o esperar a que otros detecten el problema genera incidentes evitables."}}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'jr', 'Desarrollador Backend', 'abierta',
- 'Cuenta una vez en la que pediste ayuda para resolver un bug complejo en backend. ¿Cómo lo abordaste y qué aprendiste?',
- '["Piensa en un bug real", "Incluye qué cambiaste después de esa experiencia"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Desarrollador', 'jr', 'Desarrollador Backend', 'abierta',
+  'Cuenta una vez en la que pediste ayuda para resolver un error complejo en backend. ¿Cómo lo abordaste y qué aprendiste?',
+  '["Piensa en un error real", "Incluye qué cambiaste después de esa experiencia"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["explicación del error o síntoma","cómo pediste ayuda o colaboraste","pasos para encontrar la causa","aprendizajes y cambios posteriores"]},"feedback_generico":"Se busca un ejemplo donde se vea colaboración, apertura a pedir ayuda y aprendizaje técnico o de procesos."}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'mid', 'Desarrollador Backend', 'opcion_multiple',
- 'QA reporta un bug crítico en una API que tú desarrollaste, cerca de una entrega. ¿Cuál es tu mejor reacción?',
- '["Calidad y colaboración", "No se trata de culpar"]'::jsonb,
- '{"opciones":[
-    {"id":"A","texto":"Decir que “en tu máquina funciona” y cerrar el bug"},
-    {"id":"B","texto":"Revisar el caso con QA, reproducir el problema, analizar la causa y proponer una solución con su impacto"},
-    {"id":"C","texto":"Ignorar el bug porque llega tarde"},
+(
+  'BL', 'Desarrollador', 'mid', 'Desarrollador Backend', 'opcion_multiple',
+  'Calidad asegura que existe un error crítico en una interfaz de programación que tú desarrollaste, cerca de una entrega. ¿Cuál es tu mejor reacción?',
+  '["Calidad y colaboración", "No se trata de culpar"]'::jsonb,
+  '{"opciones":[
+    {"id":"A","texto":"Decir que en tu máquina funciona y cerrar el error"},
+    {"id":"B","texto":"Revisar el caso con calidad, reproducir el problema, analizar la causa y proponer una solución con su impacto"},
+    {"id":"C","texto":"Ignorar el error porque llega tarde"},
     {"id":"D","texto":"Pedir que negocio lo acepte tal cual sin informar el riesgo"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera colaboración con calidad, análisis de causa y propuesta de solución con evaluación de impacto.","explicacion_incorrecta":"Negar el problema o ignorarlo perjudica la calidad y la relación con calidad y con negocio."}}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'sr', 'Desarrollador Backend', 'abierta',
- 'Describe una experiencia en la que lideraste la mejora de la calidad del backend (por ejemplo, pruebas, revisión de código o refactor). ¿Qué problema resolviste y qué impacto tuvo en el equipo?',
- '["Piensa en una mejora concreta", "Cuenta antes y después"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Desarrollador', 'sr', 'Desarrollador Backend', 'abierta',
+  'Describe una experiencia en la que lideraste la mejora de la calidad del backend, por ejemplo pruebas, revisión de código o refactorización. ¿Qué problema resolviste y qué impacto tuvo en el equipo?',
+  '["Piensa en una mejora concreta", "Cuenta antes y después"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["problema de calidad inicial como errores o deuda técnica","acciones de mejora como pruebas automáticas, revisión de código o refactorización","impacto medible o percibido como menos errores o mejor mantenibilidad","impacto en la colaboración del equipo"]},"feedback_generico":"Se espera un caso en el que hayas impulsado mejoras de calidad y el impacto en estabilidad o flujo de trabajo."}'::jsonb
 ),
 
 -- SOFT SKILLS - Desarrollador Frontend
-('BL', 'Desarrollador', 'jr', 'Desarrollador Frontend', 'opcion_multiple',
- 'El equipo de diseño te entrega una maqueta que en móvil se ve poco usable. ¿Qué haces?',
- '["Trabajo con diseño", "No cambies todo solo"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Desarrollador', 'jr', 'Desarrollador Frontend', 'opcion_multiple',
+  'El equipo de diseño te entrega una maqueta que en dispositivos móviles se ve poco usable. ¿Qué haces?',
+  '["Trabajo con diseño", "No cambies todo solo"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Implementar igual la maqueta aunque sepas que será incómoda"},
     {"id":"B","texto":"Modificar todo por tu cuenta sin avisar a diseño"},
     {"id":"C","texto":"Pedir una reunión breve, mostrar ejemplos del problema en móvil y proponer ajustes a la maqueta"},
     {"id":"D","texto":"Rechazar la maqueta sin dar detalles"}
-  ], "respuesta_correcta":"C"}'::jsonb
+  ],"respuesta_correcta":"C"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera colaboración con diseño, aportando evidencia y propuestas, en vez de cambiar todo solo o implementar algo poco usable.","explicacion_incorrecta":"Actuar en solitario o sin retroalimentación clara dificulta la relación con diseño y la experiencia de usuario."}}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'jr', 'Desarrollador Frontend', 'abierta',
- 'Cuenta una situación en la que tuviste que ajustar una interfaz según comentarios de usuarios o diseño. ¿Qué cambiaste y qué resultado obtuviste?',
- '["Piensa en feedback real", "Describe el cambio y su efecto"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Desarrollador', 'jr', 'Desarrollador Frontend', 'abierta',
+  'Cuenta una situación en la que tuviste que ajustar una interfaz según comentarios de usuarios o diseño. ¿Qué cambiaste y qué resultado obtuviste?',
+  '["Piensa en retroalimentación real", "Describe el cambio y su efecto"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["comentarios de usuarios o diseño","ajustes realizados en la interfaz","impacto en usabilidad o satisfacción"]},"feedback_generico":"Se espera un ejemplo de cómo incorporaste retroalimentación para mejorar la interfaz y qué efecto tuvo."}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
- 'Trabajas con un desarrollador backend y surgen problemas por mal entendimiento de los contratos de la API. ¿Qué acción es más efectiva?',
- '["Comunicación y acuerdos claros"]'::jsonb,
- '{"opciones":[
-    {"id":"A","texto":"Seguir asumiendo cómo funciona la API y corregir sobre la marcha"},
-    {"id":"B","texto":"Definir en conjunto el contrato (request/response), documentarlo y adaptar el código de ambos lados"},
+(
+  'BL', 'Desarrollador', 'mid', 'Desarrollador Frontend', 'opcion_multiple',
+  'Trabajas con un desarrollador de backend y surgen problemas por mal entendimiento de los contratos de la interfaz de programación. ¿Qué acción es más efectiva?',
+  '["Comunicación y acuerdos claros"]'::jsonb,
+  '{"opciones":[
+    {"id":"A","texto":"Seguir asumiendo cómo funciona la interfaz y corregir sobre la marcha"},
+    {"id":"B","texto":"Definir en conjunto el contrato de solicitud y respuesta, documentarlo y adaptar el código de ambos lados"},
     {"id":"C","texto":"Pedir que el backend se adapte solo a lo que tú necesitas"},
     {"id":"D","texto":"Dejar de hablar con el otro desarrollador"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La definición y documentación compartida del contrato reduce malentendidos y retrabajo.","explicacion_incorrecta":"Asumir comportamientos o imponer cambios sin acuerdo aumenta errores de integración."}}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'sr', 'Desarrollador Frontend', 'abierta',
- 'Describe una vez en la que lideraste la mejora de la experiencia de usuario (UX) en un producto o módulo. ¿Qué problema detectaste y cómo se vio el impacto en los usuarios?',
- '["Piensa en una mejora de UX", "Menciona datos o señales del impacto si puedes"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Desarrollador', 'sr', 'Desarrollador Frontend', 'abierta',
+  'Describe una vez en la que lideraste la mejora de la experiencia de usuario en un producto o módulo. ¿Qué problema detectaste y cómo se vio el impacto en los usuarios?',
+  '["Piensa en una mejora de experiencia de usuario", "Menciona datos o señales del impacto si puedes"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["problema de experiencia de usuario detectado","cambios aplicados en la interfaz o flujo","impacto medido o percibido como menos errores o mejor conversión","mejor retroalimentación de usuarios o negocio"]},"feedback_generico":"Se espera que describas una mejora de experiencia de usuario concreta y cómo se reflejó en el comportamiento o la percepción de las personas usuarias."}'::jsonb
 ),
 
 -- SOFT SKILLS - Desarrollador Fullstack
-('BL', 'Desarrollador', 'jr', 'Desarrollador Fullstack', 'opcion_multiple',
- 'En un sprint te asignan tareas de frontend y backend. ¿Cómo organizas tu trabajo?',
- '["Piensa en dependencias y comunicación"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Desarrollador', 'jr', 'Desarrollador Fullstack', 'opcion_multiple',
+  'En un sprint te asignan tareas de frontend y backend. ¿Cómo organizas tu trabajo?',
+  '["Piensa en dependencias y comunicación"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Hacer un poco de cada cosa sin terminar nada"},
     {"id":"B","texto":"Revisar dependencias, acordar prioridades con el equipo y avanzar en bloques terminando tareas completas"},
     {"id":"C","texto":"Hacer solo las tareas que más te gustan"},
-    {"id":"D","texto":"Esperar a que el Scrum Master te diga exactamente qué hacer"}
-  ], "respuesta_correcta":"B"}'::jsonb
+    {"id":"D","texto":"Esperar a que la persona que lidera el marco ágil te diga exactamente qué hacer"}
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera organización por dependencias y prioridades de equipo, cerrando tareas de forma completa.","explicacion_incorrecta":"Ir saltando de tarea en tarea sin terminar o elegir solo lo que gusta afecta el avance del sprint."}}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'jr', 'Desarrollador Fullstack', 'abierta',
- 'Cuenta una experiencia en la que tuviste que aprender algo nuevo (por ejemplo, una tecnología de frontend o backend) para sacar adelante una tarea. ¿Cómo lo hiciste?',
- '["Piensa en un aprendizaje concreto", "Explica cómo te organizaste para aprender"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Desarrollador', 'jr', 'Desarrollador Fullstack', 'abierta',
+  'Cuenta una experiencia en la que tuviste que aprender algo nuevo, por ejemplo una tecnología de frontend o backend, para sacar adelante una tarea. ¿Cómo lo hiciste?',
+  '["Piensa en un aprendizaje concreto", "Explica cómo te organizaste para aprender"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["contexto o necesidad de aprender algo nuevo","estrategia de aprendizaje como tutoriales, documentación o mentores","aplicación del aprendizaje en la tarea","resultado o impacto en el trabajo"]},"feedback_generico":"Se busca ver cómo abordas el aprendizaje autónomo ante un reto técnico concreto."}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
- 'Estás en medio de un desarrollo y negocio cambia prioridades del sprint. ¿Qué haces?',
- '["Piensa en adaptación y comunicación con el equipo"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Desarrollador', 'mid', 'Desarrollador Fullstack', 'opcion_multiple',
+  'Estás en medio de un desarrollo y negocio cambia prioridades del sprint. ¿Qué haces?',
+  '["Piensa en adaptación y comunicación con el equipo"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Ignorar el cambio y terminar lo que estabas haciendo"},
     {"id":"B","texto":"Revisar con el equipo el impacto del cambio, reordenar el trabajo y comunicar qué quedará dentro o fuera del sprint"},
     {"id":"C","texto":"Aceptar el cambio pero sin modificar el plan"},
     {"id":"D","texto":"Decir que el cambio es imposible sin analizarlo"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La respuesta esperada coordina con el equipo, replanifica y comunica el alcance revisado.","explicacion_incorrecta":"Ignorar o aceptar cambios sin replanificar genera sobrecarga y expectativas poco realistas."}}'::jsonb
 ),
 
-('BL', 'Desarrollador', 'sr', 'Desarrollador Fullstack', 'abierta',
- 'Describe un caso en el que ayudaste al equipo a mejorar la colaboración entre frontend, backend y DevOps. ¿Qué hiciste para alinear a todos?',
- '["Piensa en un caso real", "Incluye reuniones, acuerdos o cambios de proceso que impulsaste"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Desarrollador', 'sr', 'Desarrollador Fullstack', 'abierta',
+  'Describe un caso en el que ayudaste al equipo a mejorar la colaboración entre frontend, backend y personas de operaciones de plataforma. ¿Qué hiciste para alinear a todos?',
+  '["Piensa en un caso real", "Incluye reuniones, acuerdos o cambios de proceso que impulsaste"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["problema de comunicación o coordinación inicial","acciones concretas para alinear como reuniones, acuerdos o documentación","mejoras en flujo de trabajo o tiempos","impacto percibido por el equipo"]},"feedback_generico":"Se busca un ejemplo de liderazgo transversal mejorando la colaboración entre roles técnicos."}'::jsonb
 ),
 
 -- SOFT SKILLS - Analista de Datos
-('BL', 'TI', 'jr', 'Analista de Datos', 'opcion_multiple',
- 'Te piden un informe “para hoy” pero no está claro qué decisión se tomará con esos datos. ¿Qué haces?',
- '["Piensa en entender el objetivo", "No es solo hacer gráficos"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'jr', 'Analista de Datos', 'opcion_multiple',
+  'Te piden un informe para hoy pero no está claro qué decisión se tomará con esos datos. ¿Qué haces?',
+  '["Piensa en entender el objetivo", "No es solo hacer gráficos"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Generar muchos gráficos y esperar que alguno sirva"},
     {"id":"B","texto":"Hacer algunas preguntas breves para entender qué decisión quieren tomar y enfocar el análisis en eso"},
     {"id":"C","texto":"Negarte a hacer el informe"},
     {"id":"D","texto":"Enviar solo la tabla de datos sin comentarios"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera que primero entiendas la decisión o propósito para orientar el análisis.","explicacion_incorrecta":"Generar gráficos sin foco o entregar datos sin contexto limita el valor del análisis."}}'::jsonb
 ),
 
-('BL', 'TI', 'jr', 'Analista de Datos', 'abierta',
- 'Cuenta una ocasión en la que detectaste un problema en la calidad de los datos (por ejemplo, duplicados o inconsistencias). ¿Cómo lo manejaste?',
- '["Piensa en un caso real", "Incluye a quién avisaste y qué se hizo"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'jr', 'Analista de Datos', 'abierta',
+  'Cuenta una ocasión en la que detectaste un problema en la calidad de los datos, por ejemplo duplicados o inconsistencias. ¿Cómo lo manejaste?',
+  '["Piensa en un caso real", "Incluye a quién avisaste y qué se hizo"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["tipo de problema de calidad de datos","acciones para validarlo o cuantificarlo","comunicación a dueños de datos o personas interesadas","acciones para corregir o prevenir"]},"feedback_generico":"Se espera un ejemplo de gestión de calidad de datos, desde la detección hasta la comunicación y corrección."}'::jsonb
 ),
 
-('BL', 'TI', 'mid', 'Analista de Datos', 'opcion_multiple',
- 'Detectas inconsistencias importantes en las fuentes de datos de un dashboard clave. ¿Cuál es la mejor acción?',
- '["Calidad de datos primero", "Comunica el riesgo"]'::jsonb,
- '{"opciones":[
-    {"id":"A","texto":"Ignorarlas porque el dashboard ya está en producción"},
+(
+  'BL', 'TI', 'mid', 'Analista de Datos', 'opcion_multiple',
+  'Detectas inconsistencias importantes en las fuentes de datos de un panel de control clave. ¿Cuál es la mejor acción?',
+  '["Calidad de datos primero", "Comunica el riesgo"]'::jsonb,
+  '{"opciones":[
+    {"id":"A","texto":"Ignorarlas porque el panel ya está en producción"},
     {"id":"B","texto":"Documentar las inconsistencias, informar a los dueños de datos y proponer pasos para corregirlas"},
     {"id":"C","texto":"Eliminar los datos problemáticos sin avisar"},
     {"id":"D","texto":"Cambiar las métricas para que no se note"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La calidad de datos es prioritaria, por lo que documentar, informar y proponer correcciones es la respuesta esperada.","explicacion_incorrecta":"Ignorar, ocultar o alterar datos sin transparencia puede generar decisiones equivocadas."}}'::jsonb
 ),
 
-('BL', 'TI', 'sr', 'Analista de Datos', 'abierta',
- 'Describe una experiencia en la que un análisis tuyo generó un impacto importante (por ejemplo, cambio de estrategia o mejora de un proceso). ¿Qué descubriste y qué se hizo con esa información?',
- '["Piensa en un caso con impacto", "Cuenta qué decisión cambió gracias al análisis"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'sr', 'Analista de Datos', 'abierta',
+  'Describe una experiencia en la que un análisis tuyo generó un impacto importante, por ejemplo cambio de estrategia o mejora de un proceso. ¿Qué descubriste y qué se hizo con esa información?',
+  '["Piensa en un caso con impacto", "Cuenta qué decisión cambió gracias al análisis"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["hallazgo relevante del análisis","decisión o cambio que se tomó","impacto en negocio o proceso","cómo lo presentaste a la gerencia o equipo"]},"feedback_generico":"Se espera que muestres cómo un análisis influyó en decisiones importantes y cómo lo comunicaste."}'::jsonb
 ),
 
 -- SOFT SKILLS - Analista de Negocios
-('BL', 'Administracion', 'jr', 'Analista de Negocios', 'opcion_multiple',
- 'Durante una reunión, distintas áreas usan nombres distintos para el mismo indicador. ¿Qué haces?',
- '["Piensa en claridad y acuerdos", "Glosario común"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'jr', 'Analista de Negocios', 'opcion_multiple',
+  'Durante una reunión, distintas áreas usan nombres distintos para el mismo indicador. ¿Qué haces?',
+  '["Piensa en claridad y acuerdos", "Glosario común"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Anotar todo tal cual y dejar que cada área use su nombre"},
     {"id":"B","texto":"Definir en conjunto un nombre y descripción, documentarlo y validarlo con todos"},
     {"id":"C","texto":"Elegir tú un nombre sin consultar"},
     {"id":"D","texto":"Suspender la reunión y no retomar el tema"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera alinear lenguaje y definiciones mediante acuerdos y documentación compartida.","explicacion_incorrecta":"Dejar múltiples nombres sin consenso o imponer uno sin consulta genera confusión."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'jr', 'Analista de Negocios', 'abierta',
- 'Cuenta una ocasión en la que ayudaste a un área a entender mejor sus indicadores o reportes. ¿Qué hiciste para explicarlos?',
- '["Piensa en una explicación que diste", "Incluye cómo adaptaste el lenguaje"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'jr', 'Analista de Negocios', 'abierta',
+  'Cuenta una ocasión en la que ayudaste a un área a entender mejor sus indicadores o reportes. ¿Qué hiciste para explicarlos?',
+  '["Piensa en una explicación que diste", "Incluye cómo adaptaste el lenguaje"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["adaptar lenguaje a audiencia no técnica","usar ejemplos o visualizaciones","aclarar cómo se calcula el indicador","reacción o comprensión lograda"]},"feedback_generico":"Se busca ver cómo facilitas la comprensión de indicadores a personas no expertas."}'::jsonb
 ),
 
-('BL', 'Administracion', 'mid', 'Analista de Negocios', 'opcion_multiple',
- 'Distintas áreas (ventas, operaciones, finanzas) tienen prioridades distintas para un mismo proyecto. ¿Cuál es tu mejor rol?',
- '["Gestión de stakeholders", "Buscar alineamiento"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'mid', 'Analista de Negocios', 'opcion_multiple',
+  'Distintas áreas como ventas, operaciones y finanzas tienen prioridades distintas para un mismo proyecto. ¿Cuál es tu mejor rol?',
+  '["Gestión de personas interesadas", "Buscar alineamiento"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Apoyar solo a la que tenga más poder"},
     {"id":"B","texto":"Facilitar una conversación para alinear objetivos, definir criterios en común y documentar acuerdos"},
     {"id":"C","texto":"Hacer un informe distinto para cada área sin buscar un mínimo común"},
     {"id":"D","texto":"No involucrarte en el conflicto"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"El rol esperado es facilitar alineamiento entre personas interesadas con criterios y acuerdos compartidos.","explicacion_incorrecta":"Tomar partido o fragmentar soluciones sin alineamiento aumenta el conflicto."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'sr', 'Analista de Negocios', 'abierta',
- 'Describe una experiencia en la que tu análisis ayudó a la gerencia a tomar una decisión crítica (por ejemplo, cambio de producto, inversión o reducción de costos). ¿Cómo lo presentaste?',
- '["Piensa en una decisión importante", "Incluye cómo comunicaste los hallazgos"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'sr', 'Analista de Negocios', 'abierta',
+  'Describe una experiencia en la que tu análisis ayudó a la gerencia a tomar una decisión crítica, por ejemplo cambio de producto, inversión o reducción de costos. ¿Cómo lo presentaste?',
+  '["Piensa en una decisión importante", "Incluye cómo comunicaste los hallazgos"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["contexto de la decisión crítica","insumos del análisis","forma de presentación como resumen ejecutivo o visualizaciones","decisión tomada gracias al análisis"]},"feedback_generico":"Se espera un ejemplo donde se vea la conexión entre tu análisis y una decisión de alto impacto."}'::jsonb
 ),
 
 -- SOFT SKILLS - Analista QA
-('BL', 'TI', 'jr', 'Analista QA', 'opcion_multiple',
- 'En una daily, desarrollo y negocio no se ponen de acuerdo sobre la prioridad de un defecto. ¿Qué puedes aportar como QA?',
- '["Piensa en riesgo y evidencias"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'jr', 'Analista QA', 'opcion_multiple',
+  'En una reunión diaria, desarrollo y negocio no se ponen de acuerdo sobre la prioridad de un defecto. ¿Qué puedes aportar como aseguramiento de calidad?',
+  '["Piensa en riesgo y evidencias"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"No decir nada para no entrar en conflicto"},
     {"id":"B","texto":"Aportar datos sobre el impacto del defecto, ejemplos de uso y ayudar a estimar el riesgo para decidir su prioridad"},
     {"id":"C","texto":"Decir que todos los defectos son críticos siempre"},
     {"id":"D","texto":"Apoyar automáticamente al que hable más fuerte"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Calidad aporta evidencia, contexto de uso y análisis de riesgo para priorizar defectos.","explicacion_incorrecta":"No opinar o etiquetar todo como crítico sin criterio no ayuda a priorizar."}}'::jsonb
 ),
 
-('BL', 'TI', 'jr', 'Analista QA', 'abierta',
- 'Cuenta una ocasión en la que detectaste un problema importante antes de que llegara a producción. ¿Cómo lo comunicaste al equipo?',
- '["Piensa en un bug real o un riesgo", "Incluye la reacción del equipo"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'jr', 'Analista QA', 'abierta',
+  'Cuenta una ocasión en la que detectaste un problema importante antes de que llegara a producción. ¿Cómo lo comunicaste al equipo?',
+  '["Piensa en un error real o un riesgo", "Incluye la reacción del equipo"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["tipo de problema detectado","momento del ciclo en que se detectó","forma de comunicarlo como datos, ejemplos y severidad","reacción del equipo o cambio que se hizo"]},"feedback_generico":"Se espera ver cómo tu intervención como calidad evitó un problema en producción y cómo lo comunicaste."}'::jsonb
 ),
 
-('BL', 'TI', 'mid', 'Analista QA', 'opcion_multiple',
- 'Ves que el mismo tipo de defecto se repite en varios releases. ¿Qué deberías impulsar?',
- '["Mejora continua", "No solo reportar otra vez"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'mid', 'Analista QA', 'opcion_multiple',
+  'Ves que el mismo tipo de defecto se repite en varios lanzamientos. ¿Qué deberías impulsar?',
+  '["Mejora continua", "No solo reportar otra vez"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Seguir reportando el mismo defecto cada vez"},
     {"id":"B","texto":"Proponer un análisis de causa raíz y ajustar pruebas, criterios de aceptación o proceso"},
     {"id":"C","texto":"Dejar de reportarlo porque es repetitivo"},
     {"id":"D","texto":"Pedir más tiempo sin cambiar nada del proceso"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera impulsar mejoras de proceso mediante análisis de causa raíz y ajustes.","explicacion_incorrecta":"Repetir el reporte sin atacar la causa no reduce la recurrencia del defecto."}}'::jsonb
 ),
 
-('BL', 'TI', 'sr', 'Analista QA', 'abierta',
- 'Describe una experiencia en la que ayudaste a mejorar la cultura de calidad en tu equipo o empresa. ¿Qué hiciste diferente?',
- '["Piensa en cambios de prácticas, reuniones o métricas", "Cuenta el impacto en el equipo"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'sr', 'Analista QA', 'abierta',
+  'Describe una experiencia en la que ayudaste a mejorar la cultura de calidad en tu equipo o empresa. ¿Qué hiciste diferente?',
+  '["Piensa en cambios de prácticas, reuniones o métricas", "Cuenta el impacto en el equipo"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["prácticas o rituales nuevos como pruebas en pareja o refinamiento de criterios","cambios en la forma de trabajar o medir calidad","impacto en defectos, colaboración o percepción de calidad"]},"feedback_generico":"Se espera un ejemplo de cómo impulsaste prácticas o cambios que elevaron la cultura de calidad."}'::jsonb
 ),
 
 -- SOFT SKILLS - Analista Funcional
-('BL', 'TI', 'jr', 'Analista Funcional', 'opcion_multiple',
- 'Durante el levantamiento de requerimientos, los usuarios usan distintos términos para lo mismo. ¿Qué haces?',
- '["Piensa en claridad de lenguaje", "Glosario compartido"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'jr', 'Analista Funcional', 'opcion_multiple',
+  'Durante el levantamiento de requerimientos, los usuarios usan distintos términos para lo mismo. ¿Qué haces?',
+  '["Piensa en claridad de lenguaje", "Glosario compartido"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Anotar todo tal cual y dejar que desarrollo interprete"},
     {"id":"B","texto":"Crear y validar con ellos un glosario común con términos y definiciones claras"},
     {"id":"C","texto":"Elegir tú los nombres sin consultar"},
     {"id":"D","texto":"Terminar la reunión y no retomar el tema"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Un glosario validado ayuda a evitar malentendidos entre usuarios y equipo técnico.","explicacion_incorrecta":"Dejar términos variados sin alinear complica el desarrollo y las pruebas."}}'::jsonb
 ),
 
-('BL', 'TI', 'jr', 'Analista Funcional', 'abierta',
- 'Cuenta una situación en la que tuviste que explicar un proceso o requisito complejo a alguien no técnico. ¿Cómo lo hiciste?',
- '["Piensa en un caso real", "Incluye ejemplos o apoyos visuales si los usaste"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'jr', 'Analista Funcional', 'abierta',
+  'Cuenta una situación en la que tuviste que explicar un proceso o requisito complejo a alguien no técnico. ¿Cómo lo hiciste?',
+  '["Piensa en un caso real", "Incluye ejemplos o apoyos visuales si los usaste"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["uso de lenguaje simple o metáforas","uso de diagramas o ejemplos","verificación de entendimiento","resultado en la comprensión de la persona"]},"feedback_generico":"Se busca ver tu capacidad de traducir complejidad en explicaciones claras para personas no técnicas."}'::jsonb
 ),
 
-('BL', 'TI', 'mid', 'Analista Funcional', 'opcion_multiple',
- 'En un proyecto con alta presión, te piden recortar documentación de análisis. ¿Qué propones?',
- '["Documentación mínima pero útil"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'TI', 'mid', 'Analista Funcional', 'opcion_multiple',
+  'En un proyecto con alta presión, te piden recortar documentación de análisis. ¿Qué propones?',
+  '["Documentación mínima pero útil"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Eliminar toda la documentación para ganar tiempo"},
-    {"id":"B","texto":"Acordar con el equipo un set mínimo (flujos críticos, reglas clave, criterios de aceptación) y mantener al menos eso"},
+    {"id":"B","texto":"Acordar con el equipo un conjunto mínimo de flujos críticos, reglas clave y criterios de aceptación y mantener al menos eso"},
     {"id":"C","texto":"Negarte a avanzar sin documentar todo en detalle"},
     {"id":"D","texto":"Documentar solo en tus notas personales"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Documentación mínima pero alineada que incluya flujos críticos, reglas y criterios equilibra tiempo y claridad.","explicacion_incorrecta":"Documentar nada o solo para uso personal dificulta la colaboración y el mantenimiento."}}'::jsonb
 ),
 
-('BL', 'TI', 'sr', 'Analista Funcional', 'abierta',
- 'Describe una experiencia en la que ayudaste a alinear a negocio, desarrollo y QA en torno al alcance de un proyecto complejo. ¿Cómo evitaste el “scope creep”?',
- '["Piensa en un proyecto real", "Incluye acuerdos y mecanismos de control que usaste"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'TI', 'sr', 'Analista Funcional', 'abierta',
+  'Describe una experiencia en la que ayudaste a alinear a negocio, desarrollo y aseguramiento de calidad en torno al alcance de un proyecto complejo. ¿Cómo evitaste el crecimiento descontrolado del alcance?',
+  '["Piensa en un proyecto real", "Incluye acuerdos y mecanismos de control que usaste"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["definición clara de alcance","criterios de aceptación compartidos","proceso de control de cambios","mecanismos de comunicación con personas interesadas"]},"feedback_generico":"Se espera un caso donde se vea cómo alineaste a las partes y controlaste el crecimiento del alcance con acuerdos y procesos claros."}'::jsonb
 ),
 
 -- SOFT SKILLS - Asistente Administrativo
-('BL', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
- 'Tu jefe te pide un informe “para ahora ya”, pero ya tienes otras tareas comprometidas para el día. ¿Qué haces?',
- '["Piensa en gestión del tiempo y comunicación"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'jr', 'Asistente Administrativo', 'opcion_multiple',
+  'Tu jefe te pide un informe para ahora ya, pero ya tienes otras tareas comprometidas para el día. ¿Qué haces?',
+  '["Piensa en gestión del tiempo y comunicación"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Intentar hacerlo todo sin avisar si algo no se cumple"},
     {"id":"B","texto":"Explicar tu carga actual, pedir priorizar tareas y reorganizar tu día en base a eso"},
     {"id":"C","texto":"Decir que no harás el informe porque estás ocupado"},
     {"id":"D","texto":"Ignorar las otras tareas y hacer solo el informe"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La gestión esperada implica comunicar la carga actual y acordar prioridades con la jefatura.","explicacion_incorrecta":"Intentar hacerlo todo sin avisar o ignorar tareas suele llevar a incumplimientos inesperados."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'jr', 'Asistente Administrativo', 'abierta',
- 'Cuenta una ocasión en la que debiste organizar muchas tareas al mismo tiempo en la oficina. ¿Cómo decidiste por dónde empezar?',
- '["Piensa en un día ajetreado", "Incluye cómo priorizaste"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'jr', 'Asistente Administrativo', 'abierta',
+  'Cuenta una ocasión en la que debiste organizar muchas tareas al mismo tiempo en la oficina. ¿Cómo decidiste por dónde empezar?',
+  '["Piensa en un día ajetreado", "Incluye cómo priorizaste"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["lista o visión de todas las tareas","criterios de prioridad como urgencia, importancia y dependencia","planificación del día","resultado en cumplimiento de tareas"]},"feedback_generico":"Se espera un ejemplo de cómo organizas y priorizas en contextos de alta carga de trabajo."}'::jsonb
 ),
 
-('BL', 'Administracion', 'mid', 'Asistente Administrativo', 'opcion_multiple',
- 'Notas un error en un documento que ya fue enviado a un cliente. ¿Cuál es la mejor acción?',
- '["Piensa en responsabilidad y relación con el cliente"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'mid', 'Asistente Administrativo', 'opcion_multiple',
+  'Notas un error en un documento que ya fue enviado a un cliente. ¿Cuál es la mejor acción?',
+  '["Piensa en responsabilidad y relación con el cliente"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"No decir nada para evitar problemas"},
     {"id":"B","texto":"Informar a tu jefe, proponer corregir el documento y enviar una versión actualizada si es necesario"},
     {"id":"C","texto":"Echarle la culpa a otra persona"},
     {"id":"D","texto":"Eliminar el documento del archivo y olvidarlo"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Reconocer el error, informar y corregir mantiene la confianza con el cliente.","explicacion_incorrecta":"Ocultar o culpar a otros deteriora la relación y la ética profesional."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'sr', 'Asistente Administrativo', 'abierta',
- 'Describe una experiencia en la que apoyaste a tu equipo o jefatura en un periodo de alta carga de trabajo (por ejemplo, cierre de mes o evento importante). ¿Qué hiciste para que todo saliera adelante?',
- '["Piensa en un periodo de alta presión", "Incluye cómo ayudaste a organizar al equipo"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'sr', 'Asistente Administrativo', 'abierta',
+  'Describe una experiencia en la que apoyaste a tu equipo o jefatura en un periodo de alta carga de trabajo, por ejemplo cierre de mes o evento importante. ¿Qué hiciste para que todo saliera adelante?',
+  '["Piensa en un periodo de alta presión", "Incluye cómo ayudaste a organizar al equipo"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["contexto de alta carga como cierre o evento","acciones de organización o apoyo","coordinación con el equipo o jefatura","resultado final o aprendizaje"]},"feedback_generico":"Se busca ver cómo te comportas en situaciones de alta presión y cómo ayudas a tu equipo a salir adelante."}'::jsonb
 ),
 
 -- SOFT SKILLS - Analista Contable
-('BL', 'Administracion', 'jr', 'Analista Contable', 'opcion_multiple',
- 'Durante el registro de facturas encuentras un monto que no cuadra con el documento enviado. ¿Qué haces?',
- '["Piensa en exactitud y comunicación"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'jr', 'Analista Contable', 'opcion_multiple',
+  'Durante el registro de facturas encuentras un monto que no cuadra con el documento enviado. ¿Qué haces?',
+  '["Piensa en exactitud y comunicación"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Ajustar el monto para que cuadre y seguir"},
     {"id":"B","texto":"Revisar el documento, consultar la diferencia con quien corresponda y registrar correctamente el valor"},
     {"id":"C","texto":"Ignorar el problema porque el monto es pequeño"},
     {"id":"D","texto":"Registrar cualquier valor y corregir después si alguien reclama"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera exactitud y validación de montos incluso si la diferencia parece pequeña.","explicacion_incorrecta":"Ajustar sin preguntar o ignorar diferencias compromete la confiabilidad de los estados."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'jr', 'Analista Contable', 'abierta',
- 'Cuenta una situación en la que detectaste un error contable o administrativo. ¿Cómo lo corregiste?',
- '["Piensa en un error real", "Incluye qué hiciste para evitar que volviera a ocurrir"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'jr', 'Analista Contable', 'abierta',
+  'Cuenta una situación en la que detectaste un error contable o administrativo. ¿Cómo lo corregiste?',
+  '["Piensa en un error real", "Incluye qué hiciste para evitar que volviera a ocurrir"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["tipo de error detectado","acción para corregir el registro","comunicación a responsables si aplica","medida preventiva para evitar recurrencia"]},"feedback_generico":"Se espera un ejemplo donde se vea responsabilidad, corrección y propuesta de mejora del proceso."}'::jsonb
 ),
 
-('BL', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
- 'Durante el cierre contable, descubres una diferencia que no puedes explicar rápidamente. El plazo para entregar los estados es corto. ¿Qué haces?',
- '["Piensa en ética y tiempos"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'mid', 'Analista Contable', 'opcion_multiple',
+  'Durante el cierre contable descubres una diferencia que no puedes explicar rápidamente. El plazo para entregar los estados es corto. ¿Qué haces?',
+  '["Piensa en ética y tiempos"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Ajustar la cifra para que cuadre sin investigar"},
     {"id":"B","texto":"Informar la diferencia, investigar lo posible y acordar un plan para terminar el análisis si no alcanzas"},
     {"id":"C","texto":"Retrasar la entrega sin informar a nadie"},
     {"id":"D","texto":"Eliminar la cuenta con diferencia del estado financiero"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"La transparencia y un plan de análisis complementario equilibran ética y tiempos de entrega.","explicacion_incorrecta":"Ajustar cifras o eliminar cuentas sin explicación compromete la integridad de los estados."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'sr', 'Analista Contable', 'abierta',
- 'Describe una experiencia en la que tuviste que explicar información contable compleja a alguien sin conocimientos financieros (por ejemplo, un gerente o cliente). ¿Cómo lo hiciste comprensible?',
- '["Piensa en una explicación importante", "Incluye ejemplos o metáforas si las usaste"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'sr', 'Analista Contable', 'abierta',
+  'Describe una experiencia en la que tuviste que explicar información contable compleja a alguien sin conocimientos financieros, por ejemplo un gerente o cliente. ¿Cómo lo hiciste comprensible?',
+  '["Piensa en una explicación importante", "Incluye ejemplos o metáforas si las usaste"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["tema contable complejo","adaptación del lenguaje con metáforas o ejemplos","foco en lo que la persona necesitaba decidir","resultado en la comprensión o decisión del interlocutor"]},"feedback_generico":"Se busca ver tu capacidad de traducir conceptos contables complejos a un lenguaje accesible."}'::jsonb
 ),
 
 -- SOFT SKILLS - Encargado de Administración
-('BL', 'Administracion', 'jr', 'Encargado de Administración', 'opcion_multiple',
- 'Debes mantener orden físico y digital de documentación legal y laboral. Notas que varios documentos no están actualizados. ¿Qué haces?',
- '["Piensa en orden y proactividad"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'jr', 'Encargado de Administración', 'opcion_multiple',
+  'Debes mantener orden físico y digital de documentación legal y laboral. Notas que varios documentos no están actualizados. ¿Qué haces?',
+  '["Piensa en orden y proactividad"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Dejar los documentos como están para no generar trabajo extra"},
     {"id":"B","texto":"Hacer un inventario, priorizar qué actualizar y proponer un plan para regularizar la documentación"},
     {"id":"C","texto":"Eliminar los documentos antiguos sin revisar su importancia"},
     {"id":"D","texto":"Esperar a que el directorio pida algo específico para recién ordenar"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera proactividad, diagnóstico e implementación de un plan de actualización.","explicacion_incorrecta":"Ignorar o eliminar documentos sin análisis puede generar riesgos legales o administrativos."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'jr', 'Encargado de Administración', 'abierta',
- 'Cuenta una ocasión en la que organizaste o mejoraste el orden de documentos o procesos administrativos en tu trabajo o estudios. ¿Qué cambió con tu mejora?',
- '["Piensa en un cambio concreto", "Incluye antes y después"]'::jsonb,
- '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'jr', 'Encargado de Administración', 'abierta',
+  'Cuenta una ocasión en la que organizaste o mejoraste el orden de documentos o procesos administrativos en tu trabajo o estudios. ¿Qué cambió con tu mejora?',
+  '["Piensa en un cambio concreto", "Incluye antes y después"]'::jsonb,
+  '{"min_caracteres":80,"max_caracteres":800,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["situación inicial de desorden","acción de orden o mejora implementada","nueva forma de trabajo o acceso a la información","beneficio percibido como menos tiempo o menos errores"]},"feedback_generico":"Se espera un ejemplo concreto donde tu intervención haya mejorado el orden o la eficiencia administrativa."}'::jsonb
 ),
 
-('BL', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
- 'Debes informar al Directorio sobre una desviación importante en el presupuesto. ¿Qué es lo más adecuado?',
- '["Transparencia con propuesta de acción"]'::jsonb,
- '{"opciones":[
+(
+  'BL', 'Administracion', 'mid', 'Encargado de Administración', 'opcion_multiple',
+  'Debes informar al directorio sobre una desviación importante en el presupuesto. ¿Qué es lo más adecuado?',
+  '["Transparencia con propuesta de acción"]'::jsonb,
+  '{"opciones":[
     {"id":"A","texto":"Ocultar la desviación para evitar preguntas difíciles"},
     {"id":"B","texto":"Presentar la desviación con datos claros, explicar las causas y proponer acciones para corregirla"},
     {"id":"C","texto":"Mencionar solo los resultados positivos y omitir los negativos"},
     {"id":"D","texto":"Culpar a otra área sin mostrar información"}
-  ], "respuesta_correcta":"B"}'::jsonb
+  ],"respuesta_correcta":"B"}'::jsonb,
+  '{"tipo_item":"choice","nlp":{"explicacion_correcta":"Se espera transparencia, explicación de causas y propuesta de medidas correctivas.","explicacion_incorrecta":"Ocultar desviaciones o culpar sin datos erosiona la confianza del directorio."}}'::jsonb
 ),
 
-('BL', 'Administracion', 'sr', 'Encargado de Administración', 'abierta',
- 'Describe una experiencia en la que tuviste que liderar al equipo administrativo en un periodo de alta presión (por ejemplo, auditoría, cierre de año o cambio importante). ¿Cómo lo manejaste?',
- '["Piensa en un momento crítico", "Cuenta cómo apoyaste al equipo y qué resultados obtuvieron"]'::jsonb,
- '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb
+(
+  'BL', 'Administracion', 'sr', 'Encargado de Administración', 'abierta',
+  'Describe una experiencia en la que tuviste que liderar al equipo administrativo en un periodo de alta presión, por ejemplo auditoría, cierre de año o cambio importante. ¿Cómo lo manejaste?',
+  '["Piensa en un momento crítico", "Cuenta cómo apoyaste al equipo y qué resultados obtuvieron"]'::jsonb,
+  '{"min_caracteres":150,"max_caracteres":1200,"formato":"STAR"}'::jsonb,
+  '{"tipo_item":"open","star":{"sugerido":true},"nlp":{"frases_clave_esperadas":["contexto de alta presión como auditoría, cierre o cambio","acciones de coordinación, apoyo o priorización","comunicación con el equipo y otras áreas","resultado final y aprendizajes"]},"feedback_generico":"Se busca ver tu rol de liderazgo administrativo en momentos críticos y cómo ayudaste al equipo."}'::jsonb
 );
+
 
 
 COMMIT;
