@@ -14,12 +14,14 @@ object RespuestaPruebaTable : Table("respuesta_prueba") {
     val intentoId = uuid("intento_id")
         .references(IntentoPruebaTable.intentoId, onDelete = ReferenceOption.CASCADE)
 
-    val preguntaId = uuid("prueba_pregunta_id")
-        .references(PruebaPreguntaTable.id, onDelete = ReferenceOption.CASCADE)
+    // FK -> prueba_pregunta(prueba_pregunta_id)
+    val pruebaPreguntaId = uuid("prueba_pregunta_id")
+        .references(PruebaPreguntaTable.pruebaPreguntaId, onDelete = ReferenceOption.CASCADE)
 
     val respuestaUsuario = text("respuesta_usuario").nullable()
     val correcta = bool("correcta").nullable()
     val feedbackInspecl = text("feedback_inspecl").nullable()
 
-    override val primaryKey = PrimaryKey(respuestaPruebaId, name = "PK_respuesta_prueba")
+    override val primaryKey =
+        PrimaryKey(respuestaPruebaId, name = "PK_respuesta_prueba")
 }

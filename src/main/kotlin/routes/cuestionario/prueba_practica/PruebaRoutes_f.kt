@@ -42,14 +42,18 @@ object PreguntaTable : Table("pregunta") {
     val preguntaId = uuid("pregunta_id")
     val tipoBanco = varchar("tipo_banco", 5)      // PR / NV
     val sector = varchar("sector", 80)
-    val nivel = varchar("nivel", 3)               // jr | mid | sr
+    val nivel = varchar("nivel", 3)               // jr | mid | sr | "1","2","3" en NV
 
-    // tipo_pregunta en BD: p.ej. "opcion_multiple", "abierta", etc.
+    // tipo_pregunta en BD: "opcion_multiple" | "abierta"
     val tipoPregunta = varchar("tipo_pregunta", 20)
 
     val texto = text("texto")
-    val pistas = text("pistas").nullable()          // jsonb en BD, se lee como String
-    val configRespuesta = text("config_respuesta")  // jsonb en BD, se lee como String
+
+    // jsonb en BD, las manejamos como String
+    val pistas = text("pistas").nullable()
+    val configRespuesta = text("config_respuesta")
+    val configEvaluacion = text("config_evaluacion").nullable()   // <--- NUEVA COLUMNA
+
     val activa = bool("activa")
 
     override val primaryKey = PrimaryKey(preguntaId)
@@ -93,6 +97,8 @@ data class PreguntaPruebaDto(
     val tipoPregunta: String,
     val pistas: JsonElement? = null,
     val configRespuesta: JsonElement,
+    // opcional: mandamos la meta de evaluación (NLP + STAR) si la quieres usar en el front o para debug
+    val configEvaluacion: JsonElement? = null,
     val orden: Int
 )
 
@@ -269,6 +275,7 @@ fun Route.pruebaFrontRoutes() {
                 val texto = row[PreguntaTable.texto]
                 val pistasStr = row[PreguntaTable.pistas]
                 val configStr = row[PreguntaTable.configRespuesta]
+                val configEvalStr = row[PreguntaTable.configEvaluacion]
 
                 val pistasJson: JsonElement? = pistasStr?.let {
                     try {
@@ -279,6 +286,14 @@ fun Route.pruebaFrontRoutes() {
                 }
 
                 val configJson = Json.parseToJsonElement(configStr).jsonObject
+
+                val configEvaluacionJson: JsonElement? = configEvalStr?.let {
+                    try {
+                        Json.parseToJsonElement(it)
+                    } catch (_: Exception) {
+                        null
+                    }
+                }
 
                 val tieneOpciones = configJson["opciones"] != null
 
@@ -298,10 +313,12 @@ fun Route.pruebaFrontRoutes() {
                     it[PruebaPreguntaTable.claveCorrecta] = respuestaCorrecta
                 }
 
+                // Al front solo le mandamos lo que necesita para dibujar la UI
                 val configSinClave = buildJsonObject {
                     configJson["opciones"]?.let { put("opciones", it) }
                     configJson["max_caracteres"]?.let { put("max_caracteres", it) }
                     configJson["min_caracteres"]?.let { put("min_caracteres", it) }
+                    configJson["tipo"]?.let { put("tipo", it) }
                 }
 
                 preguntasSeleccionadas.add(
@@ -314,6 +331,7 @@ fun Route.pruebaFrontRoutes() {
                         tipoPregunta = tipoPregunta,
                         pistas = pistasJson,
                         configRespuesta = configSinClave,
+                        configEvaluacion = configEvaluacionJson,   // <- meta NLP + STAR (puedes ignorarla en Android si no la usas aún)
                         orden = orden
                     )
                 )
