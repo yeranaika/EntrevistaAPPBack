@@ -18,6 +18,7 @@ import org.jetbrains.exposed.sql.Random
 import org.jetbrains.exposed.sql.ResultRow
 import java.util.UUID
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 // =============================
 //  Tablas Exposed (locales)
@@ -116,9 +117,16 @@ data class CrearPruebaNivelacionReq(
     val cantidadAbierta: Int? = null
 )
 
+private enum class TipoPreguntaQuotaStrategy {
+    CUSTOM,
+    PREMIUM_DEFAULT,
+    STANDARD_DEFAULT
+}
+
 private data class TipoPreguntaQuota(
-    val opcionMultiple: Int?,
-    val abierta: Int?
+    val opcionMultiple: Int? = null,
+    val abierta: Int? = null,
+    val strategy: TipoPreguntaQuotaStrategy = TipoPreguntaQuotaStrategy.CUSTOM,
 )
 
 @Serializable
@@ -255,20 +263,25 @@ fun Route.pruebaFrontRoutes(
         val cantNV = if (usarCustomCantidades) req.cantidadNV ?: 0 else 0
         val cantBL = if (usarCustomCantidades) req.cantidadBL ?: 0 else 0
 
-        val cuotasTipoPregunta =
-            if (esPremium && (req.cantidadOpcionMultiple != null || req.cantidadAbierta != null)) {
+        val cuotasTipoPregunta = when {
+            esPremium && (req.cantidadOpcionMultiple != null || req.cantidadAbierta != null) ->
                 TipoPreguntaQuota(
                     opcionMultiple = req.cantidadOpcionMultiple,
-                    abierta = req.cantidadAbierta
+                    abierta = req.cantidadAbierta,
+                    strategy = TipoPreguntaQuotaStrategy.CUSTOM,
                 )
-            } else {
-                null
-            }
+
+            esPremium ->
+                TipoPreguntaQuota(strategy = TipoPreguntaQuotaStrategy.PREMIUM_DEFAULT)
+
+            else ->
+                TipoPreguntaQuota(strategy = TipoPreguntaQuotaStrategy.STANDARD_DEFAULT)
+        }
 
         // Validación de cantidades SOLO cuando se envíen en MIX / ENT
-            if (usarCustomCantidades) {
-                if (cantPR < 0 || cantNV < 0 || cantBL < 0) {
-                    return@post call.respond(
+        if (usarCustomCantidades) {
+            if (cantPR < 0 || cantNV < 0 || cantBL < 0) {
+                return@post call.respond(
                     HttpStatusCode.BadRequest,
                     mapOf("error" to "Las cantidades por banco no pueden ser negativas")
                 )
@@ -327,6 +340,27 @@ fun Route.pruebaFrontRoutes(
                 it[activo] = true
             } get PruebaTable.pruebaId
 
+            fun cuotasPorLimite(limite: Int): Pair<Int?, Int?> {
+                if (limite <= 0) return 0 to 0
+
+                return when (cuotasTipoPregunta.strategy) {
+                    TipoPreguntaQuotaStrategy.CUSTOM ->
+                        (cuotasTipoPregunta.opcionMultiple ?: limite) to (cuotasTipoPregunta.abierta ?: 0)
+
+                    TipoPreguntaQuotaStrategy.PREMIUM_DEFAULT -> {
+                        val abiertas = maxOf(1, (limite * 0.4).roundToInt())
+                        val opcionMultiple = maxOf(0, limite - abiertas)
+                        opcionMultiple to abiertas
+                    }
+
+                    TipoPreguntaQuotaStrategy.STANDARD_DEFAULT -> {
+                        val abiertas = maxOf(0, (limite * 0.2).roundToInt())
+                        val opcionMultiple = maxOf(1, limite - abiertas)
+                        opcionMultiple to abiertas
+                    }
+                }
+            }
+
             fun seleccionarPreguntasBanco(tipoBanco: String, limite: Int): List<ResultRow> {
                 if (limite <= 0) return emptyList()
 
@@ -363,11 +397,10 @@ fun Route.pruebaFrontRoutes(
                 }
 
                 if (cuotasTipoPregunta != null) {
-                    val cuotaMulti = cuotasTipoPregunta.opcionMultiple ?: 0
-                    val cuotaAbiertas = cuotasTipoPregunta.abierta ?: 0
+                    val (cuotaMulti, cuotaAbiertas) = cuotasPorLimite(limite)
 
-                    val cerradas = tomar("opcion_multiple", min(limite, cuotaMulti))
-                    val abiertas = tomar("abierta", min(limite - cerradas.size, cuotaAbiertas))
+                    val cerradas = tomar("opcion_multiple", min(limite, cuotaMulti ?: limite))
+                    val abiertas = tomar("abierta", min(limite - cerradas.size, cuotaAbiertas ?: 0))
                     val restante = limite - cerradas.size - abiertas.size
 
                     seleccionadas += cerradas + abiertas + tomar(null, restante)

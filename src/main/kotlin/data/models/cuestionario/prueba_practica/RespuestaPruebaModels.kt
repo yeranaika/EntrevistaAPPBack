@@ -14,7 +14,8 @@ data class RespuestaPreguntaReq(
 @Serializable
 data class EnviarRespuestasReq(
     val pruebaId: String,
-    val respuestas: List<RespuestaPreguntaReq>
+    val respuestas: List<RespuestaPreguntaReq>,
+    val usarIaFeedback: Boolean? = null
 )
 
 @Serializable
@@ -33,7 +34,9 @@ data class EnviarRespuestasRes(
     val correctas: Int,
     val puntaje: Int,
     val detalle: List<ResultadoPreguntaRes>,
-    val feedbackGeneral: String? = null      
+    val feedbackGeneral: String? = null,
+    val feedbackMode: String? = null,
+    val iaRevisionesRestantes: Int? = null
 )
 
 @Serializable
