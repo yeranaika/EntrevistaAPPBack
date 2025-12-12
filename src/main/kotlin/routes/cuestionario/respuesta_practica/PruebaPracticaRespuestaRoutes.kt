@@ -104,7 +104,11 @@ fun Route.pruebaPracticaRespuestaRoutes(
 
             transaction {
                 iaUsosPrevios = IntentoPruebaTable
-                    .select { (IntentoPruebaTable.usuarioId eq usuarioId) and (IntentoPruebaTable.recomendaciones like "feedback_mode:ia%") }
+                    .selectAll()
+                    .where {
+                        (IntentoPruebaTable.usuarioId eq usuarioId) and
+                            (IntentoPruebaTable.recomendaciones like "feedback_mode:ia%")
+                    }
                     .count()
                     .toInt()
 
