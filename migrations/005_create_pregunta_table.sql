@@ -1,3 +1,5 @@
+/* migrations/005_create_pregunta_table.sql */
+
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE pregunta (

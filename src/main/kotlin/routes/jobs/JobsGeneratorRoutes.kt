@@ -1,3 +1,5 @@
+/* src/main/kotlin/routes/jobs/JobsGeneratorRoutes.kt */
+
 package routes.jobs
 
 import io.ktor.http.*
@@ -7,12 +9,18 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import services.JSearchService
 import services.InterviewQuestionService
 import services.JobNormalizedDto
 import services.MixedGeneratedQuestionDto
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 // ===================== Constantes =====================
 
@@ -20,6 +28,7 @@ private const val QUESTIONS_PER_JOB = 3          // cuántas preguntas devolvemo
 private const val BOOTSTRAP_TOTAL = 30          // total esperado en bootstrap
 private const val BOOTSTRAP_PER_LEVEL = 10      // 10 jr, 10 mid, 10 sr
 private const val MAX_JOBS = 1                  // cuántos avisos tomamos desde JSearch por meta_dato
+private const val BACKUP_FILE_PATH = "src/DB/preguntas_backup.json"
 
 // ===================== DTOs =====================
 
@@ -56,6 +65,31 @@ data class PreguntaDto(
     val configRespuesta: String?,  // JSON como string
     val activa: Boolean,
     val fechaCreacion: String
+)
+
+// 🆕 DTOs para backup
+@Serializable
+data class PreguntaBackup(
+    val pregunta_id: String,
+    val tipo_banco: String,
+    val sector: String,
+    val nivel: String,
+    val meta_cargo: String,
+    val tipo_pregunta: String,
+    val texto: String,
+    val pistas: String,
+    val config_respuesta: String,
+    val config_evaluacion: String?,
+    val fecha_creacion: String
+)
+
+@Serializable
+data class BackupContainer(
+    val version: String = "1.0",
+    val fecha_actualizacion: String,
+    val descripcion: String = "Backup de preguntas generadas por IA para restauración en caso de pérdida de datos",
+    val total_preguntas: Int,
+    val preguntas: List<PreguntaBackup>
 )
 
 // ===================== Helpers =====================
@@ -177,6 +211,140 @@ private fun buildConfigRespuestaJson(q: MixedGeneratedQuestionDto): String {
     }
 }
 
+/**
+ * 🆕 Construye el JSON de config_evaluacion según el tipo de pregunta.
+ */
+private fun buildConfigEvaluacionJson(q: MixedGeneratedQuestionDto): String {
+    return if (q.tipo == "seleccion_unica") {
+        // Pregunta de selección única (choice)
+        val safeExplicacionCorrecta = q.explicacion_correcta
+            ?.replace("\"", "\\\"")
+            ?.replace("\n", " ") ?: ""
+        
+        val safeExplicacionIncorrecta = q.explicacion_incorrecta
+            ?.replace("\"", "\\\"")
+            ?.replace("\n", " ") ?: ""
+        
+        """
+        {
+          "tipo_item": "choice",
+          "nlp": {
+            "explicacion_correcta": "$safeExplicacionCorrecta",
+            "explicacion_incorrecta": "$safeExplicacionIncorrecta"
+          }
+        }
+        """.trimIndent().replace("\n", "")
+    } else {
+        // Pregunta abierta (open)
+        val safeFeedback = q.feedback_generico
+            ?.replace("\"", "\\\"")
+            ?.replace("\n", " ") ?: ""
+        
+        val safeFrases = q.frases_clave_esperadas.map { 
+            it.replace("\"", "\\\"") 
+        }
+        
+        val frasesJoined = if (safeFrases.isEmpty()) {
+            "[]"
+        } else {
+            safeFrases.joinToString(
+                separator = "\", \"",
+                prefix = "[\"",
+                postfix = "\"]"
+            )
+        }
+        
+        """
+        {
+          "tipo_item": "open",
+          "nlp": {
+            "frases_clave_esperadas": $frasesJoined
+          },
+          "feedback_generico": "$safeFeedback"
+        }
+        """.trimIndent().replace("\n", "")
+    }
+}
+
+/**
+ * 🆕 Guarda la pregunta en el archivo de backup JSON
+ */
+private fun guardarPreguntaEnBackup(
+    preguntaId: UUID,
+    tipoBanco: String,
+    sector: String,
+    nivel: String,
+    metaCargo: String,
+    tipoPregunta: String,
+    texto: String,
+    pistasJson: String,
+    configRespuestaJson: String,
+    configEvaluacionJson: String?
+) {
+    try {
+        val backupFile = File(BACKUP_FILE_PATH)
+        val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+        
+        // Crear directorio si no existe
+        backupFile.parentFile?.mkdirs()
+        
+        // Leer backup existente o crear uno nuevo
+        val container: BackupContainer = if (backupFile.exists()) {
+            try {
+                json.decodeFromString(backupFile.readText())
+            } catch (e: Exception) {
+                println("⚠️ Error leyendo backup existente, creando nuevo: ${e.message}")
+                BackupContainer(
+                    fecha_actualizacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
+                    total_preguntas = 0,
+                    preguntas = emptyList()
+                )
+            }
+        } else {
+            BackupContainer(
+                fecha_actualizacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
+                total_preguntas = 0,
+                preguntas = emptyList()
+            )
+        }
+        
+        // Crear nueva pregunta
+        val nuevaPregunta = PreguntaBackup(
+            pregunta_id = preguntaId.toString(),
+            tipo_banco = tipoBanco,
+            sector = sector,
+            nivel = nivel,
+            meta_cargo = metaCargo,
+            tipo_pregunta = tipoPregunta,
+            texto = texto,
+            pistas = pistasJson,
+            config_respuesta = configRespuestaJson,
+            config_evaluacion = configEvaluacionJson,
+            fecha_creacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+        )
+        
+        // Agregar a la lista (evitar duplicados por UUID)
+        val preguntasActualizadas = container.preguntas
+            .filterNot { it.pregunta_id == preguntaId.toString() }
+            .plus(nuevaPregunta)
+        
+        // Actualizar container
+        val containerActualizado = container.copy(
+            fecha_actualizacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
+            total_preguntas = preguntasActualizadas.size,
+            preguntas = preguntasActualizadas
+        )
+        
+        // Escribir archivo
+        backupFile.writeText(json.encodeToString(containerActualizado))
+        
+        println("✅ Pregunta ${preguntaId} guardada en backup (total: ${preguntasActualizadas.size})")
+    } catch (e: Exception) {
+        println("⚠️ Error guardando backup: ${e.message}")
+        e.printStackTrace()
+    }
+}
+
 // ===================== Rutas =====================
 
 fun Route.jobsGeneratorRoutes(
@@ -250,23 +418,22 @@ fun Route.jobsGeneratorRoutes(
                     //    (cualquier nivel, cualquier tipo_banco)
                     // ----------------------------------------------------------------
                     val existeBancoParaSectorMeta = transaction {
-                    var count = 0
-                    val sql = """
-                        SELECT COUNT(*) AS cnt
-                        FROM pregunta
-                        WHERE sector = '$safeSector'
-                        AND meta_cargo = '$safeMetaCargo'
-                        AND tipo_banco <> 'NV'
-                    """.trimIndent()
+                        var count = 0
+                        val sql = """
+                            SELECT COUNT(*) AS cnt
+                            FROM pregunta
+                            WHERE sector = '$safeSector'
+                            AND meta_cargo = '$safeMetaCargo'
+                            AND tipo_banco <> 'NV'
+                        """.trimIndent()
 
-                    TransactionManager.current().exec(sql) { rs ->
-                        if (rs.next()) {
-                            count = rs.getInt("cnt")
+                        TransactionManager.current().exec(sql) { rs ->
+                            if (rs.next()) {
+                                count = rs.getInt("cnt")
+                            }
                         }
+                        count > 0
                     }
-                    count > 0
-                    }
-
 
                     if (!existeBancoParaSectorMeta) {
                         // =========================================================
@@ -323,6 +490,7 @@ fun Route.jobsGeneratorRoutes(
 
                                 val pistasJson = buildPistasJson(q.pistas)
                                 val configRespuestaJson = buildConfigRespuestaJson(q)
+                                val configEvaluacionJson = buildConfigEvaluacionJson(q)  // 🆕 NUEVA LÍNEA
 
                                 val newId = java.util.UUID.randomUUID()
                                 val sql = """
@@ -336,6 +504,7 @@ fun Route.jobsGeneratorRoutes(
                                         texto,
                                         pistas,
                                         config_respuesta,
+                                        config_evaluacion,
                                         activa,
                                         fecha_creacion
                                     )
@@ -349,6 +518,7 @@ fun Route.jobsGeneratorRoutes(
                                         '$safeTexto',
                                         '$pistasJson'::jsonb,
                                         '$configRespuestaJson'::jsonb,
+                                        '$configEvaluacionJson'::jsonb,
                                         true,
                                         now()
                                     )
@@ -356,6 +526,21 @@ fun Route.jobsGeneratorRoutes(
 
                                 TransactionManager.current().exec(sql)
                                 println("💾 [Bootstrap] Insertada pregunta sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivel")
+                                
+                                // 🆕 Guardar en backup
+                                guardarPreguntaEnBackup(
+                                    preguntaId = newId,
+                                    tipoBanco = "IAJOB",
+                                    sector = safeSector,
+                                    nivel = safeNivel,
+                                    metaCargo = safeMetaCargo,
+                                    tipoPregunta = tipoPreguntaDb,
+                                    texto = safeTexto,
+                                    pistasJson = pistasJson,
+                                    configRespuestaJson = configRespuestaJson,
+                                    configEvaluacionJson = configEvaluacionJson
+                                )
+                                
                                 totalGuardadas++
                             }
                         }
@@ -447,6 +632,7 @@ fun Route.jobsGeneratorRoutes(
 
                             val pistasJson = buildPistasJson(q.pistas)
                             val configRespuestaJson = buildConfigRespuestaJson(q)
+                            val configEvaluacionJson = buildConfigEvaluacionJson(q)  // 🆕 NUEVA LÍNEA
 
                             val newId = java.util.UUID.randomUUID()
                             val sql = """
@@ -460,6 +646,7 @@ fun Route.jobsGeneratorRoutes(
                                     texto,
                                     pistas,
                                     config_respuesta,
+                                    config_evaluacion,
                                     activa,
                                     fecha_creacion
                                 )
@@ -473,6 +660,7 @@ fun Route.jobsGeneratorRoutes(
                                     '$safeTexto',
                                     '$pistasJson'::jsonb,
                                     '$configRespuestaJson'::jsonb,
+                                    '$configEvaluacionJson'::jsonb,
                                     true,
                                     now()
                                 )
@@ -480,6 +668,21 @@ fun Route.jobsGeneratorRoutes(
 
                             TransactionManager.current().exec(sql)
                             println("💾 Insertada pregunta en BD: [${q.tipo}] sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivel, texto=$safeTexto")
+                            
+                            // 🆕 Guardar en backup
+                            guardarPreguntaEnBackup(
+                                preguntaId = newId,
+                                tipoBanco = "IAJOB",
+                                sector = safeSector,
+                                nivel = safeNivel,
+                                metaCargo = safeMetaCargo,
+                                tipoPregunta = tipoPreguntaDb,
+                                texto = safeTexto,
+                                pistasJson = pistasJson,
+                                configRespuestaJson = configRespuestaJson,
+                                configEvaluacionJson = configEvaluacionJson
+                            )
+                            
                             totalGuardadas++
                         }
                     }

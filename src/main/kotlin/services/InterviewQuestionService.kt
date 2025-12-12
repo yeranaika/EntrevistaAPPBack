@@ -1,3 +1,5 @@
+/* src/main/kotlin/services/InterviewQuestionService.kt */
+
 package services
 
 import io.ktor.client.*
@@ -65,6 +67,8 @@ data class OpcionDto(
 /**
  * Pregunta mixta generada por la IA:
  * puede ser "seleccion_unica" o "abierta_texto".
+ * 
+ * 🆕 ACTUALIZADO: Incluye campos para evaluación (explicaciones y feedback).
  */
 @Serializable
 data class MixedGeneratedQuestionDto(
@@ -75,7 +79,13 @@ data class MixedGeneratedQuestionDto(
     val opciones: List<OpcionDto> = emptyList(),
     val respuesta_correcta: String? = null,
     val min_caracteres: Int? = null,
-    val max_caracteres: Int? = null
+    val max_caracteres: Int? = null,
+    
+    // 🆕 NUEVOS CAMPOS PARA EVALUACIÓN
+    val explicacion_correcta: String? = null,
+    val explicacion_incorrecta: String? = null,
+    val feedback_generico: String? = null,
+    val frases_clave_esperadas: List<String> = emptyList()
 )
 
 /**
@@ -218,6 +228,8 @@ class InterviewQuestionService(
     /**
      * Genera preguntas mixtas: mayoría de "seleccion_unica" y minoría "abierta_texto".
      *
+     * 🆕 ACTUALIZADO: Ahora la IA incluye explicaciones y feedback para AMBOS tipos de preguntas.
+     *
      * Se usa para el flujo de banco de preguntas en la tabla `pregunta`
      * con tipo_banco = 'IAJOB'.
      */
@@ -251,6 +263,16 @@ class InterviewQuestionService(
             - Todas deben ser técnicas o de experiencia ligada al rol (no preguntas genéricas tipo "¿Cuál es tu mayor debilidad?").
             - Deben servir para evaluar conocimientos y experiencia relacionados con el aviso.
             
+            🆕 IMPORTANTE - CAMPOS DE EVALUACIÓN OBLIGATORIOS:
+            
+            Para TODAS las preguntas (tanto "seleccion_unica" como "abierta_texto") debes incluir:
+              - explicacion_correcta: Texto que explica por qué la respuesta correcta es correcta o qué se espera en una buena respuesta.
+              - explicacion_incorrecta: Texto que explica errores comunes o por qué otras opciones son incorrectas.
+            
+            Adicionalmente, para preguntas de tipo "abierta_texto" debes incluir:
+              - feedback_generico: Mensaje de orientación sobre qué se espera en la respuesta (1-2 oraciones).
+              - frases_clave_esperadas: Lista de 2-4 frases o conceptos clave que debería mencionar el usuario.
+            
             ESTRUCTURA DE CADA PREGUNTA:
             
             Campo "tipo":
@@ -265,7 +287,7 @@ class InterviewQuestionService(
             
             Campo "pistas":
               - Lista de strings que den pistas sobre la respuesta correcta o elementos clave a considerar.
-              - Ejemplo: ["Describe lo que el sistema debe hacer", "Comportamiento"].
+              - Ejemplo: ["Piensa en el ciclo de vida del dato", "Considera la escalabilidad"].
             
             Campo "opciones" (solo si tipo = "seleccion_unica"):
               - Lista de opciones con:
@@ -278,6 +300,22 @@ class InterviewQuestionService(
             Campo "min_caracteres" y "max_caracteres" (solo si tipo = "abierta_texto"):
               - Usa típicamente min 20, max 300 para respuestas abiertas.
             
+            🆕 Campo "explicacion_correcta" (OBLIGATORIO para ambos tipos):
+              - Para "seleccion_unica": explica por qué la opción correcta es la mejor.
+              - Para "abierta_texto": describe qué elementos debe contener una buena respuesta.
+            
+            🆕 Campo "explicacion_incorrecta" (OBLIGATORIO para ambos tipos):
+              - Para "seleccion_unica": explica por qué las otras opciones son incorrectas.
+              - Para "abierta_texto": menciona errores comunes o malentendidos frecuentes.
+            
+            🆕 Campo "feedback_generico" (OBLIGATORIO solo para "abierta_texto"):
+              - Un mensaje breve que oriente al usuario sobre qué debe incluir en su respuesta.
+              - Ejemplo: "Se espera que menciones los beneficios principales y des un ejemplo concreto."
+            
+            🆕 Campo "frases_clave_esperadas" (OBLIGATORIO solo para "abierta_texto"):
+              - Lista de 2-4 conceptos o frases que se esperan en la respuesta.
+              - Ejemplo: ["patrón MVC", "separación de responsabilidades", "controlador maneja lógica"]
+            
             RESPUESTA:
             Devuelve EXCLUSIVAMENTE un JSON con el siguiente formato:
             
@@ -286,25 +324,31 @@ class InterviewQuestionService(
                 {
                   "tipo": "seleccion_unica",
                   "nivel": "jr",
-                  "enunciado": "¿...?",
-                  "pistas": ["..."],
+                  "enunciado": "¿Qué es una API REST?",
+                  "pistas": ["Piensa en cómo se comunican aplicaciones web", "HTTP es clave"],
                   "opciones": [
-                    { "id": "A", "texto": "..." },
-                    { "id": "B", "texto": "..." },
-                    { "id": "C", "texto": "..." }
+                    { "id": "A", "texto": "Un protocolo de base de datos" },
+                    { "id": "B", "texto": "Una interfaz para comunicación entre sistemas usando HTTP" },
+                    { "id": "C", "texto": "Un lenguaje de programación" }
                   ],
                   "respuesta_correcta": "B",
+                  "explicacion_correcta": "La opción B es correcta porque REST es un estilo arquitectónico que usa HTTP para la comunicación entre sistemas, permitiendo operaciones CRUD mediante métodos como GET, POST, PUT, DELETE.",
+                  "explicacion_incorrecta": "La opción A es incorrecta porque REST no es un protocolo de base de datos. La opción C es incorrecta porque REST no es un lenguaje de programación, sino un estilo de arquitectura.",
                   "min_caracteres": null,
                   "max_caracteres": null
                 },
                 {
                   "tipo": "abierta_texto",
                   "nivel": "jr",
-                  "enunciado": "¿...?",
-                  "pistas": ["..."],
+                  "enunciado": "Explica qué es el patrón MVC y por qué es útil en desarrollo web.",
+                  "pistas": ["Piensa en separación de responsabilidades", "Modelo-Vista-Controlador"],
                   "opciones": [],
                   "respuesta_correcta": null,
-                  "min_caracteres": 20,
+                  "explicacion_correcta": "Una buena respuesta debe explicar que MVC separa la aplicación en tres componentes: Modelo (datos), Vista (presentación) y Controlador (lógica), y mencionar beneficios como mantenibilidad y reutilización de código.",
+                  "explicacion_incorrecta": "Errores comunes incluyen confundir los roles de cada componente, no mencionar la separación de responsabilidades, o pensar que MVC es un framework en lugar de un patrón de diseño.",
+                  "feedback_generico": "Se espera que expliques los tres componentes del patrón MVC y menciones al menos un beneficio de usarlo.",
+                  "frases_clave_esperadas": ["modelo maneja datos", "vista presenta información", "controlador gestiona lógica", "separación de responsabilidades"],
+                  "min_caracteres": 50,
                   "max_caracteres": 300
                 }
               ]
@@ -316,7 +360,7 @@ class InterviewQuestionService(
             messages = listOf(
                 OpenAIChatMessage(
                     role = "system",
-                    content = "Eres un experto creando bancos de preguntas técnicas para entrevistas laborales de TI."
+                    content = "Eres un experto creando bancos de preguntas técnicas para entrevistas laborales de TI. Siempre incluyes explicaciones detalladas y feedback para ayudar en el aprendizaje."
                 ),
                 OpenAIChatMessage(
                     role = "user",
@@ -326,7 +370,7 @@ class InterviewQuestionService(
             temperature = 0.6
         )
 
-        println("🧠 Generando $cantidad preguntas MIXTAS para aviso: ${job.titulo} (${job.empresa ?: "N/A"})")
+        println("🧠 Generando $cantidad preguntas MIXTAS (con evaluación) para aviso: ${job.titulo} (${job.empresa ?: "N/A"})")
 
         val response: OpenAIChatResponse = httpClient.post(openAiUrl) {
             header(HttpHeaders.Authorization, "Bearer $apiKey")
