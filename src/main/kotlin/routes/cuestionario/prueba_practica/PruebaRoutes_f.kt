@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.Random
 import org.jetbrains.exposed.sql.ResultRow
 import java.util.UUID
+import kotlin.math.min
 
 // =============================
 //  Tablas Exposed (locales)
@@ -107,7 +108,16 @@ data class CrearPruebaNivelacionReq(
      */
     val cantidadPR: Int? = null,
     val cantidadNV: Int? = null,
-    val cantidadBL: Int? = null
+    val cantidadBL: Int? = null,
+
+    // 🆕 Cuotas por tipo de pregunta (opción múltiple vs abierta)
+    val cantidadOpcionMultiple: Int? = null,
+    val cantidadAbierta: Int? = null
+)
+
+private data class TipoPreguntaQuota(
+    val opcionMultiple: Int?,
+    val abierta: Int?
 )
 
 @Serializable
@@ -211,6 +221,13 @@ fun Route.pruebaFrontRoutes() {
 
         val MAX_PREGUNTAS = 10
 
+        if ((req.cantidadOpcionMultiple ?: 0) < 0 || (req.cantidadAbierta ?: 0) < 0) {
+            return@post call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("error" to "Las cantidades por tipo de pregunta no pueden ser negativas")
+            )
+        }
+
         // ¿Se están usando cantidades personalizadas para MIX / ENT?
         val usarCustomCantidades =
             (modoPrueba == "MIX" || modoPrueba == "ENT") &&
@@ -220,6 +237,16 @@ fun Route.pruebaFrontRoutes() {
         val cantPR = if (usarCustomCantidades) req.cantidadPR ?: 0 else 0
         val cantNV = if (usarCustomCantidades) req.cantidadNV ?: 0 else 0
         val cantBL = if (usarCustomCantidades) req.cantidadBL ?: 0 else 0
+
+        val cuotasTipoPregunta =
+            if (req.cantidadOpcionMultiple != null || req.cantidadAbierta != null) {
+                TipoPreguntaQuota(
+                    opcionMultiple = req.cantidadOpcionMultiple,
+                    abierta = req.cantidadAbierta
+                )
+            } else {
+                null
+            }
 
         // Validación de cantidades SOLO cuando se envíen en MIX / ENT
         if (usarCustomCantidades) {
@@ -282,100 +309,75 @@ fun Route.pruebaFrontRoutes() {
                 it[activo] = true
             } get PruebaTable.pruebaId
 
+            fun seleccionarPreguntasBanco(tipoBanco: String, limite: Int): List<ResultRow> {
+                if (limite <= 0) return emptyList()
+
+                val seleccionadas = mutableListOf<ResultRow>()
+                val usados = mutableSetOf<UUID>()
+
+                fun tomar(tipoPregunta: String?, cantidad: Int): List<ResultRow> {
+                    if (cantidad <= 0) return emptyList()
+
+                    val query = PreguntaTable
+                        .selectAll()
+                        .where {
+                            (PreguntaTable.tipoBanco eq tipoBanco) and
+                            (PreguntaTable.sector eq req.sector) and
+                            (PreguntaTable.nivel eq nivelNormalizado) and
+                            (PreguntaTable.activa eq true)
+                        }
+
+                    tipoPregunta?.let {
+                        query.andWhere { PreguntaTable.tipoPregunta eq it }
+                    }
+
+                    if (usados.isNotEmpty()) {
+                        query.andWhere { PreguntaTable.preguntaId notInList usados.toList() }
+                    }
+
+                    val rows = query
+                        .orderBy(Random())
+                        .limit(cantidad)
+                        .toList()
+
+                    usados += rows.map { it[PreguntaTable.preguntaId] }
+                    return rows
+                }
+
+                if (cuotasTipoPregunta != null) {
+                    val cuotaMulti = cuotasTipoPregunta.opcionMultiple ?: 0
+                    val cuotaAbiertas = cuotasTipoPregunta.abierta ?: 0
+
+                    val cerradas = tomar("opcion_multiple", min(limite, cuotaMulti))
+                    val abiertas = tomar("abierta", min(limite - cerradas.size, cuotaAbiertas))
+                    val restante = limite - cerradas.size - abiertas.size
+
+                    seleccionadas += cerradas + abiertas + tomar(null, restante)
+                } else {
+                    seleccionadas += tomar(null, limite)
+                }
+
+                return seleccionadas
+            }
+
             // 2) Seleccionar preguntas
             val filasPreguntas: List<ResultRow> =
                 if (modoPrueba == "MIX" || modoPrueba == "ENT") {
                     // ---------- MODO MIX / ENT (PR + NV + BL) ----------
                     if (usarCustomCantidades) {
-                        // Usar cantidades personalizadas
-                        val nvRows =
-                            if (cantNV > 0)
-                                PreguntaTable
-                                    .selectAll()
-                                    .where {
-                                        (PreguntaTable.tipoBanco eq "NV") and
-                                        (PreguntaTable.sector eq req.sector) and
-                                        (PreguntaTable.nivel eq nivelNormalizado) and
-                                        (PreguntaTable.activa eq true)
-                                    }
-                                    .orderBy(Random())
-                                    .limit(cantNV)
-                                    .toList()
-                            else emptyList()
+                        val nvRows = if (cantNV > 0) seleccionarPreguntasBanco("NV", cantNV) else emptyList()
+                        val prRows = if (cantPR > 0) seleccionarPreguntasBanco("PR", cantPR) else emptyList()
+                        val blRows = if (cantBL > 0) seleccionarPreguntasBanco("BL", cantBL) else emptyList()
 
-                        val prRows =
-                            if (cantPR > 0)
-                                PreguntaTable
-                                    .selectAll()
-                                    .where {
-                                        (PreguntaTable.tipoBanco eq "PR") and
-                                        (PreguntaTable.sector eq req.sector) and
-                                        (PreguntaTable.nivel eq nivelNormalizado) and
-                                        (PreguntaTable.activa eq true)
-                                    }
-                                    .orderBy(Random())
-                                    .limit(cantPR)
-                                    .toList()
-                            else emptyList()
-
-                        val blRows =
-                            if (cantBL > 0)
-                                PreguntaTable
-                                    .selectAll()
-                                    .where {
-                                        (PreguntaTable.tipoBanco eq "BL") and
-                                        (PreguntaTable.sector eq req.sector) and
-                                        (PreguntaTable.nivel eq nivelNormalizado) and
-                                        (PreguntaTable.activa eq true)
-                                    }
-                                    .orderBy(Random())
-                                    .limit(cantBL)
-                                    .toList()
-                            else emptyList()
-
-                        // No hace falta hacer .take(MAX_PREGUNTAS) porque ya validamos
-                        // que cantPR+cantNV+cantBL <= MAX_PREGUNTAS
                         (nvRows + prRows + blRows)
                             .shuffled()
                     } else {
                         // Distribución automática (comportamiento antiguo)
                         val maxPorBanco = MAX_PREGUNTAS / 3  // ej: 3 NV, 3 PR, 3 BL (queda 1 libre)
 
-                        val nvRows = PreguntaTable
-                            .selectAll()
-                            .where {
-                                (PreguntaTable.tipoBanco eq "NV") and
-                                (PreguntaTable.sector eq req.sector) and
-                                (PreguntaTable.nivel eq nivelNormalizado) and
-                                (PreguntaTable.activa eq true)
-                            }
-                            .orderBy(Random())
-                            .limit(maxPorBanco)
-                            .toList()
-
-                        val prRows = PreguntaTable
-                            .selectAll()
-                            .where {
-                                (PreguntaTable.tipoBanco eq "PR") and
-                                (PreguntaTable.sector eq req.sector) and
-                                (PreguntaTable.nivel eq nivelNormalizado) and
-                                (PreguntaTable.activa eq true)
-                            }
-                            .orderBy(Random())
-                            .limit(maxPorBanco)
-                            .toList()
-
-                        val blRows = PreguntaTable
-                            .selectAll()
-                            .where {
-                                (PreguntaTable.tipoBanco eq "BL") and
-                                (PreguntaTable.sector eq req.sector) and
-                                (PreguntaTable.nivel eq nivelNormalizado) and
-                                (PreguntaTable.activa eq true)
-                            }
-                            .orderBy(Random())
-                            .limit(maxPorBanco)
-                            .toList()
+                        val nvRows = seleccionarPreguntasBanco("NV", maxPorBanco)
+                        val prRows = seleccionarPreguntasBanco("PR", maxPorBanco)
+                        val blRows = seleccionarPreguntasBanco("BL", maxPorBanco)
 
                         (nvRows + prRows + blRows)
                             .shuffled()
@@ -383,19 +385,9 @@ fun Route.pruebaFrontRoutes() {
                     }
                 } else {
                     // ---------- MODO PR / NV / BL CLÁSICO ----------
-                    // Aquí NO usamos cantidades aunque vengan en el request,
-                    // para no romper los flujos existentes de práctica/nivelación.
-                    PreguntaTable
-                        .selectAll()
-                        .where {
-                            (PreguntaTable.tipoBanco eq modoPrueba) and
-                            (PreguntaTable.sector eq req.sector) and
-                            (PreguntaTable.nivel eq nivelNormalizado) and
-                            (PreguntaTable.activa eq true)
-                        }
-                        .orderBy(Random())
-                        .limit(MAX_PREGUNTAS)
-                        .toList()
+                    // Aquí NO usamos cantidades por banco aunque vengan en el request,
+                    // pero sí respetamos las cuotas de tipo de pregunta si vienen.
+                    seleccionarPreguntasBanco(modoPrueba, MAX_PREGUNTAS)
                 }
 
             // 3) Insertar en PRUEBA_PREGUNTA y armar DTO
