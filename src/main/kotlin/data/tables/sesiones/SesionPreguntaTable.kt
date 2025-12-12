@@ -1,6 +1,6 @@
 package data.tables.sesiones
 
-import tables.cuestionario.preguntas.PreguntaTable
+import data.tables.cuestionario.preguntas.PreguntaTable
 import org.jetbrains.exposed.sql.Table
 
 /**

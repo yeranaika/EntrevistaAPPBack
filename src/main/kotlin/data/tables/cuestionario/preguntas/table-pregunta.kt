@@ -1,29 +1,26 @@
-// tables/cuestionario/preguntas/PreguntaTable.kt
-package tables.cuestionario.preguntas
+// data/tables/cuestionario/preguntas/table-pregunta.kt
+package data.tables.cuestionario.preguntas
 
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
-import org.jetbrains.exposed.sql.TextColumnType
-import org.jetbrains.exposed.sql.Column
-import java.util.UUID
+import org.jetbrains.exposed.sql.javatime.timestamp
+import java.time.Instant
 
-// Custom column type for PostgreSQL JSON
-class JsonColumnType : TextColumnType() {
-    override fun sqlType(): String = "JSON"
-}
+object PreguntaTable : Table("pregunta") {
+    val id = uuid("pregunta_id")
+    val tipoBanco = varchar("tipo_banco", 5)
+    val sector = varchar("sector", 80)
+    val nivel = varchar("nivel", 3)
+    val metaCargo = varchar("meta_cargo", 120).nullable()
+    val tipoPregunta = varchar("tipo_pregunta", 20)
+    val texto = text("texto")
 
-fun Table.jsonText(name: String): Column<String> = registerColumn(name, JsonColumnType())
+    // JSONB en BD, pero aquí lo manejamos como TEXT
+    val pistas = text("pistas").nullable()
+    val configRespuesta = text("config_respuesta")
+    val configEvaluacion = text("config_evaluacion").nullable()
 
-object PreguntaTable : Table("app.pregunta") {
-    val id           = uuid("pregunta_id")                  // PK UUID "a mano"
-    val tipoBanco    = varchar("tipo_banco", 5)
-    val nivel        = varchar("nivel", 3)
-    val sector       = varchar("sector", 80).nullable()
-    val texto        = text("texto")
-    val pistas       = jsonText("pistas").nullable()        // JSON column
-    val historica    = jsonText("historica").nullable()     // JSON column
-    val activa       = bool("activa").default(true)
-    val fechaCreacion= timestampWithTimeZone("fecha_creacion")
+    val activa = bool("activa").default(true)
+    val fechaCreacion = timestamp("fecha_creacion")  // Instant
 
     override val primaryKey = PrimaryKey(id)
 }

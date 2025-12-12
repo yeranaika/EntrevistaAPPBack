@@ -1,3 +1,5 @@
+
+
 package data.models.cuestionario.prueba_practica
 
 import kotlinx.serialization.Serializable
@@ -5,13 +7,15 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class RespuestaPreguntaReq(
     val preguntaId: String,
-    val opcionesSeleccionadas: List<String>
+    val opcionesSeleccionadas: List<String> = emptyList(),
+    val textoLibre: String? = null
 )
 
 @Serializable
 data class EnviarRespuestasReq(
     val pruebaId: String,
-    val respuestas: List<RespuestaPreguntaReq>
+    val respuestas: List<RespuestaPreguntaReq>,
+    val usarIaFeedback: Boolean? = null
 )
 
 @Serializable
@@ -29,5 +33,23 @@ data class EnviarRespuestasRes(
     val respondidas: Int,
     val correctas: Int,
     val puntaje: Int,
-    val detalle: List<ResultadoPreguntaRes>
+    val detalle: List<ResultadoPreguntaRes>,
+    val feedbackGeneral: String? = null,
+    val feedbackMode: String? = null,
+    val iaRevisionesRestantes: Int? = null
+)
+
+@Serializable
+data class IntentoPracticaRes(
+    val intentoId: String,
+    val pruebaId: String,
+    val fecha: String,
+    val puntaje: Int,
+    val totalPreguntas: Int,
+    val correctas: Int
+)
+
+@Serializable
+data class HistorialPracticaRes(
+    val items: List<IntentoPracticaRes>
 )

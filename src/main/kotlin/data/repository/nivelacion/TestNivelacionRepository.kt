@@ -1,10 +1,16 @@
 package data.repository.nivelacion
 
-import tables.cuestionario.prueba.PruebaTable
+import data.tables.cuestionario.prueba.PruebaTable
 import com.example.data.tables.IntentoPruebaTable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.innerJoin
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -14,34 +20,27 @@ class TestNivelacionRepository {
 
     private val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-    /**
-     * Crea una PRUEBA de tipo 'nivelacion' y un INTENTO asociado para el usuario,
-     * guardando puntaje, total de preguntas y feedback.
-     *
-     * Retorna el ID del intento (lo puedes usar como testId en las respuestas).
-     */
     fun create(
         usuarioId: UUID,
         area: String,
         nivel: String,
         metaCargo: String?,
-        puntaje: Int,            // 0–100
+        puntaje: Int,
         totalPreguntas: Int,
-        preguntasCorrectas: Int, // hoy se usa sólo para mostrar, el cálculo es simple
+        preguntasCorrectas: Int,
         feedback: String
     ): UUID = transaction {
-        // 1) Crear una prueba de nivelación
         val pruebaId = UUID.randomUUID()
+
         PruebaTable.insert { row ->
-            row[id] = pruebaId
-            row[tipoPrueba] = "nivel"
+            row[PruebaTable.id] = pruebaId
+            row[PruebaTable.tipoPrueba] = "nivel"
             row[PruebaTable.area] = area
             row[PruebaTable.nivel] = nivel
-            row[metadata] = metaCargo
-            row[activo] = true
+            row[PruebaTable.metadata] = metaCargo
+            row[PruebaTable.activo] = true
         }
 
-        // 2) Crear intento para ese usuario
         val now = OffsetDateTime.now().format(formatter)
         val intentoId = UUID.randomUUID()
 
@@ -53,7 +52,7 @@ class TestNivelacionRepository {
             row[IntentoPruebaTable.fechaFin] = now
             row[IntentoPruebaTable.puntaje] = puntaje.toBigDecimal()
             row[IntentoPruebaTable.recomendaciones] = feedback
-            row[IntentoPruebaTable.puntajeTotal] = totalPreguntas   // usamos este campo para guardar total de preguntas
+            row[IntentoPruebaTable.puntajeTotal] = totalPreguntas
             row[IntentoPruebaTable.estado] = "completado"
             row[IntentoPruebaTable.tiempoTotalSegundos] = null
             row[IntentoPruebaTable.creadoEn] = now
@@ -63,10 +62,6 @@ class TestNivelacionRepository {
         intentoId
     }
 
-    /**
-     * Versión simplificada para sistema de onboarding
-     * Acepta habilidad y nivelSugerido numérico (1, 2, 3)
-     */
     fun create(
         usuarioId: UUID,
         habilidad: String,
@@ -76,7 +71,6 @@ class TestNivelacionRepository {
         preguntasCorrectas: Int,
         feedback: String
     ): UUID {
-        // Convertir nivel numérico a texto
         val nivelTexto = when (nivelSugerido) {
             1 -> "jr"
             2 -> "mid"
@@ -84,7 +78,6 @@ class TestNivelacionRepository {
             else -> "jr"
         }
 
-        // Extraer área corta del cargo (primeras 5 letras o mapeo)
         val areaCorta = when {
             habilidad.contains("Desarrollador", ignoreCase = true) -> "tec"
             habilidad.contains("Analista", ignoreCase = true) -> "tec"
@@ -106,10 +99,6 @@ class TestNivelacionRepository {
         )
     }
 
-    /**
-     * Busca el test de nivelación más reciente de un usuario para una habilidad específica
-     * Ahora busca por metadata (meta_cargo) en lugar de area
-     */
     fun findLatestByUsuarioAndHabilidad(
         usuarioId: UUID,
         habilidad: String
@@ -128,9 +117,6 @@ class TestNivelacionRepository {
             ?.let { toRow(it) }
     }
 
-    /**
-     * Historial de tests de nivelación de un usuario.
-     */
     fun findByUsuario(usuarioId: UUID): List<TestNivelacionRow> = transaction {
         IntentoPruebaTable
             .innerJoin(PruebaTable, { IntentoPruebaTable.pruebaId }, { PruebaTable.id })
@@ -143,9 +129,6 @@ class TestNivelacionRepository {
             .map { toRow(it) }
     }
 
-    /**
-     * Historial filtrado por área+nivel (por si lo necesitas).
-     */
     fun findByUsuarioAndAreaNivel(
         usuarioId: UUID,
         area: String,
@@ -182,7 +165,6 @@ class TestNivelacionRepository {
         val puntajeDecimal = row[IntentoPruebaTable.puntaje]?.toDouble() ?: 0.0
         val puntajeInt = puntajeDecimal.roundToInt()
 
-        // Aproximamos correctas = total * porcentaje / 100
         val correctas = if (total > 0) {
             (total * puntajeDecimal / 100.0).roundToInt()
         } else 0

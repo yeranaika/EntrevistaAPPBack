@@ -2,12 +2,13 @@ package data.repository.cuestionario
 
 import com.example.data.models.OpcionRespuesta
 import com.example.data.models.PreguntaConOrden
-import com.example.data.tables.RespuestaPruebaTable
 import data.models.cuestionario.AsociarPreguntaRequest
 import data.models.cuestionario.PreguntaAsignadaResponse
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ColumnSet
 import org.jetbrains.exposed.sql.JoinType
@@ -19,11 +20,14 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
-import tables.cuestionario.prueba.PruebaPreguntaTable
-import tables.cuestionario.preguntas.PreguntaTable
 import java.util.UUID
 
-private val opcionesSerializer = kotlinx.serialization.builtins.ListSerializer(OpcionRespuesta.serializer())
+import com.example.data.tables.RespuestaPruebaTable
+import data.tables.cuestionario.prueba.PruebaTable
+import data.tables.cuestionario.prueba.PruebaPreguntaTable
+import data.tables.cuestionario.preguntas.PreguntaTable
+
+private val opcionesSerializer = ListSerializer(OpcionRespuesta.serializer())
 
 class PruebaCuestionarioRepository(
     private val db: Database,
@@ -38,7 +42,6 @@ class PruebaCuestionarioRepository(
     ): PreguntaAsignadaResponse = newSuspendedTransaction(db = db) {
         require(payload.orden > 0) { "El orden debe ser mayor a 0" }
 
-        // Verificar que la pregunta existe y obtener sus datos
         val preguntaRow = PreguntaTable
             .selectAll()
             .where { PreguntaTable.id eq preguntaId }
@@ -48,37 +51,37 @@ class PruebaCuestionarioRepository(
 
         val ordenOcupado = !PruebaPreguntaTable
             .selectAll()
-            .where { (PruebaPreguntaTable.pruebaId eq pruebaId) and (PruebaPreguntaTable.orden eq payload.orden) }
+            .where {
+                (PruebaPreguntaTable.pruebaId eq pruebaId) and
+                (PruebaPreguntaTable.orden eq payload.orden)
+            }
             .limit(1)
             .empty()
+
         if (ordenOcupado) {
             throw IllegalStateException("El orden ${payload.orden} ya esta en uso para esta prueba")
         }
 
-        // Validaciones de consistencia BLOQUEANTES
         if (validarConsistencia) {
-            // Obtener datos de la prueba para validar consistencia
-            val pruebaRow = tables.cuestionario.prueba.PruebaTable
+            val pruebaRow = PruebaTable
                 .selectAll()
-                .where { tables.cuestionario.prueba.PruebaTable.id eq pruebaId }
+                .where { PruebaTable.id eq pruebaId }
                 .limit(1)
                 .singleOrNull()
                 ?: throw IllegalArgumentException("Prueba no encontrada")
 
-            val nivelPrueba = pruebaRow[tables.cuestionario.prueba.PruebaTable.nivel]
-            val areaPrueba = pruebaRow[tables.cuestionario.prueba.PruebaTable.area]
+            val nivelPrueba = pruebaRow[PruebaTable.nivel]
+            val areaPrueba = pruebaRow[PruebaTable.area]
 
             val nivelPregunta = preguntaRow[PreguntaTable.nivel]
             val tipoPregunta = preguntaRow[PreguntaTable.tipoBanco]
 
-            // VALIDACIÓN BLOQUEANTE: Nivel de pregunta debe coincidir con nivel de prueba
             if (nivelPrueba != null && nivelPregunta != nivelPrueba) {
                 throw IllegalArgumentException(
                     "Inconsistencia de nivel: La pregunta tiene nivel '$nivelPregunta' pero la prueba requiere nivel '$nivelPrueba'"
                 )
             }
 
-            // VALIDACIÓN BLOQUEANTE: Tipo de pregunta debe ser compatible con área de prueba
             if (areaPrueba != null && tipoPregunta != areaPrueba) {
                 throw IllegalArgumentException(
                     "Inconsistencia de área: La pregunta es tipo '$tipoPregunta' pero la prueba es área '$areaPrueba'"
@@ -93,12 +96,12 @@ class PruebaCuestionarioRepository(
         val clave = payload.claveCorrecta?.trim()
 
         PruebaPreguntaTable.insert {
-            it[id] = newId
-            it[this.pruebaId] = pruebaId
-            it[this.preguntaId] = preguntaId
-            it[orden] = payload.orden
-            it[opciones] = opcionesJson
-            it[claveCorrecta] = clave
+            it[PruebaPreguntaTable.id] = newId
+            it[PruebaPreguntaTable.pruebaId] = pruebaId
+            it[PruebaPreguntaTable.preguntaId] = preguntaId
+            it[PruebaPreguntaTable.orden] = payload.orden
+            it[PruebaPreguntaTable.opciones] = opcionesJson
+            it[PruebaPreguntaTable.claveCorrecta] = clave
         }
 
         baseQuery()
@@ -117,8 +120,11 @@ class PruebaCuestionarioRepository(
         newSuspendedTransaction(db = db) {
             baseQuery()
                 .selectAll()
-                .where { (PruebaPreguntaTable.pruebaId eq pruebaId) and (PruebaPreguntaTable.orden greater ordenActual) }
-                .orderBy(PruebaPreguntaTable.orden to SortOrder.ASC)
+                .where {
+                    (PruebaPreguntaTable.pruebaId eq pruebaId) and
+                    (PruebaPreguntaTable.orden greater ordenActual)
+                }
+                .orderBy(PruebaPreguntaTable.orden, SortOrder.ASC)
                 .limit(1)
                 .singleOrNull()
                 ?.toAsignada(json)
@@ -129,7 +135,10 @@ class PruebaCuestionarioRepository(
         newSuspendedTransaction(db = db) {
             baseQuery()
                 .selectAll()
-                .where { (PruebaPreguntaTable.pruebaId eq pruebaId) and (PruebaPreguntaTable.preguntaId eq preguntaId) }
+                .where {
+                    (PruebaPreguntaTable.pruebaId eq pruebaId) and
+                    (PruebaPreguntaTable.preguntaId eq preguntaId)
+                }
                 .limit(1)
                 .singleOrNull()
                 ?.toAsignada(json)
@@ -159,27 +168,38 @@ class PruebaCuestionarioRepository(
         newSuspendedTransaction(db = db) {
             !RespuestaPruebaTable
                 .selectAll()
-                .where { (RespuestaPruebaTable.intentoId eq intentoId) and (RespuestaPruebaTable.preguntaId eq pruebaPreguntaId) }
+                .where {
+                    (RespuestaPruebaTable.intentoId eq intentoId) and
+                    (RespuestaPruebaTable.preguntaId eq pruebaPreguntaId)
+                }
                 .limit(1)
                 .empty()
         }
+
+    // ----------------- Helpers privados -----------------
 
     private suspend fun obtenerPreguntaPorOrden(pruebaId: UUID, orden: Int): PreguntaAsignadaRow? =
         newSuspendedTransaction(db = db) {
             baseQuery()
                 .selectAll()
-                .where { (PruebaPreguntaTable.pruebaId eq pruebaId) and (PruebaPreguntaTable.orden eq orden) }
+                .where {
+                    (PruebaPreguntaTable.pruebaId eq pruebaId) and
+                    (PruebaPreguntaTable.orden eq orden)
+                }
                 .limit(1)
                 .singleOrNull()
                 ?.toAsignada(json)
         }
 
-    private fun baseQuery(): ColumnSet = PruebaPreguntaTable.join(
-        otherTable = PreguntaTable,
-        joinType = JoinType.INNER,
-        additionalConstraint = { PruebaPreguntaTable.preguntaId eq PreguntaTable.id }
-    )
+    private fun baseQuery(): ColumnSet =
+        PruebaPreguntaTable.join(
+            otherTable = PreguntaTable,
+            joinType = JoinType.INNER,
+            additionalConstraint = { PruebaPreguntaTable.preguntaId eq PreguntaTable.id }
+        )
 }
+
+// ----------------- Mapeos a DTOs -----------------
 
 private data class PreguntaAsignadaRow(
     val asignacionId: UUID,
@@ -189,7 +209,8 @@ private data class PreguntaAsignadaRow(
     val texto: String,
     val tipoPregunta: String,
     val opciones: List<OpcionRespuesta>?,
-    val claveCorrecta: String?
+    val claveCorrecta: String?,
+    val configEvaluacion: JsonElement?     // 👈 nuevo campo interno
 )
 
 private fun ResultRow.toAsignada(json: Json): PreguntaAsignadaRow {
@@ -198,15 +219,23 @@ private fun ResultRow.toAsignada(json: Json): PreguntaAsignadaRow {
         runCatching { json.decodeFromString(opcionesSerializer, raw) }
             .getOrNull()
     }
+
+    // Leemos el JSONB de config_evaluacion como String y lo parseamos a JsonElement
+    val configEvalRaw: String? = this[PreguntaTable.configEvaluacion]
+    val configEvalJson: JsonElement? = configEvalRaw?.let { raw ->
+        runCatching { json.parseToJsonElement(raw) }.getOrNull()
+    }
+
     return PreguntaAsignadaRow(
         asignacionId = this[PruebaPreguntaTable.id],
         pruebaId = this[PruebaPreguntaTable.pruebaId],
         preguntaId = this[PruebaPreguntaTable.preguntaId],
         orden = this[PruebaPreguntaTable.orden],
         texto = this[PreguntaTable.texto],
-        tipoPregunta = this[PreguntaTable.tipoBanco],
+        tipoPregunta = this[PreguntaTable.tipoBanco],   // como lo tenías
         opciones = opciones,
-        claveCorrecta = this[PruebaPreguntaTable.claveCorrecta]
+        claveCorrecta = this[PruebaPreguntaTable.claveCorrecta],
+        configEvaluacion = configEvalJson
     )
 }
 
@@ -228,7 +257,6 @@ private fun PreguntaAsignadaRow.toResponse(): PreguntaAsignadaResponse =
         textoPregunta = texto,
         tipoPregunta = tipoPregunta,
         opciones = opciones,
-        claveCorrecta = claveCorrecta
+        claveCorrecta = claveCorrecta,
+        configEvaluacion = configEvaluacion
     )
-
-

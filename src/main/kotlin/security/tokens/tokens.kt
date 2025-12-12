@@ -14,7 +14,7 @@ fun issueAccessToken(
     issuer: String,
     audience: String,
     algorithm: Algorithm,
-    ttlSeconds: Long = 15 * 60
+    ttlSeconds: Long = 45 * 60
 ): String {
     val now = Instant.now()
     return JWT.create()

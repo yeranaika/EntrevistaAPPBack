@@ -23,3 +23,9 @@ data class ResetPasswordReq(
 data class ResetPasswordRes(
     val message: String
 )
+
+@Serializable
+data class ChangePasswordReq(
+    val contrasenaActual: String,
+    val nuevaContrasena: String
+)

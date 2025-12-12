@@ -25,6 +25,7 @@ import data.repository.usuarios.PasswordResetRepository
 
 import services.EmailService
 import io.github.cdimascio.dotenv.dotenv
+import services.PreguntasBackupSeeder
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
@@ -61,6 +62,8 @@ fun Application.module() {
         password = dotenv["GMAIL_APP_PASSWORD"] ?: throw RuntimeException("GMAIL_APP_PASSWORD no configurado"),
         fromEmail = dotenv["GMAIL_USER"] ?: throw RuntimeException("GMAIL_USER no configurado")
     )
+    PreguntasBackupSeeder("src/DB/preguntas_backup.json")
+    .seedIfEmpty("IAJOB")
 
     // 👇 ahora configureRouting recibe PasswordResetRepository
     configureRouting(

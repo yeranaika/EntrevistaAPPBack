@@ -1,3 +1,5 @@
+/* src/main/kotlin/routes/Routing.kt */
+
 package routes
 
 import data.repository.admin.PreguntaRepository
@@ -62,6 +64,7 @@ import org.jetbrains.exposed.sql.Database
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
@@ -74,9 +77,11 @@ import routes.jobs.jobsRequirementsRoutes
 import routes.jobs.jobsRequirementsBulkRoutes
 import routes.cuestionario.prueba_practica.pruebaFrontRoutes
 import routes.cuestionario.respuesta_practica.pruebaPracticaRespuestaRoutes
+import routes.cuestionario.intentos_practica.intentosPracticaRoutes
 
 import data.repository.admin.InformeGestionRepository
 import routes.admin.informeGestionRoutes
+import services.PracticeGlobalFeedbackService
 
 fun Application.configureRouting(
     preguntaRepo: PreguntaRepository,
@@ -134,6 +139,13 @@ fun Application.configureRouting(
                 }
             )
         }
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = 60_000   // hasta 60s para toda la request
+            connectTimeoutMillis = 10_000   // 10s para conectar
+            socketTimeoutMillis = 60_000    // 60s sin datos en el socket
+        }
+
         expectSuccess = true
     }
 
@@ -148,6 +160,9 @@ fun Application.configureRouting(
         httpClient = httpClient,
         apiKey = s.openAiApiKey,
     )
+
+    // Servicio de feedback general para pruebas prácticas (usa OpenAI por dentro)
+    val practiceGlobalFeedbackService = PracticeGlobalFeedbackService(interviewQuestionService)
 
     routing {
         // Healthcheck
@@ -183,14 +198,17 @@ fun Application.configureRouting(
         profileRoutes(onboardingRepo)
         adminPlanRoutes(onboardingRepo)
 
-        // Intentos de prueba
+        // Intentos de prueba (flujo antiguo)
         intentosRoutes()
 
-        // Rutas de cuestionario
+        // Intentos de práctica (nuevo flujo de práctica)
+        intentosPracticaRoutes()
+
+        // Rutas de cuestionario (admin / definición de pruebas)
         pruebaRoutes()
 
         // Front de pruebas (nivelación/práctica para app/web)
-        pruebaFrontRoutes()
+        pruebaFrontRoutes(suscripcionRepo)
 
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
@@ -240,15 +258,22 @@ fun Application.configureRouting(
         // Skills por cargo
         jobsSkillsRoutes(skillsCargoRepository)
 
-        // ✅ Tests de nivelación (solo 2 parámetros, como está declarada la función)
+        // Tests de nivelación
         testNivelacionRoutes(
             preguntaRepo = preguntaNivelacionRepo,
             testRepo = testNivelacionRepo
         )
 
+        // Práctica: envío de respuestas + feedback general (IA/NLP)
+        pruebaPracticaRespuestaRoutes(
+            feedbackService = practiceGlobalFeedbackService,
+            suscripcionRepository = suscripcionRepo
+        )
+
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
 
+        // Informes de gestión
         informeGestionRoutes(informeRepo)
 
         // Historial unificado (Tests + Entrevistas)
