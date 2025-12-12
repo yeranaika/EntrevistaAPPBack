@@ -2,6 +2,7 @@
 
 package routes.cuestionario.prueba_practica
 
+import data.repository.billing.SuscripcionRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -160,7 +161,9 @@ data class CrearPruebaNivelacionRes(
  *   - Si NO envías cantidadPR/cantidadNV/cantidadBL → distribución automática.
  *   - Si SÍ envías alguna cantidad → respeta esas cantidades (con validaciones).
  */
-fun Route.pruebaFrontRoutes() {
+fun Route.pruebaFrontRoutes(
+    suscripcionRepo: SuscripcionRepository
+) {
 
     post("/api/prueba-practica/front") {
         val req = call.receive<CrearPruebaNivelacionReq>()
@@ -221,6 +224,19 @@ fun Route.pruebaFrontRoutes() {
 
         val MAX_PREGUNTAS = 10
 
+        // Optional: verificar si el usuario es premium para habilitar configuraciones avanzadas
+        val esPremium: Boolean = req.usuarioId
+            ?.takeIf { it.isNotBlank() }
+            ?.let { rawId ->
+                runCatching { UUID.fromString(rawId) }
+                    .getOrNull()
+                    ?.let { userUuid ->
+                        runCatching { suscripcionRepo.getCurrentStatus(userUuid).isPremium }
+                            .getOrDefault(false)
+                    }
+            }
+            ?: false
+
         if ((req.cantidadOpcionMultiple ?: 0) < 0 || (req.cantidadAbierta ?: 0) < 0) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
@@ -230,7 +246,8 @@ fun Route.pruebaFrontRoutes() {
 
         // ¿Se están usando cantidades personalizadas para MIX / ENT?
         val usarCustomCantidades =
-            (modoPrueba == "MIX" || modoPrueba == "ENT") &&
+            esPremium &&
+                    (modoPrueba == "MIX" || modoPrueba == "ENT") &&
                     (req.cantidadPR != null || req.cantidadNV != null || req.cantidadBL != null)
 
         // Valores seguros de cantidades (solo se usarán en MIX / ENT)
@@ -239,7 +256,7 @@ fun Route.pruebaFrontRoutes() {
         val cantBL = if (usarCustomCantidades) req.cantidadBL ?: 0 else 0
 
         val cuotasTipoPregunta =
-            if (req.cantidadOpcionMultiple != null || req.cantidadAbierta != null) {
+            if (esPremium && (req.cantidadOpcionMultiple != null || req.cantidadAbierta != null)) {
                 TipoPreguntaQuota(
                     opcionMultiple = req.cantidadOpcionMultiple,
                     abierta = req.cantidadAbierta
@@ -249,9 +266,9 @@ fun Route.pruebaFrontRoutes() {
             }
 
         // Validación de cantidades SOLO cuando se envíen en MIX / ENT
-        if (usarCustomCantidades) {
-            if (cantPR < 0 || cantNV < 0 || cantBL < 0) {
-                return@post call.respond(
+            if (usarCustomCantidades) {
+                if (cantPR < 0 || cantNV < 0 || cantBL < 0) {
+                    return@post call.respond(
                     HttpStatusCode.BadRequest,
                     mapOf("error" to "Las cantidades por banco no pueden ser negativas")
                 )
@@ -298,6 +315,7 @@ fun Route.pruebaFrontRoutes() {
                 put("tipoBanco", JsonPrimitive(tipoBancoMeta))
                 put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPrueba))
                 put("usuarioId", JsonPrimitive(req.usuarioId ?: ""))
+                put("esPremium", JsonPrimitive(esPremium))
                 put("nombreUsuario", JsonPrimitive(req.nombreUsuario ?: ""))
             }.toString()
 
@@ -481,7 +499,8 @@ fun Route.pruebaFrontRoutes() {
                 "nombreUsuario" to (req.nombreUsuario ?: ""),
                 "nivelSolicitado" to nivelNormalizado,
                 "tipoBanco" to tipoBancoMeta,
-                "tipoPrueba" to etiquetaTipoPrueba
+                "tipoPrueba" to etiquetaTipoPrueba,
+                "esPremium" to esPremium.toString()
             ),
             preguntas = preguntasSeleccionadas
         )

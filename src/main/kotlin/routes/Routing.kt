@@ -208,7 +208,7 @@ fun Application.configureRouting(
         pruebaRoutes()
 
         // Front de pruebas (nivelación/práctica para app/web)
-        pruebaFrontRoutes()
+        pruebaFrontRoutes(suscripcionRepo)
 
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
