@@ -74,7 +74,9 @@ fun Route.intentosPracticaRoutes() {
                     }
 
                 (intentosApp + intentosPractica)
+                    // Hay joins que pueden duplicar filas; nos quedamos con un registro por intento
                     .sortedByDescending { intento -> intento.creadoEn }
+                    .distinctBy { intento -> intento.intentoId }
                     .take(20)
                     .map { intento ->
                         HistorialPracticaItemRes(
