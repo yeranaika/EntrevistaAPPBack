@@ -208,11 +208,11 @@ fun Route.pruebaFrontRoutes(
 
         // Lo que se guarda en la columna tipo_prueba (tipo de PRUEBA, no de banco)
         val etiquetaTipoPrueba = when (modoPrueba) {
-            "NV" -> "nivel"
+            "NV" -> "nivelacion"
             // PR y BL son pruebas prácticas (técnicas o blandas)
             "PR", "BL" -> "practica"
-            // MIX / ENT las tratamos como pruebas mezcladas / simulación
-            "MIX", "ENT" -> "blended"   // o "simulacion" si en tu BD usas ese valor
+            // MIX / ENT se muestran como entrevistas/simulaciones
+            "MIX", "ENT" -> "entrevista"
             else -> "practica"
         }
 

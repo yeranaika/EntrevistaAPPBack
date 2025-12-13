@@ -5,6 +5,7 @@ package routes.cuestionario.intentos_practica
 import com.example.data.tables.IntentoPruebaTable as IntentoPruebaAppTable
 import data.models.cuestionario.intentos_practica.HistorialPracticaItemRes
 import data.tables.cuestionario.intentos_practica.IntentoPruebaTable as IntentoPracticaTable
+import data.tables.cuestionario.prueba.PruebaTable
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -36,12 +37,14 @@ fun Route.intentosPracticaRoutes() {
             val intentos = transaction {
                 // Intentos registrados en la app (nivelación, entrevista, etc.)
                 val intentosApp = IntentoPruebaAppTable
+                    .innerJoin(PruebaTable, { IntentoPruebaAppTable.pruebaId }, { PruebaTable.pruebaId })
                     .selectAll()
                     .andWhere { IntentoPruebaAppTable.usuarioId eq usuarioId }
                     .map { row ->
                         IntentoRow(
                             intentoId = row[IntentoPruebaAppTable.id].toString(),
                             pruebaId = row[IntentoPruebaAppTable.pruebaId].toString(),
+                            tipoPrueba = row[PruebaTable.tipoPrueba],
                             fechaFin = row[IntentoPruebaAppTable.fechaFin],
                             puntaje = row[IntentoPruebaAppTable.puntaje]?.toInt(),
                             puntajeTotal = row[IntentoPruebaAppTable.puntajeTotal],
@@ -52,12 +55,14 @@ fun Route.intentosPracticaRoutes() {
 
                 // Intentos propios de práctica
                 val intentosPractica = IntentoPracticaTable
+                    .innerJoin(PruebaTable, { IntentoPracticaTable.pruebaId }, { PruebaTable.pruebaId })
                     .selectAll()
                     .andWhere { IntentoPracticaTable.usuarioIdCol eq usuarioId }
                     .map { row ->
                         IntentoRow(
                             intentoId = row[IntentoPracticaTable.intentoId].toString(),
                             pruebaId = row[IntentoPracticaTable.pruebaId].toString(),
+                            tipoPrueba = row[PruebaTable.tipoPrueba],
                             fechaFin = row[IntentoPracticaTable.fechaFin],
                             puntaje = row[IntentoPracticaTable.puntaje]?.toInt(),
                             puntajeTotal = row[IntentoPracticaTable.puntajeTotal],
@@ -73,6 +78,7 @@ fun Route.intentosPracticaRoutes() {
                         HistorialPracticaItemRes(
                             intentoId = intento.intentoId,
                             pruebaId = intento.pruebaId,
+                            tipoPrueba = intento.tipoPrueba,
                             fechaFin = intento.fechaFin,
                             puntaje = intento.puntaje,
                             puntajeTotal = intento.puntajeTotal,
@@ -89,6 +95,7 @@ fun Route.intentosPracticaRoutes() {
 private data class IntentoRow(
     val intentoId: String,
     val pruebaId: String,
+    val tipoPrueba: String,
     val fechaFin: String?,
     val puntaje: Int?,
     val puntajeTotal: Int,
