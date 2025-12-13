@@ -1,5 +1,3 @@
-/* src/main/kotlin/routes/cuestionario/respuesta_practica/PruebaPracticaRespuestaRoutes.kt */
-
 package routes.cuestionario.respuesta_practica
 
 import data.models.cuestionario.prueba_practica.EnviarRespuestasReq
@@ -9,13 +7,8 @@ import data.models.cuestionario.prueba_practica.RespuestaPreguntaReq
 import data.repository.billing.SuscripcionRepository
 import data.tables.cuestionario.intentos_practica.IntentoPruebaTable
 import data.tables.cuestionario.prueba.PruebaPreguntaTable
-
-// Tabla ligera usada en las rutas front
 import routes.cuestionario.prueba_practica.PruebaTable as PruebaFrontTable
-
-// Tabla real de respuestas
 import data.tables.cuestionario.respuestas.RespuestaPruebaTable
-
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -88,8 +81,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
             val ahoraStr = OffsetDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
 
-            var tipoPruebaEtiqueta: String = "practica"
-
             // Datos auxiliares para insertar en respuesta_prueba
             data class RespuestaAGuardar(
                 val pruebaPreguntaId: UUID,
@@ -126,8 +117,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
                     .selectAll()
                     .where { PruebaFrontTable.pruebaId eq pruebaUuid }
                     .singleOrNull()
-
-                tipoPruebaEtiqueta = rowPrueba?.get(PruebaFrontTable.tipoPrueba) ?: "practica"
 
                 // 2) Cargamos preguntas de esa prueba
                 val filas = PruebaPreguntaTable
@@ -246,7 +235,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
                 respuestasAGuardar.forEach { r ->
                     RespuestaPruebaTable.insert {
                         it[RespuestaPruebaTable.intentoId] = intentoUuid
-                        // 👇 CAMBIO IMPORTANTE: usamos la columna nueva
                         it[RespuestaPruebaTable.pruebaPreguntaId] = r.pruebaPreguntaId
                         it[RespuestaPruebaTable.respuestaUsuario] = r.respuestaUsuario
                         it[RespuestaPruebaTable.correcta] = r.correcta
