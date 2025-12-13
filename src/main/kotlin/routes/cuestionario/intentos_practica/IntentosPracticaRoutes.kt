@@ -12,9 +12,12 @@ import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.andWhere
+import org.jetbrains.exposed.sql.join
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 fun Route.intentosPracticaRoutes() {
@@ -37,7 +40,11 @@ fun Route.intentosPracticaRoutes() {
             val intentos = transaction {
                 // Intentos registrados en la app (nivelación, entrevista, etc.)
                 val intentosApp = IntentoPruebaAppTable
-                    .innerJoin(PruebaTable, { IntentoPruebaAppTable.pruebaId }, { PruebaTable.pruebaId })
+                    .join(
+                        PruebaTable,
+                        joinType = JoinType.INNER,
+                        additionalConstraint = { IntentoPruebaAppTable.pruebaId eq PruebaTable.pruebaId }
+                    )
                     .selectAll()
                     .andWhere { IntentoPruebaAppTable.usuarioId eq usuarioId }
                     .map { row ->
@@ -55,7 +62,11 @@ fun Route.intentosPracticaRoutes() {
 
                 // Intentos propios de práctica
                 val intentosPractica = IntentoPracticaTable
-                    .innerJoin(PruebaTable, { IntentoPracticaTable.pruebaId }, { PruebaTable.pruebaId })
+                    .join(
+                        PruebaTable,
+                        joinType = JoinType.INNER,
+                        additionalConstraint = { IntentoPracticaTable.pruebaId eq PruebaTable.pruebaId }
+                    )
                     .selectAll()
                     .andWhere { IntentoPracticaTable.usuarioIdCol eq usuarioId }
                     .map { row ->
