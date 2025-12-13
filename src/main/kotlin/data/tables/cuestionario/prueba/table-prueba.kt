@@ -12,7 +12,6 @@ object PruebaTable : Table("prueba") {
     val area       = varchar("area", 80).nullable()
     val nivel      = varchar("nivel", 20).nullable()
     val metadata   = text("metadata").nullable()
-    val historica  = text("historica").nullable()
     val activo     = bool("activo").default(true)
 
     override val primaryKey = PrimaryKey(pruebaId)
