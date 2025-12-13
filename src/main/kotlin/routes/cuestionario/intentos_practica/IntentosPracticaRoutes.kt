@@ -2,29 +2,19 @@
 
 package routes.cuestionario.intentos_practica
 
-import data.tables.cuestionario.intentos_practica.IntentoPruebaTable
+import com.example.data.tables.IntentoPruebaTable as IntentoPruebaAppTable
+import data.models.cuestionario.intentos_practica.HistorialPracticaItemRes
+import data.tables.cuestionario.intentos_practica.IntentoPruebaTable as IntentoPracticaTable
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.selectAll
 import java.util.UUID
-
-@Serializable
-data class IntentoPracticaRes(
-    val intentoId: String,
-    val pruebaId: String,
-    val fechaInicio: String,
-    val fechaFin: String?,
-    val puntaje: Int?,
-    val puntajeTotal: Int
-)
 
 fun Route.intentosPracticaRoutes() {
 
@@ -44,20 +34,49 @@ fun Route.intentosPracticaRoutes() {
             }
 
             val intentos = transaction {
-                IntentoPruebaTable
+                // Intentos registrados en la app (nivelación, entrevista, etc.)
+                val intentosApp = IntentoPruebaAppTable
                     .selectAll()
-                    .andWhere { IntentoPruebaTable.usuarioIdCol eq usuarioId }
-                    .toList() // traemos todos
-                    .sortedByDescending { row: ResultRow -> row[IntentoPruebaTable.creadoEn] }
-                    .take(20)
+                    .andWhere { IntentoPruebaAppTable.usuarioId eq usuarioId }
                     .map { row ->
-                        IntentoPracticaRes(
-                            intentoId = row[IntentoPruebaTable.intentoId].toString(),
-                            pruebaId = row[IntentoPruebaTable.pruebaId].toString(),
-                            fechaInicio = row[IntentoPruebaTable.fechaInicio],
-                            fechaFin = row[IntentoPruebaTable.fechaFin],
-                            puntaje = row[IntentoPruebaTable.puntaje]?.toInt(),
-                            puntajeTotal = row[IntentoPruebaTable.puntajeTotal]
+                        IntentoRow(
+                            intentoId = row[IntentoPruebaAppTable.id].toString(),
+                            pruebaId = row[IntentoPruebaAppTable.pruebaId].toString(),
+                            fechaFin = row[IntentoPruebaAppTable.fechaFin],
+                            puntaje = row[IntentoPruebaAppTable.puntaje]?.toInt(),
+                            puntajeTotal = row[IntentoPruebaAppTable.puntajeTotal],
+                            estado = row[IntentoPruebaAppTable.estado],
+                            creadoEn = row[IntentoPruebaAppTable.creadoEn]
+                        )
+                    }
+
+                // Intentos propios de práctica
+                val intentosPractica = IntentoPracticaTable
+                    .selectAll()
+                    .andWhere { IntentoPracticaTable.usuarioIdCol eq usuarioId }
+                    .map { row ->
+                        IntentoRow(
+                            intentoId = row[IntentoPracticaTable.intentoId].toString(),
+                            pruebaId = row[IntentoPracticaTable.pruebaId].toString(),
+                            fechaFin = row[IntentoPracticaTable.fechaFin],
+                            puntaje = row[IntentoPracticaTable.puntaje]?.toInt(),
+                            puntajeTotal = row[IntentoPracticaTable.puntajeTotal],
+                            estado = row[IntentoPracticaTable.estado],
+                            creadoEn = row[IntentoPracticaTable.creadoEn]
+                        )
+                    }
+
+                (intentosApp + intentosPractica)
+                    .sortedByDescending { intento -> intento.creadoEn }
+                    .take(20)
+                    .map { intento ->
+                        HistorialPracticaItemRes(
+                            intentoId = intento.intentoId,
+                            pruebaId = intento.pruebaId,
+                            fechaFin = intento.fechaFin,
+                            puntaje = intento.puntaje,
+                            puntajeTotal = intento.puntajeTotal,
+                            estado = intento.estado
                         )
                     }
             }
@@ -66,3 +85,13 @@ fun Route.intentosPracticaRoutes() {
         }
     }
 }
+
+private data class IntentoRow(
+    val intentoId: String,
+    val pruebaId: String,
+    val fechaFin: String?,
+    val puntaje: Int?,
+    val puntajeTotal: Int,
+    val estado: String,
+    val creadoEn: String
+)
