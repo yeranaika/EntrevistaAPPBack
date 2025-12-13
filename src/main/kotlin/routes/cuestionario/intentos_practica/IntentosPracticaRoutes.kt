@@ -37,7 +37,7 @@ fun Route.intentosPracticaRoutes() {
             val intentos = transaction {
                 // Intentos registrados en la app (nivelación, entrevista, etc.)
                 val intentosApp = IntentoPruebaAppTable
-                    .innerJoin(PruebaTable) { IntentoPruebaAppTable.pruebaId eq PruebaTable.pruebaId }
+                    .innerJoin(PruebaTable, { IntentoPruebaAppTable.pruebaId }, { PruebaTable.pruebaId })
                     .selectAll()
                     .andWhere { IntentoPruebaAppTable.usuarioId eq usuarioId }
                     .map { row ->
@@ -55,7 +55,7 @@ fun Route.intentosPracticaRoutes() {
 
                 // Intentos propios de práctica
                 val intentosPractica = IntentoPracticaTable
-                    .innerJoin(PruebaTable) { IntentoPracticaTable.pruebaId eq PruebaTable.pruebaId }
+                    .innerJoin(PruebaTable, { IntentoPracticaTable.pruebaId }, { PruebaTable.pruebaId })
                     .selectAll()
                     .andWhere { IntentoPracticaTable.usuarioIdCol eq usuarioId }
                     .map { row ->
