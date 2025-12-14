@@ -25,6 +25,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import services.FeedbackGeneralV2
 import services.PracticeGlobalFeedbackService
 import services.ResultadoPreguntaResConTexto
 import java.math.BigDecimal
@@ -101,6 +102,9 @@ fun Route.pruebaPracticaRespuestaRoutes(
             var iaUsosPrevios = 0
             var iaRestantes = 0
             var feedbackMode = "nlp"
+
+            // NUEVO: contenedor del JSON estructurado (solo cuando feedbackMode = "ia")
+            var feedbackGeneralV2: FeedbackGeneralV2? = null
 
             transaction {
                 iaUsosPrevios = IntentoPruebaTable
@@ -259,13 +263,27 @@ fun Route.pruebaPracticaRespuestaRoutes(
             val puntaje = if (totalPreguntas > 0) (correctas * 100) / totalPreguntas else 0
 
             val feedbackGeneral = if (feedbackMode == "ia") {
-                feedbackService.generarFeedbackGeneral(
+                // NUEVO: generamos JSON estructurado y mantenemos texto legacy
+                val v2 = feedbackService.generarFeedbackGeneralV2(
                     puntaje = puntaje,
                     totalPreguntas = totalPreguntas,
                     correctas = correctas,
                     preguntas = resultadosConTexto
                 )
+                feedbackGeneralV2 = v2
+
+                // Texto legacy (compatibilidad) a partir del JSON (sin "churrullo")
+                buildString {
+                    appendLine(v2.summary.oneLiner)
+                    appendLine()
+                    v2.sections.forEach { sec ->
+                        appendLine("${sec.title}:")
+                        sec.bullets.forEach { b -> appendLine("- $b") }
+                        appendLine()
+                    }
+                }.trim()
             } else {
+                // NLP: NO tocar
                 feedbackService.generarFeedbackNlpBasico(
                     puntaje = puntaje,
                     totalPreguntas = totalPreguntas,
@@ -276,6 +294,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
 
             val iaRestantesRespuesta = if (esPremium) null else iaRestantes
 
+            // OJO: debes agregar `feedbackGeneralV2` al DTO EnviarRespuestasRes
             val res = EnviarRespuestasRes(
                 pruebaId = pruebaIdPath,
                 totalPreguntas = totalPreguntas,
@@ -284,6 +303,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
                 puntaje = puntaje,
                 detalle = detalleResultados,
                 feedbackGeneral = feedbackGeneral,
+                feedbackGeneralV2 = feedbackGeneralV2,
                 feedbackMode = feedbackMode,
                 iaRevisionesRestantes = iaRestantesRespuesta
             )

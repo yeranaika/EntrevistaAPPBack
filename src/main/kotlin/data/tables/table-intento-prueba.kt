@@ -15,6 +15,5 @@ object IntentoPruebaTable : Table("app.intento_prueba") {
     val tiempoTotalSegundos = integer("tiempo_total_segundos").nullable()
     val creadoEn = varchar("creado_en", 50)
     val actualizadoEn = varchar("actualizado_en", 50)
-
     override val primaryKey = PrimaryKey(id)
 }
