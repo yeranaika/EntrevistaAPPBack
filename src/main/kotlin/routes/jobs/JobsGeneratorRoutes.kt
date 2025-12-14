@@ -424,7 +424,7 @@ fun Route.jobsGeneratorRoutes(
                             FROM pregunta
                             WHERE sector = '$safeSector'
                             AND meta_cargo = '$safeMetaCargo'
-                            AND tipo_banco <> 'NV'
+                            AND tipo_banco IN ('AIJOB', 'PR')   -- Solo buscamos 'AIJOB' o 'PR'
                         """.trimIndent()
 
                         TransactionManager.current().exec(sql) { rs ->
@@ -432,7 +432,7 @@ fun Route.jobsGeneratorRoutes(
                                 count = rs.getInt("cnt")
                             }
                         }
-                        count > 0
+                        count > 0   // Retorna true si hay al menos una pregunta que cumple con las condiciones
                     }
 
                     if (!existeBancoParaSectorMeta) {
