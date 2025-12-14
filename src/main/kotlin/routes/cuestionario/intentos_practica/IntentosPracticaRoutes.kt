@@ -36,6 +36,9 @@ fun Route.intentosPracticaRoutes() {
                 )
             }
 
+            val filtroTipoPrueba = call.request.queryParameters["tipoPrueba"]
+                ?.normalizaTipoPrueba()
+
             val intentos = transaction {
                 // Intentos registrados en la app (nivelación, entrevista, etc.)
                 val intentosApp = IntentoPruebaAppTable
@@ -74,6 +77,11 @@ fun Route.intentosPracticaRoutes() {
                     }
 
                 (intentosApp + intentosPractica)
+                    .let { lista ->
+                        filtroTipoPrueba?.let { tipo ->
+                            lista.filter { it.tipoPrueba == tipo }
+                        } ?: lista
+                    }
                     // Hay joins que pueden duplicar filas; nos quedamos con un registro por intento
                     .sortedByDescending { intento -> intento.creadoEn }
                     .distinctBy { intento -> intento.intentoId }
@@ -102,8 +110,9 @@ fun Route.intentosPracticaRoutes() {
  * "practica" o "entrevista".
  */
 private fun String.normalizaTipoPrueba(): String = when (this.lowercase()) {
-    "nivel", "nivelacion" -> "nivelacion"
-    "blended", "ent", "entrenamiento", "entrevista" -> "entrevista"
+    "nivel", "nivelacion", "nv" -> "nivelacion"
+    "blended", "ent", "entrenamiento", "entrevista", "mix" -> "entrevista"
+    "pr", "practica", "practice" -> "practica"
     else -> "practica"
 }
 
