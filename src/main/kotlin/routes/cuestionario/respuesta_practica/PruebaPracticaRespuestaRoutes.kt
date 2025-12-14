@@ -339,7 +339,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
                         it[RespuestaPruebaTable.intentoId] = newIntentoUuid
 
                         // ✅ En tu Table suele llamarse "preguntaId" aunque la columna sea prueba_pregunta_id
-                        it[RespuestaPruebaTable.preguntaId] = r.pruebaPreguntaId
+                        it[RespuestaPruebaTable.pruebaPreguntaId] = r.pruebaPreguntaId
 
                         it[RespuestaPruebaTable.respuestaUsuario] = r.respuestaUsuario
                         it[RespuestaPruebaTable.correcta] = r.correcta

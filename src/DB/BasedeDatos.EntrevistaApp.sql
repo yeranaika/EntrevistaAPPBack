@@ -3082,10 +3082,11 @@ INSERT INTO pregunta (
 
 COMMIT;
 
--- =============================================================================
--- INSERT REQUISITOS POR CARGO (skills_cargo)
--- =============================================================================
 INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
+
+-- =============================================================================
+-- Soporte TI
+-- =============================================================================
 ('Soporte TI','tecnico','Prestar apoyo a los Asistentes de reuniones para proyectar presentaciones'),
 ('Soporte TI','tecnico','Documentación: Mantener registros detallados de los procedimientos y servicios prestados, incluyendo manuales y registros de resolución de problemas'),
 ('Soporte TI','blando','Buenas habilidades comunicacionales y orientación al cliente'),
@@ -3095,6 +3096,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Soporte TI','blando','Diagnóstico y resolución de problemas: Identificar y solucionar problemas técnicos críticos que afecten la continuidad de las operaciones'),
 ('Soporte TI','blando','Colaboración con el equipo de TI: Trabajar de forma conjunta con otros miembros del área para resolver problemas complejos y asegurar la alineación de objetivos'),
 ('Soporte TI','blando','Formación técnica en áreas relacionadas con informática, redes, telecomunicaciones o similar'),
+
+-- =============================================================================
+-- DevOps Engineer
+-- =============================================================================
 ('DevOps Engineer','tecnico','Nos encontramos en búsqueda de un(a) DevOps / Cloud Engineer para el área TI, buscamos un perfil con fuertes habilidades técnicas en infraestructura y GCP, con experiencia previa en compañías similares e idealmente habiendo liderado o participado en procesos de implementación de servicios en la nube'),
 ('DevOps Engineer','tecnico','Diseñar, implementar y mantener infraestructura en la nube (GCP)'),
 ('DevOps Engineer','tecnico','Implementar y administrar clústeres y contenedores con Docker y Kubernetes (GKE)'),
@@ -3107,6 +3112,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('DevOps Engineer','tecnico','Familiaridad con Apache Kafka y arquitecturas basadas en microservicios'),
 ('DevOps Engineer','blando','Capacidad de resolución de problemas y pensamiento analítico aplicado a procesos de automatización'),
 ('DevOps Engineer','blando','Comunicación efectiva'),
+
+-- =============================================================================
+-- SysAdmin
+-- =============================================================================
 ('SysAdmin','tecnico','En Tecnocomp iniciamos el proceso para incorporar a un Administrador de Sistemas que prestará servicios presenciales a un importante cliente del sector energía en la Región Metropolitana'),
 ('SysAdmin','tecnico','Conocimientos en herramientas de respaldo y uso de PowerShell'),
 ('SysAdmin','tecnico','Deseable: experiencia con Linux, Azure, y certificaciones (Microsoft, VMware, CompTIA, ITIL)'),
@@ -3125,6 +3134,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('SysAdmin','blando','Alta capacidad analítica, orientación al cliente, trabajo colaborativo y comunicación efectiva'),
 ('SysAdmin','blando','Horario: Artículo 22 (colaboración con distintos mercados: Chile, Perú, México y Colombia)'),
 ('SysAdmin','blando','Registrar y tratar proactivamente los incidentes y requerimientos asociados al área de Operaciones y Tecnologías'),
+
+-- =============================================================================
+-- Desarrollador Backend
+-- =============================================================================
 ('Desarrollador Backend','tecnico','Gestión de Spring Boot'),
 ('Desarrollador Backend','tecnico','Práctica en JUnit, Mockito y Hamcrest'),
 ('Desarrollador Backend','tecnico','Creación de servicios REST y SOAP'),
@@ -3141,6 +3154,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Desarrollador Backend','blando','Comunicación efectiva para interactuar con usuarios y equipos'),
 ('Desarrollador Backend','blando','Trabajo en equipo y actitud colaborativa'),
 ('Desarrollador Backend','blando','Proactividad en la resolución de problemas'),
+
+-- =============================================================================
+-- Desarrollador Frontend
+-- =============================================================================
 ('Desarrollador Frontend','tecnico','Un importante canal de televisión está en búsqueda de un(a) Desarrollador(a) de Plataformas para integrarse al área digital y de Prensa'),
 ('Desarrollador Frontend','tecnico','End, con conocimientos en HTML, CSS y Java/JavaScript'),
 ('Desarrollador Frontend','tecnico','Familiaridad con los sistemas de control de versiones (por ejemplo, Git)'),
@@ -3156,6 +3173,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Desarrollador Frontend','blando','Trabaja en estrecha colaboración con el equipo de diseño y los desarrolladores de back'),
 ('Desarrollador Frontend','blando','Fuertes habilidades de resolución de problemas y atención al detalle'),
 ('Desarrollador Frontend','blando','Excelentes habilidades de comunicación y capacidad para entender los requisitos y expectativas del cliente y del usuario final'),
+
+-- =============================================================================
+-- Desarrollador Fullstack
+-- =============================================================================
 ('Desarrollador Fullstack','tecnico','Desarrollar módulos, microservicios, mejoras de API y aplicaciones como parte de la mejora continua de los productos propietarios de la compañía'),
 ('Desarrollador Fullstack','tecnico','Dominio de Python para desarrollo backend, con experiencia específica en Flask (conocimiento en Django o FastAPI es un plus)'),
 ('Desarrollador Fullstack','tecnico','js y ecosistema frontend contemporáneo (HTML5, CSS3, JavaScript ES6+)'),
@@ -3166,6 +3187,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Desarrollador Fullstack','tecnico','Estamos en búsqueda de un Desarrollador Full Stack apasionado por la tecnología, la innovación y la creación de soluciones robustas para un futuro digital Si tienes experiencia en desarrollo de software, estás familiarizado con las últimas herramientas y deseas trabajar en un ambiente ágil, ¡te estamos buscando! […]'),
 ('Desarrollador Fullstack','tecnico','Alto conocimiento de Java J2EE y Java Spring Boot […]'),
 ('Desarrollador Fullstack','tecnico','Alto conocimiento Serverless computing AWS (NodeJs, lambda, DynamoDB) […]'),
+
+-- =============================================================================
+-- QA Automation
+-- =============================================================================
 ('QA Automation','tecnico','performing team!If you are an QA Automation ambitious and passionate about innovation, joining Yuno will allow you to transform your passion into real high'),
 ('QA Automation','tecnico','As a QA Automation you will be part of the team of integrations'),
 ('QA Automation','tecnico','Create and manage test cases for regression; create automation and performance testing'),
@@ -3176,6 +3201,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('QA Automation','tecnico','Proven experience as a QA Automation Engineer or similar role in the payments industry'),
 ('QA Automation','tecnico','Demonstrated knowledge in: Automation backend: Python, Cucumber/Behave, Automation web/mobile, Typescrip, Webdriver'),
 ('QA Automation','tecnico','POO, design patterns, docker, k6/jmeter, CI/CD tools and y monitoring tools such as DataDog'),
+
+-- =============================================================================
+-- Analista de Datos
+-- =============================================================================
 ('Analista de Datos','tecnico','SQL Server Integration Services (SSIS)'),
 ('Analista de Datos','tecnico','SQL Server Analysis Services (SSAS)'),
 ('Analista de Datos','tecnico','Programación (Python, SQL, RPA)'),
@@ -3184,6 +3213,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Analista de Datos','blando','Valoramos a personas analíticas, proactivas y con capacidad para aportar ideas que generen impacto'),
 ('Analista de Datos','blando','Buscamos a una persona analítica, proactiva y orientada al detalle'),
 ('Analista de Datos','blando','Pensamiento analítico, orientación al detalle y capacidad para identificar patrones en grandes volúmenes de datos'),
+
+-- =============================================================================
+-- Analista de Negocios
+-- =============================================================================
 ('Analista de Negocios','tecnico','Conocimientos de SQL para validación de datos y análisis económico'),
 ('Analista de Negocios','tecnico','Formar parte del equipo estratégico detrás de la optimización de procesos críticos de operaciones de Capitaria, asegurando que cada decisión se base en datos relevantes y generando mejoras continuas en los mismos'),
 ('Analista de Negocios','tecnico','Monitoreo de KPIs Financieros y Operacionales >Diseñar y mantener dashboards de indicadores clave relacionados con el uso de capital, márgenes operacionales, flujos de caja, entre otros'),
@@ -3193,6 +3226,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Analista de Negocios','blando','· Capacidad de análisis, comunicación efectiva y'),
 ('Analista de Negocios','blando','· Buen ambiente laboral y cultura de colaboración'),
 ('Analista de Negocios','blando','Este rol reportará directamente al Gerente General y trabajará en estrecha colaboración con el Director Ejecutivo que asesora el área de Finanzas y Mesa de Dinero'),
+
+-- =============================================================================
+-- Analista QA
+-- =============================================================================
 ('Analista QA','tecnico','Analista Testing QA'),
 ('Analista QA','tecnico','Buscamos un QA Funcional con experiencia en el sector bancario y sólidos conocimientos en testing de software, metodologías ágiles y herramientas de gestión de calidad'),
 ('Analista QA','tecnico','Automatización y Mejora Continua: Automatizar pruebas de regresión utilizando Selenium / Cucumber / Gherkin'),
@@ -3208,6 +3245,10 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Analista QA','blando','Comunicación con el cliente y con su equipo de trabajo'),
 ('Analista QA','blando','Comunicación clara: capaz de traducir necesidades del negocio bancario a soluciones técnicas'),
 ('Analista QA','blando','Trabajo en equipo multidisciplinario: interacción con BAs, arquitectos, reguladores y áreas de riesgo'),
+
+-- =============================================================================
+-- Analista Funcional
+-- =============================================================================
 ('Analista Funcional','tecnico','Ejecutar testing, levantar alertas y aplicar correctivos para optimizar las iniciativas implementadas'),
 ('Analista Funcional','tecnico','Experiencia con herramientas de desarrollo en plataformas abiertas (SQL Server, ambientes Windows)'),
 ('Analista Funcional','tecnico','Lenguaje: Java, Angular, Springboot'),
@@ -3219,13 +3260,25 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Analista Funcional','blando','Manejo comunicacional ejecutivo y capacidad de relacionamiento transversal'),
 ('Analista Funcional','blando','Alta autonomía y proactividad'),
 ('Analista Funcional','blando','Manejo comunicacional ejecutivo y alta autonomía'),
+
+-- =============================================================================
+-- Asistente Administrativo
+-- =============================================================================
 ('Asistente Administrativo','blando','Estamos buscando un Asistente Administrativo proactivo y organizado para unirse a nuestro equipo de Recursos Humanos'),
 ('Asistente Administrativo','blando','El candidato ideal será responsable, comprometido y poseerá excelentes habilidades comunicacionales y disposición para el trabajo en equipo'),
 ('Asistente Administrativo','blando','Buenas habilidades comunicacionales y disposición para el trabajo en equipo'),
 ('Asistente Administrativo','blando','Estamos buscando un/a Asistente Administrativo/a dinámico/a y proactivo/a para unirse a nuestro equipo'),
 ('Asistente Administrativo','blando','Buscamos a alguien con excelentes habilidades de organización, comunicación y capacidad para trabajar en equipo'),
+
+-- =============================================================================
+-- Analista Contable
+-- =============================================================================
 ('Analista Contable','tecnico','*Realizar la digitación de las facturas al sistema contable, para chequear por errores antes de imprimir los reportes'),
 ('Analista Contable','blando','Apoyo administrativo y comunicación con clientes y proveedores — Atender requerimientos administrativos relacionados con facturación, órdenes de compra y coordinación de pagos'),
+
+-- =============================================================================
+-- Encargado de Administración
+-- =============================================================================
 ('Encargado de Administración','tecnico','Informar mensualmente al Directorio sobre ejecución presupuestaria y preparar proyecciones financieras para el resto del año'),
 ('Encargado de Administración','tecnico','Bash, destacado holding de empresas con presencia a nivel nacional y ubicado en la zona norte de Santiago, busca incorporar a su equipo a un/a Jefe/a de Administración'),
 ('Encargado de Administración','tecnico','️ Mantener orden físico y digital de documentación legal, tributaria y laboral'),
@@ -3233,7 +3286,26 @@ INSERT INTO skills_cargo (cargo, tipo, descripcion) VALUES
 ('Encargado de Administración','blando','Capacidad de liderazgo, gestión de equipos y habilidades comunicacionales'),
 ('Encargado de Administración','blando','Orientación al detalle, proactividad y capacidad de trabajo bajo presión'),
 ('Encargado de Administración','blando','Comunicación Efectiva: Habilidad para transmitir información clara y precisa tanto a equipos internos como externos'),
-('Encargado de Administración','blando','Resolución de Problemas: Aptitud para identificar situaciones críticas y proponer soluciones oportunas');
+('Encargado de Administración','blando','Resolución de Problemas: Aptitud para identificar situaciones críticas y proponer soluciones oportunas'),
+
+-- =============================================================================
+-- Desarrollador Android
+-- =============================================================================
+('Desarrollador Android','tecnico','Desarrollar aplicaciones móviles Android utilizando Kotlin o Java'),
+('Desarrollador Android','tecnico','Integración con servicios RESTful y APIs en Android'),
+('Desarrollador Android','tecnico','Familiaridad con herramientas de desarrollo Android Studio y SDK'),
+('Desarrollador Android','blando','Capacidad para trabajar en equipo y colaboración con diseñadores y otros desarrolladores'),
+('Desarrollador Android','blando','Habilidades de comunicación efectiva y resolución de problemas'),
+
+-- =============================================================================
+-- Jefe de Administración
+-- =============================================================================
+('Jefe de Administración','tecnico','Gestión administrativa integral: coordinación de procesos, control documental y cumplimiento interno'),
+('Jefe de Administración','tecnico','Supervisión de compras, facturación, pagos y relación con proveedores'),
+('Jefe de Administración','tecnico','Control presupuestario, reportabilidad y seguimiento de indicadores (Excel/Sheets)'),
+('Jefe de Administración','blando','Liderazgo y coordinación de equipo administrativo, asignación de tareas y seguimiento'),
+('Jefe de Administración','blando','Planificación y organización: priorización y control de hitos/fechas críticas'),
+('Jefe de Administración','blando','Comunicación efectiva con stakeholders internos y externos, resolución de conflictos');
 
 COMMIT;
 
