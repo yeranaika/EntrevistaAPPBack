@@ -274,6 +274,7 @@ CREATE TABLE intento_prueba (
     tiempo_total_segundos INTEGER,
     creado_en             VARCHAR(50) NOT NULL DEFAULT to_char(now(), 'YYYY-MM-DD"T"HH24:MI:SSOF'),
     actualizado_en        VARCHAR(50) NOT NULL DEFAULT to_char(now(), 'YYYY-MM-DD"T"HH24:MI:SSOF'),
+    feedback_general_v2   JSONB,
     CONSTRAINT chk_puntaje_rango CHECK (puntaje >= 0 AND puntaje <= 100)
 );
 CREATE INDEX intento_prueba_user_idx ON intento_prueba(usuario_id, prueba_id);

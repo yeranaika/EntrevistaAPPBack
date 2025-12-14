@@ -1,8 +1,10 @@
 
+/* src/main/kotlin/data/models/cuestionario/prueba_practica/RespuestaPruebaModels.kt */
 
 package data.models.cuestionario.prueba_practica
 
 import kotlinx.serialization.Serializable
+import services.FeedbackGeneralV2  
 
 @Serializable
 data class RespuestaPreguntaReq(
@@ -34,10 +36,12 @@ data class EnviarRespuestasRes(
     val correctas: Int,
     val puntaje: Int,
     val detalle: List<ResultadoPreguntaRes>,
-    val feedbackGeneral: String? = null,
-    val feedbackMode: String? = null,
-    val iaRevisionesRestantes: Int? = null
+    val feedbackGeneral: String,
+    val feedbackGeneralV2: FeedbackGeneralV2? = null, // 👈 NUEVO
+    val feedbackMode: String,
+    val iaRevisionesRestantes: Int?
 )
+
 
 @Serializable
 data class IntentoPracticaRes(
