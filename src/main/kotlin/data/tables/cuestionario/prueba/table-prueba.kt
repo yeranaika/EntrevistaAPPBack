@@ -8,9 +8,10 @@ object PruebaTable : Table("prueba") {
     val pruebaId = uuid("prueba_id").clientDefault { UUID.randomUUID() }
     val id = pruebaId   // alias
 
-    val tipoPrueba = varchar("tipo_prueba", 20)   // 'practica','nivel','simulacion'
+    // DB column is VARCHAR(8): values like "practica", "nivel", "blended"
+    val tipoPrueba = varchar("tipo_prueba", 8)
     val area       = varchar("area", 80).nullable()
-    val nivel      = varchar("nivel", 20).nullable()
+    val nivel      = varchar("nivel", 3).nullable()
     val metadata   = text("metadata").nullable()
     val activo     = bool("activo").default(true)
 

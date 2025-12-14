@@ -208,11 +208,20 @@ fun Route.pruebaFrontRoutes(
         }
 
         // Lo que se guarda en la columna tipo_prueba (tipo de PRUEBA, no de banco)
-        val etiquetaTipoPrueba = when (modoPrueba) {
-            "NV" -> "nivelacion"
+        // Columna BD admite máximo 8 caracteres.
+        val etiquetaTipoPruebaBD = when (modoPrueba) {
+            "NV" -> "nivel"
             // PR y BL son pruebas prácticas (técnicas o blandas)
             "PR", "BL" -> "practica"
             // MIX / ENT se muestran como entrevistas/simulaciones
+            "MIX", "ENT" -> "blended"
+            else -> "practica"
+        }
+
+        // Etiqueta más descriptiva para front/metadata
+        val etiquetaTipoPruebaFront = when (modoPrueba) {
+            "NV" -> "nivelacion"
+            "PR", "BL" -> "practica"
             "MIX", "ENT" -> "entrevista"
             else -> "practica"
         }
@@ -327,14 +336,14 @@ fun Route.pruebaFrontRoutes(
                 put("metaCargo", JsonPrimitive(metaCargoSafe))
                 put("nivelSolicitado", JsonPrimitive(nivelNormalizado))
                 put("tipoBanco", JsonPrimitive(tipoBancoMeta))
-                put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPrueba))
+                put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPruebaFront))
                 put("usuarioId", JsonPrimitive(req.usuarioId ?: ""))
                 put("esPremium", JsonPrimitive(esPremium))
                 put("nombreUsuario", JsonPrimitive(req.nombreUsuario ?: ""))
             }.toString()
 
             pruebaId = PruebaTable.insert {
-                it[tipoPrueba] = etiquetaTipoPrueba
+                it[tipoPrueba] = etiquetaTipoPruebaBD
                 it[area] = areaSafe
                 it[nivel] = nivelNormalizado
                 it[metadata] = metadataJson
@@ -532,7 +541,7 @@ fun Route.pruebaFrontRoutes(
 
         val resp = CrearPruebaNivelacionRes(
             pruebaId = pruebaId.toString(),
-            tipoPrueba = etiquetaTipoPrueba,
+            tipoPrueba = etiquetaTipoPruebaFront,
             area = req.sector,
             nivel = nivelNormalizado,
             metadata = mapOf(
@@ -541,7 +550,7 @@ fun Route.pruebaFrontRoutes(
                 "nombreUsuario" to (req.nombreUsuario ?: ""),
                 "nivelSolicitado" to nivelNormalizado,
                 "tipoBanco" to tipoBancoMeta,
-                "tipoPrueba" to etiquetaTipoPrueba,
+                "tipoPrueba" to etiquetaTipoPruebaFront,
                 "esPremium" to esPremium.toString()
             ),
             preguntas = preguntasSeleccionadas
