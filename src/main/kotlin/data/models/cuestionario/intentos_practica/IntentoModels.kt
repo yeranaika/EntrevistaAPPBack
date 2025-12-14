@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class HistorialPracticaItemRes(
     val intentoId: String,
     val pruebaId: String,
+    val tipoPrueba: String,
     val fechaFin: String?,
     val puntaje: Int?,
     val puntajeTotal: Int,

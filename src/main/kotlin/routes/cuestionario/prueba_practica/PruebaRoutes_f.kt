@@ -2,6 +2,7 @@
 
 package routes.cuestionario.prueba_practica
 
+import data.repository.billing.SuscripcionRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -15,7 +16,10 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.Random
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.lowerCase
 import java.util.UUID
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 // =============================
 //  Tablas Exposed (locales)
@@ -107,7 +111,23 @@ data class CrearPruebaNivelacionReq(
      */
     val cantidadPR: Int? = null,
     val cantidadNV: Int? = null,
-    val cantidadBL: Int? = null
+    val cantidadBL: Int? = null,
+
+    // 🆕 Cuotas por tipo de pregunta (opción múltiple vs abierta)
+    val cantidadOpcionMultiple: Int? = null,
+    val cantidadAbierta: Int? = null
+)
+
+private enum class TipoPreguntaQuotaStrategy {
+    CUSTOM,
+    PREMIUM_DEFAULT,
+    STANDARD_DEFAULT
+}
+
+private data class TipoPreguntaQuota(
+    val opcionMultiple: Int? = null,
+    val abierta: Int? = null,
+    val strategy: TipoPreguntaQuotaStrategy = TipoPreguntaQuotaStrategy.CUSTOM,
 )
 
 @Serializable
@@ -150,13 +170,15 @@ data class CrearPruebaNivelacionRes(
  *   - Si NO envías cantidadPR/cantidadNV/cantidadBL → distribución automática.
  *   - Si SÍ envías alguna cantidad → respeta esas cantidades (con validaciones).
  */
-fun Route.pruebaFrontRoutes() {
+fun Route.pruebaFrontRoutes(
+    suscripcionRepo: SuscripcionRepository
+) {
 
     post("/api/prueba-practica/front") {
         val req = call.receive<CrearPruebaNivelacionReq>()
 
         val nivelNormalizado = req.nivel.trim().lowercase()
-        val nivelesValidos = setOf("jr", "mid", "sr")
+        val nivelesValidos = setOf("jr", "mid", "sr", "ssr", "1", "2", "3")
 
         // =========================
         // Validar tipoPrueba
@@ -186,19 +208,28 @@ fun Route.pruebaFrontRoutes() {
         }
 
         // Lo que se guarda en la columna tipo_prueba (tipo de PRUEBA, no de banco)
-        val etiquetaTipoPrueba = when (modoPrueba) {
+        // Columna BD admite máximo 8 caracteres.
+        val etiquetaTipoPruebaBD = when (modoPrueba) {
             "NV" -> "nivel"
             // PR y BL son pruebas prácticas (técnicas o blandas)
             "PR", "BL" -> "practica"
-            // MIX / ENT las tratamos como pruebas mezcladas / simulación
-            "MIX", "ENT" -> "blended"   // o "simulacion" si en tu BD usas ese valor
+            // MIX / ENT se muestran como entrevistas/simulaciones
+            "MIX", "ENT" -> "blended"
+            else -> "practica"
+        }
+
+        // Etiqueta más descriptiva para front/metadata
+        val etiquetaTipoPruebaFront = when (modoPrueba) {
+            "NV" -> "nivelacion"
+            "PR", "BL" -> "practica"
+            "MIX", "ENT" -> "entrevista"
             else -> "practica"
         }
 
         if (nivelNormalizado !in nivelesValidos) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "nivel debe ser uno de: jr, mid, sr")
+                mapOf("error" to "nivel debe ser uno de: jr, mid, sr, ssr, 1, 2, 3")
             )
         }
 
@@ -211,15 +242,51 @@ fun Route.pruebaFrontRoutes() {
 
         val MAX_PREGUNTAS = 10
 
+        // Optional: verificar si el usuario es premium para habilitar configuraciones avanzadas
+        val esPremium: Boolean = req.usuarioId
+            ?.takeIf { it.isNotBlank() }
+            ?.let { rawId ->
+                runCatching { UUID.fromString(rawId) }
+                    .getOrNull()
+                    ?.let { userUuid ->
+                        runCatching { suscripcionRepo.getCurrentStatus(userUuid).isPremium }
+                            .getOrDefault(false)
+                    }
+            }
+            ?: false
+
+        if ((req.cantidadOpcionMultiple ?: 0) < 0 || (req.cantidadAbierta ?: 0) < 0) {
+            return@post call.respond(
+                HttpStatusCode.BadRequest,
+                mapOf("error" to "Las cantidades por tipo de pregunta no pueden ser negativas")
+            )
+        }
+
         // ¿Se están usando cantidades personalizadas para MIX / ENT?
         val usarCustomCantidades =
-            (modoPrueba == "MIX" || modoPrueba == "ENT") &&
+            esPremium &&
+                    (modoPrueba == "MIX" || modoPrueba == "ENT") &&
                     (req.cantidadPR != null || req.cantidadNV != null || req.cantidadBL != null)
 
         // Valores seguros de cantidades (solo se usarán en MIX / ENT)
         val cantPR = if (usarCustomCantidades) req.cantidadPR ?: 0 else 0
         val cantNV = if (usarCustomCantidades) req.cantidadNV ?: 0 else 0
         val cantBL = if (usarCustomCantidades) req.cantidadBL ?: 0 else 0
+
+        val cuotasTipoPregunta = when {
+            esPremium && (req.cantidadOpcionMultiple != null || req.cantidadAbierta != null) ->
+                TipoPreguntaQuota(
+                    opcionMultiple = req.cantidadOpcionMultiple,
+                    abierta = req.cantidadAbierta,
+                    strategy = TipoPreguntaQuotaStrategy.CUSTOM,
+                )
+
+            esPremium ->
+                TipoPreguntaQuota(strategy = TipoPreguntaQuotaStrategy.PREMIUM_DEFAULT)
+
+            else ->
+                TipoPreguntaQuota(strategy = TipoPreguntaQuotaStrategy.STANDARD_DEFAULT)
+        }
 
         // Validación de cantidades SOLO cuando se envíen en MIX / ENT
         if (usarCustomCantidades) {
@@ -269,113 +336,117 @@ fun Route.pruebaFrontRoutes() {
                 put("metaCargo", JsonPrimitive(metaCargoSafe))
                 put("nivelSolicitado", JsonPrimitive(nivelNormalizado))
                 put("tipoBanco", JsonPrimitive(tipoBancoMeta))
-                put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPrueba))
+                put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPruebaFront))
                 put("usuarioId", JsonPrimitive(req.usuarioId ?: ""))
+                put("esPremium", JsonPrimitive(esPremium))
                 put("nombreUsuario", JsonPrimitive(req.nombreUsuario ?: ""))
             }.toString()
 
             pruebaId = PruebaTable.insert {
-                it[tipoPrueba] = etiquetaTipoPrueba
+                it[tipoPrueba] = etiquetaTipoPruebaBD
                 it[area] = areaSafe
                 it[nivel] = nivelNormalizado
                 it[metadata] = metadataJson
                 it[activo] = true
             } get PruebaTable.pruebaId
 
+            fun cuotasPorLimite(limite: Int): Pair<Int?, Int?> {
+                if (limite <= 0) return 0 to 0
+
+                return when (cuotasTipoPregunta.strategy) {
+                    TipoPreguntaQuotaStrategy.CUSTOM ->
+                        (cuotasTipoPregunta.opcionMultiple ?: limite) to (cuotasTipoPregunta.abierta ?: 0)
+
+                    TipoPreguntaQuotaStrategy.PREMIUM_DEFAULT -> {
+                        val abiertas = maxOf(1, (limite * 0.4).roundToInt())
+                        val opcionMultiple = maxOf(0, limite - abiertas)
+                        opcionMultiple to abiertas
+                    }
+
+                    TipoPreguntaQuotaStrategy.STANDARD_DEFAULT -> {
+                        val abiertas = maxOf(0, (limite * 0.2).roundToInt())
+                        val opcionMultiple = maxOf(1, limite - abiertas)
+                        opcionMultiple to abiertas
+                    }
+                }
+            }
+
+            fun tipoBancoObjetivo(tipoBanco: String): List<String> = when (tipoBanco.uppercase()) {
+                "NV" -> listOf("nv", "nivel", "nivelacion", "nivelación")
+                "BL" -> listOf("bl", "blandas", "blanda")
+                else -> listOf("pr", "practica", "práctica", "pr")
+            }
+
+            fun seleccionarPreguntasBanco(tipoBanco: String, limite: Int): List<ResultRow> {
+                if (limite <= 0) return emptyList()
+
+                val seleccionadas = mutableListOf<ResultRow>()
+                val usados = mutableSetOf<UUID>()
+
+                fun tomar(tipoPregunta: String?, cantidad: Int): List<ResultRow> {
+                    if (cantidad <= 0) return emptyList()
+
+                    val bancosObjetivo = tipoBancoObjetivo(tipoBanco)
+
+                    val query = PreguntaTable
+                        .selectAll()
+                        .where {
+                            (PreguntaTable.tipoBanco.lowerCase() inList bancosObjetivo) and
+                            (PreguntaTable.sector eq req.sector) and
+                            (PreguntaTable.nivel eq nivelNormalizado) and
+                            (PreguntaTable.activa eq true)
+                        }
+
+                    tipoPregunta?.let {
+                        query.andWhere { PreguntaTable.tipoPregunta eq it }
+                    }
+
+                    if (usados.isNotEmpty()) {
+                        query.andWhere { PreguntaTable.preguntaId notInList usados.toList() }
+                    }
+
+                    val rows = query
+                        .orderBy(Random())
+                        .limit(cantidad)
+                        .toList()
+
+                    usados += rows.map { it[PreguntaTable.preguntaId] }
+                    return rows
+                }
+
+                if (cuotasTipoPregunta != null) {
+                    val (cuotaMulti, cuotaAbiertas) = cuotasPorLimite(limite)
+
+                    val cerradas = tomar("opcion_multiple", min(limite, cuotaMulti ?: limite))
+                    val abiertas = tomar("abierta", min(limite - cerradas.size, cuotaAbiertas ?: 0))
+                    val restante = limite - cerradas.size - abiertas.size
+
+                    seleccionadas += cerradas + abiertas + tomar(null, restante)
+                } else {
+                    seleccionadas += tomar(null, limite)
+                }
+
+                return seleccionadas
+            }
+
             // 2) Seleccionar preguntas
             val filasPreguntas: List<ResultRow> =
                 if (modoPrueba == "MIX" || modoPrueba == "ENT") {
                     // ---------- MODO MIX / ENT (PR + NV + BL) ----------
                     if (usarCustomCantidades) {
-                        // Usar cantidades personalizadas
-                        val nvRows =
-                            if (cantNV > 0)
-                                PreguntaTable
-                                    .selectAll()
-                                    .where {
-                                        (PreguntaTable.tipoBanco eq "NV") and
-                                        (PreguntaTable.sector eq req.sector) and
-                                        (PreguntaTable.nivel eq nivelNormalizado) and
-                                        (PreguntaTable.activa eq true)
-                                    }
-                                    .orderBy(Random())
-                                    .limit(cantNV)
-                                    .toList()
-                            else emptyList()
+                        val nvRows = if (cantNV > 0) seleccionarPreguntasBanco("NV", cantNV) else emptyList()
+                        val prRows = if (cantPR > 0) seleccionarPreguntasBanco("PR", cantPR) else emptyList()
+                        val blRows = if (cantBL > 0) seleccionarPreguntasBanco("BL", cantBL) else emptyList()
 
-                        val prRows =
-                            if (cantPR > 0)
-                                PreguntaTable
-                                    .selectAll()
-                                    .where {
-                                        (PreguntaTable.tipoBanco eq "PR") and
-                                        (PreguntaTable.sector eq req.sector) and
-                                        (PreguntaTable.nivel eq nivelNormalizado) and
-                                        (PreguntaTable.activa eq true)
-                                    }
-                                    .orderBy(Random())
-                                    .limit(cantPR)
-                                    .toList()
-                            else emptyList()
-
-                        val blRows =
-                            if (cantBL > 0)
-                                PreguntaTable
-                                    .selectAll()
-                                    .where {
-                                        (PreguntaTable.tipoBanco eq "BL") and
-                                        (PreguntaTable.sector eq req.sector) and
-                                        (PreguntaTable.nivel eq nivelNormalizado) and
-                                        (PreguntaTable.activa eq true)
-                                    }
-                                    .orderBy(Random())
-                                    .limit(cantBL)
-                                    .toList()
-                            else emptyList()
-
-                        // No hace falta hacer .take(MAX_PREGUNTAS) porque ya validamos
-                        // que cantPR+cantNV+cantBL <= MAX_PREGUNTAS
                         (nvRows + prRows + blRows)
                             .shuffled()
                     } else {
                         // Distribución automática (comportamiento antiguo)
                         val maxPorBanco = MAX_PREGUNTAS / 3  // ej: 3 NV, 3 PR, 3 BL (queda 1 libre)
 
-                        val nvRows = PreguntaTable
-                            .selectAll()
-                            .where {
-                                (PreguntaTable.tipoBanco eq "NV") and
-                                (PreguntaTable.sector eq req.sector) and
-                                (PreguntaTable.nivel eq nivelNormalizado) and
-                                (PreguntaTable.activa eq true)
-                            }
-                            .orderBy(Random())
-                            .limit(maxPorBanco)
-                            .toList()
-
-                        val prRows = PreguntaTable
-                            .selectAll()
-                            .where {
-                                (PreguntaTable.tipoBanco eq "PR") and
-                                (PreguntaTable.sector eq req.sector) and
-                                (PreguntaTable.nivel eq nivelNormalizado) and
-                                (PreguntaTable.activa eq true)
-                            }
-                            .orderBy(Random())
-                            .limit(maxPorBanco)
-                            .toList()
-
-                        val blRows = PreguntaTable
-                            .selectAll()
-                            .where {
-                                (PreguntaTable.tipoBanco eq "BL") and
-                                (PreguntaTable.sector eq req.sector) and
-                                (PreguntaTable.nivel eq nivelNormalizado) and
-                                (PreguntaTable.activa eq true)
-                            }
-                            .orderBy(Random())
-                            .limit(maxPorBanco)
-                            .toList()
+                        val nvRows = seleccionarPreguntasBanco("NV", maxPorBanco)
+                        val prRows = seleccionarPreguntasBanco("PR", maxPorBanco)
+                        val blRows = seleccionarPreguntasBanco("BL", maxPorBanco)
 
                         (nvRows + prRows + blRows)
                             .shuffled()
@@ -383,19 +454,9 @@ fun Route.pruebaFrontRoutes() {
                     }
                 } else {
                     // ---------- MODO PR / NV / BL CLÁSICO ----------
-                    // Aquí NO usamos cantidades aunque vengan en el request,
-                    // para no romper los flujos existentes de práctica/nivelación.
-                    PreguntaTable
-                        .selectAll()
-                        .where {
-                            (PreguntaTable.tipoBanco eq modoPrueba) and
-                            (PreguntaTable.sector eq req.sector) and
-                            (PreguntaTable.nivel eq nivelNormalizado) and
-                            (PreguntaTable.activa eq true)
-                        }
-                        .orderBy(Random())
-                        .limit(MAX_PREGUNTAS)
-                        .toList()
+                    // Aquí NO usamos cantidades por banco aunque vengan en el request,
+                    // pero sí respetamos las cuotas de tipo de pregunta si vienen.
+                    seleccionarPreguntasBanco(modoPrueba, MAX_PREGUNTAS)
                 }
 
             // 3) Insertar en PRUEBA_PREGUNTA y armar DTO
@@ -480,7 +541,7 @@ fun Route.pruebaFrontRoutes() {
 
         val resp = CrearPruebaNivelacionRes(
             pruebaId = pruebaId.toString(),
-            tipoPrueba = etiquetaTipoPrueba,
+            tipoPrueba = etiquetaTipoPruebaFront,
             area = req.sector,
             nivel = nivelNormalizado,
             metadata = mapOf(
@@ -489,7 +550,8 @@ fun Route.pruebaFrontRoutes() {
                 "nombreUsuario" to (req.nombreUsuario ?: ""),
                 "nivelSolicitado" to nivelNormalizado,
                 "tipoBanco" to tipoBancoMeta,
-                "tipoPrueba" to etiquetaTipoPrueba
+                "tipoPrueba" to etiquetaTipoPruebaFront,
+                "esPremium" to esPremium.toString()
             ),
             preguntas = preguntasSeleccionadas
         )

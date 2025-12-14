@@ -140,4 +140,54 @@ class PracticeGlobalFeedbackService(
 
         return interviewQuestionService.generarTexto(prompt)
     }
+
+    /**
+     * Feedback determinístico "NLP" para cuentas estándar (sin llamada a LLM).
+     */
+    fun generarFeedbackNlpBasico(
+        puntaje: Int,
+        totalPreguntas: Int,
+        correctas: Int,
+        preguntas: List<ResultadoPreguntaResConTexto>
+    ): String {
+        val abiertas = preguntas.filter { it.tipo == "abierta" }
+        val opcionMultiple = preguntas.filter { it.tipo != "abierta" }
+
+        val tono = when {
+            puntaje >= 80 -> "Tu desempeño es muy sólido; solo afina algunos detalles."
+            puntaje >= 60 -> "Vas bien encaminado, pero aún hay brechas que cubrir."
+            puntaje >= 40 -> "Se identifican lagunas importantes; prioriza los temas clave."
+            else -> "Es un punto de partida: enfócate en fundamentos antes de una entrevista real."
+        }
+
+        val resumenAbiertas = abiertas.joinToString("\n") { p ->
+            val estado = if (p.correcta) "✔" else "✘"
+            "$estado Respuesta abierta: \"${p.textoPregunta.take(120)}\""
+        }.ifBlank { "No hubo respuestas abiertas en esta prueba." }
+
+        val resumenCerradas = opcionMultiple.joinToString("\n") { p ->
+            val estado = if (p.correcta) "✔" else "✘"
+            "$estado Opción múltiple: \"${p.textoPregunta.take(120)}\""
+        }.ifBlank { "No hubo preguntas de opción múltiple." }
+
+        val sugerencias = buildString {
+            appendLine("- Prioriza las preguntas que contestaste mal y revisa definiciones básicas.")
+            appendLine("- Practica explicando en voz alta tus respuestas para ganar fluidez.")
+            appendLine("- Alterna ejercicios de opción múltiple con preguntas abiertas para equilibrar teoría y comunicación.")
+        }
+
+        return """
+            Resultado: $puntaje% ($correctas/$totalPreguntas correctas)
+            $tono
+
+            📌 Resumen de abiertas:
+            $resumenAbiertas
+
+            📌 Resumen de opción múltiple:
+            $resumenCerradas
+
+            ▶️ Sugerencias inmediatas:
+            $sugerencias
+        """.trimIndent()
+    }
 }

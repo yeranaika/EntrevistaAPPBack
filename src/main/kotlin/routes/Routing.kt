@@ -208,7 +208,7 @@ fun Application.configureRouting(
         pruebaRoutes()
 
         // Front de pruebas (nivelación/práctica para app/web)
-        pruebaFrontRoutes()
+        pruebaFrontRoutes(suscripcionRepo)
 
         // Admin: banco de preguntas
         adminPreguntaRoutes(preguntaRepo)
@@ -264,8 +264,11 @@ fun Application.configureRouting(
             testRepo = testNivelacionRepo
         )
 
-        // Práctica: envío de respuestas + feedback general (IA)
-        pruebaPracticaRespuestaRoutes(practiceGlobalFeedbackService)
+        // Práctica: envío de respuestas + feedback general (IA/NLP)
+        pruebaPracticaRespuestaRoutes(
+            feedbackService = practiceGlobalFeedbackService,
+            suscripcionRepository = suscripcionRepo
+        )
 
         // Admin: preguntas de nivelación
         adminPreguntaNivelacionRoutes(preguntaNivelacionRepo)
