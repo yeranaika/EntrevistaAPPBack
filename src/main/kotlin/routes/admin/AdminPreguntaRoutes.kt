@@ -54,6 +54,31 @@ fun Route.adminPreguntaRoutes(repo: PreguntaRepository) {
                 call.respond(HttpStatusCode.Created, created)
             }
 
+            // ---------- GET /admin/preguntas/{id} (obtener una pregunta) ----------
+            get("/{id}") {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@get call.respond(HttpStatusCode.Unauthorized)
+
+                if (!principal.isAdmin())
+                    return@get call.respond(HttpStatusCode.Forbidden, "Solo admin")
+
+                val idParam = call.parameters["id"]
+                    ?: return@get call.respond(HttpStatusCode.BadRequest, "id requerido")
+
+                val preguntaId = runCatching { UUID.fromString(idParam) }
+                    .getOrElse { return@get call.respond(HttpStatusCode.BadRequest, "id inválido") }
+
+                val pregunta = runCatching { repo.getById(preguntaId) }
+                    .getOrElse { ex ->
+                        return@get call.respond(HttpStatusCode.InternalServerError, ex.message ?: "Error obteniendo pregunta")
+                    }
+
+                if (pregunta == null)
+                    return@get call.respond(HttpStatusCode.NotFound, "Pregunta no encontrada")
+
+                call.respond(HttpStatusCode.OK, pregunta)
+            }
+
             // ---------- GET /admin/preguntas (listar con filtros) ----------
             get {
                 val principal = call.principal<JWTPrincipal>()
@@ -69,6 +94,7 @@ fun Route.adminPreguntaRoutes(repo: PreguntaRepository) {
                 val activa = call.request.queryParameters["activa"]?.toBooleanStrictOrNull()
                 val nivel  = parseEnum(call.request.queryParameters["nivel"], Nivel.values())
                 val tipo   = parseEnum(call.request.queryParameters["tipoBanco"], TipoBanco.values())
+                val sector = call.request.queryParameters["sector"]
                 val q      = call.request.queryParameters["q"]
 
                 val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
@@ -79,6 +105,7 @@ fun Route.adminPreguntaRoutes(repo: PreguntaRepository) {
                         activa    = activa,
                         nivel     = nivel,
                         tipoBanco = tipo,
+                        sector    = sector,
                         q         = q,
                         page      = page,
                         size      = size
@@ -94,58 +121,9 @@ fun Route.adminPreguntaRoutes(repo: PreguntaRepository) {
 
                 call.respond(res)
             }
-        }
 
-        get("/admin/preguntas") {
-            val principal = call.principal<JWTPrincipal>()
-                ?: return@get call.respond(HttpStatusCode.Unauthorized)
-
-            if (!principal.isAdmin())
-                return@get call.respond(HttpStatusCode.Forbidden, "Solo admin")
-
-            // Parsear query parameters
-            val activa = call.request.queryParameters["activa"]?.toBooleanStrictOrNull()
-            val nivel = call.request.queryParameters["nivel"]?.let {
-                runCatching { Nivel.valueOf(it) }.getOrNull()
-            }
-            val tipoBanco = call.request.queryParameters["tipoBanco"]?.let {
-                runCatching { TipoBanco.valueOf(it) }.getOrNull()
-            }
-            val q = call.request.queryParameters["q"]
-            val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
-            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 20
-
-            // Validar parámetros
-            if (page < 1)
-                return@get call.respond(HttpStatusCode.BadRequest, "page debe ser >= 1")
-            if (size < 1 || size > 100)
-                return@get call.respond(HttpStatusCode.BadRequest, "size debe estar entre 1 y 100")
-
-            val params = PreguntaRepository.ListParams(
-                activa = activa,
-                nivel = nivel,
-                tipoBanco = tipoBanco,
-                q = q,
-                page = page,
-                size = size
-            )
-
-            val (items, total) = runCatching { repo.list(params) }
-                .getOrElse { ex ->
-                    return@get call.respond(HttpStatusCode.InternalServerError, ex.message ?: "Error listando preguntas")
-                }
-
-            val response = PagedPreguntasRes(
-                items = items,
-                page = page,
-                size = size,
-                total = total
-            )
-
-            call.respond(HttpStatusCode.OK, response)
-        }
-
-        patch("/admin/preguntas/{id}") {
+            // ---------- PATCH /admin/preguntas/{id} (actualizar) ----------
+            patch("/{id}") {
             val principal = call.principal<JWTPrincipal>()
                 ?: return@patch call.respond(HttpStatusCode.Unauthorized)
 
@@ -181,6 +159,32 @@ fun Route.adminPreguntaRoutes(repo: PreguntaRepository) {
                 return@patch call.respond(HttpStatusCode.NotFound, "Pregunta no encontrada")
 
             call.respond(HttpStatusCode.OK, updated)
+            }
+
+            // ---------- DELETE /admin/preguntas/{id} (eliminar) ----------
+            delete("/{id}") {
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@delete call.respond(HttpStatusCode.Unauthorized)
+
+                if (!principal.isAdmin())
+                    return@delete call.respond(HttpStatusCode.Forbidden, "Solo admin")
+
+                val idParam = call.parameters["id"]
+                    ?: return@delete call.respond(HttpStatusCode.BadRequest, "id requerido")
+
+                val preguntaId = runCatching { UUID.fromString(idParam) }
+                    .getOrElse { return@delete call.respond(HttpStatusCode.BadRequest, "id inválido") }
+
+                val deleted = runCatching { repo.delete(preguntaId) }
+                    .getOrElse { ex ->
+                        return@delete call.respond(HttpStatusCode.InternalServerError, ex.message ?: "Error eliminando pregunta")
+                    }
+
+                if (!deleted)
+                    return@delete call.respond(HttpStatusCode.NotFound, "Pregunta no encontrada")
+
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Pregunta eliminada exitosamente"))
+            }
         }
     }
 }

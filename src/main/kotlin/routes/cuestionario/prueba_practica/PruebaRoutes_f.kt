@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.Random
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.lowerCase
 import java.util.UUID
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -177,7 +178,7 @@ fun Route.pruebaFrontRoutes(
         val req = call.receive<CrearPruebaNivelacionReq>()
 
         val nivelNormalizado = req.nivel.trim().lowercase()
-        val nivelesValidos = setOf("jr", "mid", "sr")
+        val nivelesValidos = setOf("jr", "mid", "sr", "ssr", "1", "2", "3")
 
         // =========================
         // Validar tipoPrueba
@@ -207,19 +208,28 @@ fun Route.pruebaFrontRoutes(
         }
 
         // Lo que se guarda en la columna tipo_prueba (tipo de PRUEBA, no de banco)
-        val etiquetaTipoPrueba = when (modoPrueba) {
+        // Columna BD admite máximo 8 caracteres.
+        val etiquetaTipoPruebaBD = when (modoPrueba) {
             "NV" -> "nivel"
             // PR y BL son pruebas prácticas (técnicas o blandas)
             "PR", "BL" -> "practica"
-            // MIX / ENT las tratamos como pruebas mezcladas / simulación
-            "MIX", "ENT" -> "blended"   // o "simulacion" si en tu BD usas ese valor
+            // MIX / ENT se muestran como entrevistas/simulaciones
+            "MIX", "ENT" -> "blended"
+            else -> "practica"
+        }
+
+        // Etiqueta más descriptiva para front/metadata
+        val etiquetaTipoPruebaFront = when (modoPrueba) {
+            "NV" -> "nivelacion"
+            "PR", "BL" -> "practica"
+            "MIX", "ENT" -> "entrevista"
             else -> "practica"
         }
 
         if (nivelNormalizado !in nivelesValidos) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "nivel debe ser uno de: jr, mid, sr")
+                mapOf("error" to "nivel debe ser uno de: jr, mid, sr, ssr, 1, 2, 3")
             )
         }
 
@@ -326,14 +336,14 @@ fun Route.pruebaFrontRoutes(
                 put("metaCargo", JsonPrimitive(metaCargoSafe))
                 put("nivelSolicitado", JsonPrimitive(nivelNormalizado))
                 put("tipoBanco", JsonPrimitive(tipoBancoMeta))
-                put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPrueba))
+                put("tipoPruebaEtiqueta", JsonPrimitive(etiquetaTipoPruebaFront))
                 put("usuarioId", JsonPrimitive(req.usuarioId ?: ""))
                 put("esPremium", JsonPrimitive(esPremium))
                 put("nombreUsuario", JsonPrimitive(req.nombreUsuario ?: ""))
             }.toString()
 
             pruebaId = PruebaTable.insert {
-                it[tipoPrueba] = etiquetaTipoPrueba
+                it[tipoPrueba] = etiquetaTipoPruebaBD
                 it[area] = areaSafe
                 it[nivel] = nivelNormalizado
                 it[metadata] = metadataJson
@@ -361,6 +371,12 @@ fun Route.pruebaFrontRoutes(
                 }
             }
 
+            fun tipoBancoObjetivo(tipoBanco: String): List<String> = when (tipoBanco.uppercase()) {
+                "NV" -> listOf("nv", "nivel", "nivelacion", "nivelación")
+                "BL" -> listOf("bl", "blandas", "blanda")
+                else -> listOf("pr", "practica", "práctica", "pr")
+            }
+
             fun seleccionarPreguntasBanco(tipoBanco: String, limite: Int): List<ResultRow> {
                 if (limite <= 0) return emptyList()
 
@@ -370,10 +386,12 @@ fun Route.pruebaFrontRoutes(
                 fun tomar(tipoPregunta: String?, cantidad: Int): List<ResultRow> {
                     if (cantidad <= 0) return emptyList()
 
+                    val bancosObjetivo = tipoBancoObjetivo(tipoBanco)
+
                     val query = PreguntaTable
                         .selectAll()
                         .where {
-                            (PreguntaTable.tipoBanco eq tipoBanco) and
+                            (PreguntaTable.tipoBanco.lowerCase() inList bancosObjetivo) and
                             (PreguntaTable.sector eq req.sector) and
                             (PreguntaTable.nivel eq nivelNormalizado) and
                             (PreguntaTable.activa eq true)
@@ -523,7 +541,7 @@ fun Route.pruebaFrontRoutes(
 
         val resp = CrearPruebaNivelacionRes(
             pruebaId = pruebaId.toString(),
-            tipoPrueba = etiquetaTipoPrueba,
+            tipoPrueba = etiquetaTipoPruebaFront,
             area = req.sector,
             nivel = nivelNormalizado,
             metadata = mapOf(
@@ -532,7 +550,7 @@ fun Route.pruebaFrontRoutes(
                 "nombreUsuario" to (req.nombreUsuario ?: ""),
                 "nivelSolicitado" to nivelNormalizado,
                 "tipoBanco" to tipoBancoMeta,
-                "tipoPrueba" to etiquetaTipoPrueba,
+                "tipoPrueba" to etiquetaTipoPruebaFront,
                 "esPremium" to esPremium.toString()
             ),
             preguntas = preguntasSeleccionadas

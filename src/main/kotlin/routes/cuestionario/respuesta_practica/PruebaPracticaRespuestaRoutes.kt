@@ -1,5 +1,3 @@
-/* src/main/kotlin/routes/cuestionario/respuesta_practica/PruebaPracticaRespuestaRoutes.kt */
-
 package routes.cuestionario.respuesta_practica
 
 import com.example.data.tables.IntentoPruebaTable
@@ -9,6 +7,7 @@ import data.models.cuestionario.prueba_practica.ResultadoPreguntaRes
 import data.models.cuestionario.prueba_practica.RespuestaPreguntaReq
 import data.repository.billing.SuscripcionRepository
 import data.tables.cuestionario.prueba.PruebaPreguntaTable
+import routes.cuestionario.prueba_practica.PruebaTable as PruebaFrontTable
 import data.tables.cuestionario.respuestas.RespuestaPruebaTable
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -24,7 +23,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import routes.cuestionario.prueba_practica.PruebaTable as PruebaFrontTable
 import services.FeedbackGeneralV2
 import services.PracticeGlobalFeedbackService
 import services.ResultadoPreguntaResConTexto
@@ -120,7 +118,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
                 else json.decodeFromString<FeedbackGeneralV2>(feedbackJsonStr)
             }.getOrNull()
 
-            // ✅ IMPORTANTE: responder con DTO tipado (no Map mezclando String y FeedbackGeneralV2)
             call.respond(
                 GetUltimoIntentoRes(
                     pruebaId = pruebaIdPath,
@@ -185,6 +182,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
             val ahoraStr = OffsetDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
 
+            // Datos auxiliares para insertar en respuesta_prueba
             data class RespuestaAGuardar(
                 val pruebaPreguntaId: UUID,
                 val respuestaUsuario: String?,
@@ -198,6 +196,7 @@ fun Route.pruebaPracticaRespuestaRoutes(
 
             var feedbackGeneralV2: FeedbackGeneralV2? = null
             var intentoUuid: UUID? = null
+            var pruebaExiste = true
 
             transaction {
                 iaUsosPrevios = IntentoPruebaTable
@@ -226,11 +225,15 @@ fun Route.pruebaPracticaRespuestaRoutes(
                 val rowPrueba = PruebaFrontTable
                     .selectAll()
                     .where { PruebaFrontTable.pruebaId eq pruebaUuid }
+                    .limit(1)
                     .singleOrNull()
 
-                @Suppress("UNUSED_VARIABLE")
-                val tipoPruebaEtiqueta = rowPrueba?.get(PruebaFrontTable.tipoPrueba) ?: "practica"
+                if (rowPrueba == null) {
+                    pruebaExiste = false
+                    return@transaction
+                }
 
+                // 2) Cargamos preguntas de esa prueba
                 val filas = PruebaPreguntaTable
                     .selectAll()
                     .where { PruebaPreguntaTable.pruebaId eq pruebaUuid }
@@ -332,13 +335,24 @@ fun Route.pruebaPracticaRespuestaRoutes(
 
                 respuestasAGuardar.forEach { r ->
                     RespuestaPruebaTable.insert {
+                        // ✅ NO usar intentoUuid (UUID?) acá: Exposed espera UUID no-null
                         it[RespuestaPruebaTable.intentoId] = newIntentoUuid
-                        it[RespuestaPruebaTable.pruebaPreguntaId] = r.pruebaPreguntaId
+
+                        // ✅ En tu Table suele llamarse "preguntaId" aunque la columna sea prueba_pregunta_id
+                        it[RespuestaPruebaTable.preguntaId] = r.pruebaPreguntaId
+
                         it[RespuestaPruebaTable.respuestaUsuario] = r.respuestaUsuario
                         it[RespuestaPruebaTable.correcta] = r.correcta
                         it[RespuestaPruebaTable.feedbackInspecl] = null
                     }
                 }
+            }
+
+            if (!pruebaExiste) {
+                return@post call.respond(
+                    HttpStatusCode.NotFound,
+                    mapOf("error" to "No existe la prueba solicitada")
+                )
             }
 
             val respondidas = req.respuestas.size
@@ -359,7 +373,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
                     val safeJson = jsonStr.replace("'", "''")
 
                     transaction {
-                        // ✅ exec SIN genéricos (compatible con tu versión Exposed)
                         exec(
                             """
                             UPDATE app.intento_prueba

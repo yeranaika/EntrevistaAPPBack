@@ -27,6 +27,33 @@ fun Route.informeGestionRoutes(
                 val informe = informeRepo.obtenerInformeGestion()
                 call.respond(HttpStatusCode.OK, informe)
             }
+
+            // GET /admin/informes/gestion/excel
+            get("/gestion/excel") {
+                val informe = informeRepo.obtenerInformeGestion()
+                val objetivosCarrera = informeRepo.obtenerObjetivosCarrera()
+                val excelService = services.ExcelService()
+                val fileBytes = excelService.generarExcelInforme(informe, objetivosCarrera)
+
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, "informe_gestion.xlsx").toString()
+                )
+                call.respondBytes(fileBytes, ContentType.Application.OctetStream)
+            }
+
+            // GET /admin/informes/gestion/csv
+            get("/gestion/csv") {
+                val informe = informeRepo.obtenerInformeGestion()
+                val excelService = services.ExcelService()
+                val csvContent = excelService.generarCsvInforme(informe)
+
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, "informe_gestion.csv").toString()
+                )
+                call.respondText(csvContent, ContentType.Text.CSV)
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ data class CreatePreguntaReq(
     val tipoBanco: TipoBanco,
     val nivel: Nivel,
     val sector: String,
+    val metaCargo: String? = null,
     val texto: String,
     val pistas: Map<String, String>? = null,     // se guarda como JSON string
     val historica: Map<String, String>? = null,  // se guarda como JSON string
@@ -25,6 +26,7 @@ data class PreguntaRes(
     val tipoBanco: TipoBanco,
     val nivel: Nivel,
     val sector: String? = null,
+    val metaCargo: String? = null,
     val texto: String,
     val pistas: Map<String, String>?,     // ya parseado
     val historica: Map<String, String>?,  // ya parseado

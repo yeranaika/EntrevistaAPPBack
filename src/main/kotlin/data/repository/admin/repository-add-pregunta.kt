@@ -39,6 +39,7 @@ class PreguntaRepository(
                 st[PreguntaTable.tipoBanco] = req.tipoBanco.name
                 st[PreguntaTable.nivel]     = req.nivel.name
                 st[PreguntaTable.sector]    = sector
+                st[PreguntaTable.metaCargo] = req.metaCargo
                 st[PreguntaTable.texto]     = req.texto
                 st[PreguntaTable.tipoPregunta] = "opcion_multiple"  // o lo que uses por defecto
 
@@ -71,6 +72,7 @@ class PreguntaRepository(
         val activa: Boolean? = null,
         val nivel: Nivel? = null,
         val tipoBanco: TipoBanco? = null,
+        val sector: String? = null,
         val q: String? = null,
         val page: Int = 1,
         val size: Int = 20
@@ -82,7 +84,22 @@ class PreguntaRepository(
 
             params.activa?.let { base.andWhere { PreguntaTable.activa eq it } }
             params.nivel?.let { base.andWhere { PreguntaTable.nivel eq it.name } }
-            params.tipoBanco?.let { base.andWhere { PreguntaTable.tipoBanco eq it.name } }
+
+            // Mapear valores de enum a valores de BD
+            params.tipoBanco?.let { tipo ->
+                val tipoBD = when (tipo) {
+                    TipoBanco.tec -> "PR"   // tec -> Práctica
+                    TipoBanco.soft -> "BL"  // soft -> Blandas
+                    TipoBanco.mix -> "NV"   // mix -> Nivelación
+                }
+                base.andWhere { PreguntaTable.tipoBanco eq tipoBD }
+            }
+
+            // Filtrar por sector (búsqueda parcial, case-insensitive)
+            if (!params.sector.isNullOrBlank()) {
+                val term = "%${params.sector.trim()}%"
+                base.andWhere { lower(PreguntaTable.sector) like term.lowercase() }
+            }
 
             if (!params.q.isNullOrBlank()) {
                 val term = "%${params.q.trim()}%"
@@ -132,6 +149,28 @@ class PreguntaRepository(
                 .limit(1)
                 .single()
                 .toPreguntaRes(json)
+        }
+
+    // ============================
+    // DELETE
+    // ============================
+    suspend fun delete(id: UUID): Boolean =
+        newSuspendedTransaction(db = db) {
+            val deleted = PreguntaTable.deleteWhere { PreguntaTable.id eq id }
+            deleted > 0
+        }
+
+    // ============================
+    // GET BY ID
+    // ============================
+    suspend fun getById(id: UUID): PreguntaRes? =
+        newSuspendedTransaction(db = db) {
+            PreguntaTable
+                .selectAll()
+                .where { PreguntaTable.id eq id }
+                .limit(1)
+                .singleOrNull()
+                ?.toPreguntaRes(json)
         }
 
     // ============================

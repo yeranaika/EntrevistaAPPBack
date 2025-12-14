@@ -98,7 +98,7 @@ fun Route.adminRoutes(adminUserRepo: AdminUserRepository) {
                 }
             }
 
-            // DELETE /admin/usuarios/{usuarioId} - Eliminar un usuario
+            // DELETE /admin/usuarios/{usuarioId} - Desactivar un usuario
             delete("/usuarios/{usuarioId}") {
                 try {
                     val usuarioIdStr = call.parameters["usuarioId"]
@@ -115,17 +115,48 @@ fun Route.adminRoutes(adminUserRepo: AdminUserRepository) {
                         return@delete call.respond(HttpStatusCode.NotFound, ErrorResponse("Usuario no encontrado"))
                     }
 
-                    // Eliminar el usuario
+                    // Desactivar el usuario
                     val deleted = adminUserRepo.deleteUser(usuarioId)
 
                     if (deleted > 0) {
-                        call.respond(HttpStatusCode.OK, SuccessResponse("Usuario eliminado exitosamente"))
+                        call.respond(HttpStatusCode.OK, SuccessResponse("Usuario desactivado exitosamente"))
                     } else {
-                        call.respond(HttpStatusCode.InternalServerError, ErrorResponse("No se pudo eliminar el usuario"))
+                        call.respond(HttpStatusCode.InternalServerError, ErrorResponse("No se pudo desactivar el usuario"))
                     }
                 } catch (e: Exception) {
-                    call.application.environment.log.error("Error al eliminar usuario", e)
-                    call.respond(HttpStatusCode.InternalServerError, ErrorResponse("Error al eliminar usuario"))
+                    call.application.environment.log.error("Error al desactivar usuario", e)
+                    call.respond(HttpStatusCode.InternalServerError, ErrorResponse("Error al desactivar usuario"))
+                }
+            }
+
+            // PATCH /admin/usuarios/{usuarioId}/activar - Activar un usuario
+            patch("/usuarios/{usuarioId}/activar") {
+                try {
+                    val usuarioIdStr = call.parameters["usuarioId"]
+                        ?: return@patch call.respond(HttpStatusCode.BadRequest, ErrorResponse("usuarioId requerido"))
+
+                    val usuarioId = try {
+                        UUID.fromString(usuarioIdStr)
+                    } catch (e: IllegalArgumentException) {
+                        return@patch call.respond(HttpStatusCode.BadRequest, ErrorResponse("usuarioId inválido"))
+                    }
+
+                    // Verificar que el usuario existe
+                    if (!adminUserRepo.existsById(usuarioId)) {
+                        return@patch call.respond(HttpStatusCode.NotFound, ErrorResponse("Usuario no encontrado"))
+                    }
+
+                    // Activar el usuario
+                    val activated = adminUserRepo.activateUser(usuarioId)
+
+                    if (activated > 0) {
+                        call.respond(HttpStatusCode.OK, SuccessResponse("Usuario activado exitosamente"))
+                    } else {
+                        call.respond(HttpStatusCode.InternalServerError, ErrorResponse("No se pudo activar el usuario"))
+                    }
+                } catch (e: Exception) {
+                    call.application.environment.log.error("Error al activar usuario", e)
+                    call.respond(HttpStatusCode.InternalServerError, ErrorResponse("Error al activar usuario"))
                 }
             }
 
