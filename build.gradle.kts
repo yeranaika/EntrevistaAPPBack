@@ -96,4 +96,7 @@ dependencies {
     implementation("com.sun.mail:jakarta.mail:2.0.1")
     implementation("jakarta.activation:jakarta.activation-api:2.1.0")
     implementation("org.eclipse.angus:angus-activation:2.0.1")
+
+    // Excel Export
+    implementation("org.apache.poi:poi-ooxml:5.2.5")
 }

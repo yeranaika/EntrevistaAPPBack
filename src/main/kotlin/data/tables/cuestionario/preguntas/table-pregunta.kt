@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
 
-object PreguntaTable : Table("pregunta") {
+object PreguntaTable : Table("app.pregunta") {
     val id = uuid("pregunta_id")
     val tipoBanco = varchar("tipo_banco", 5)
     val sector = varchar("sector", 80)

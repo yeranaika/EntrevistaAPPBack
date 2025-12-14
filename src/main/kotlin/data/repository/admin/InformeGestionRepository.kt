@@ -2,34 +2,42 @@ package data.repository.admin
 
 import data.models.admin.*
 import data.tables.usuarios.UsuarioTable
+import data.tables.usuarios.ObjetivoCarreraTable
 import data.tables.cuestionario.PlanPracticaTable
+import data.tables.billing.SuscripcionTable
+import data.tables.sesiones.SesionEntrevistaTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.javatime.timestampWithTimeZone
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class InformeGestionRepository {
 
     suspend fun obtenerInformeGestion(): InformeGestionRes =
         newSuspendedTransaction(Dispatchers.IO) {
 
-            // 1) Usuarios + su objetivo (si tiene plan de práctica)
-            val usuarios = (UsuarioTable leftJoin PlanPracticaTable)
-                .select(
-                    UsuarioTable.usuarioId,
-                    UsuarioTable.correo,
-                    UsuarioTable.nombre,
-                    PlanPracticaTable.area,
-                    PlanPracticaTable.metaCargo,
-                    PlanPracticaTable.nivel
-                )
+            val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+
+            // 1) Usuarios + su objetivo (si tiene plan de práctica) + suscripción
+            val usuarios = (UsuarioTable leftJoin PlanPracticaTable leftJoin SuscripcionTable)
+                .selectAll()
                 .map { row ->
                     UsuarioResumenRes(
                         usuarioId = row[UsuarioTable.usuarioId].toString(),
                         correo = row[UsuarioTable.correo],
                         nombre = row[UsuarioTable.nombre],
+                        estado = row[UsuarioTable.estado],
                         area = row.getOrNull(PlanPracticaTable.area),
                         metaCargo = row.getOrNull(PlanPracticaTable.metaCargo),
-                        nivel = row.getOrNull(PlanPracticaTable.nivel)
+                        nivel = row.getOrNull(PlanPracticaTable.nivel),
+                        fechaCreacion = row[UsuarioTable.fechaCreacion].format(dateFormatter),
+                        fechaUltimoLogin = row[UsuarioTable.fechaUltimoLogin]?.format(dateFormatter),
+                        planSuscripcion = row.getOrNull(SuscripcionTable.plan),
+                        estadoSuscripcion = row.getOrNull(SuscripcionTable.estado),
+                        fechaExpiracionSuscripcion = row.getOrNull(SuscripcionTable.fechaExpiracion)?.toString()
                     )
                 }
 
@@ -69,10 +77,30 @@ class InformeGestionRepository {
                     )
                 }
 
+            // 4) Calcular métricas de usuarios
+            val usuariosActivos = usuarios.count { it.estado == "activo" }
+            val usuariosInactivos = usuarios.count { it.estado == "inactivo" }
+
+
+
+            // Métricas de suscripciones
+            val suscripcionesActivas = usuarios.count { it.estadoSuscripcion == "activa" }
+            val suscripcionesInactivas = usuarios.count { it.estadoSuscripcion != null && it.estadoSuscripcion != "activa" }
+            val usuariosConPremium = usuarios.count { it.planSuscripcion != null && it.planSuscripcion != "free" }
+            val usuariosConFree = usuarios.count { it.planSuscripcion == "free" || it.planSuscripcion == null }
+
             val totales = TotalesRes(
                 usuariosRegistrados = usuarios.size,
+                usuariosActivos = usuariosActivos,
+                usuariosInactivos = usuariosInactivos,
+
+
                 cargosDistintos = personasPorCargo.size,   // nº de grupos metaCargo/area
-                areasDistintas = cargosPorArea.size
+                areasDistintas = cargosPorArea.size,
+                suscripcionesActivas = suscripcionesActivas,
+                suscripcionesInactivas = suscripcionesInactivas,
+                usuariosConPremium = usuariosConPremium,
+                usuariosConFree = usuariosConFree
             )
 
             InformeGestionRes(
@@ -82,4 +110,23 @@ class InformeGestionRepository {
                 cargosPorArea = cargosPorArea
             )
         }
+
+    // Obtener objetivos de carrera para el Excel
+    suspend fun obtenerObjetivosCarrera(): List<ObjetivoCarreraExcel> =
+        newSuspendedTransaction(Dispatchers.IO) {
+            (UsuarioTable innerJoin ObjetivoCarreraTable)
+                .selectAll()
+                .map { row ->
+                    ObjetivoCarreraExcel(
+                        correo = row[UsuarioTable.correo],
+                        nombre = row[UsuarioTable.nombre],
+                        nombreCargo = row[ObjetivoCarreraTable.nombreCargo],
+                        sector = row[ObjetivoCarreraTable.sector],
+                        activo = row[ObjetivoCarreraTable.activo]
+                    )
+                }
+        }
+
+    // TODO: Excel export - Temporarily disabled due to type mismatch issues
+    // suspend fun obtenerDatosExcel(): List<UsuarioExcelRow> = ...
 }

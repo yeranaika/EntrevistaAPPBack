@@ -13,8 +13,14 @@ data class InformeGestionRes(
 @Serializable
 data class TotalesRes(
     val usuariosRegistrados: Int,
+    val usuariosActivos: Int,
+    val usuariosInactivos: Int,
     val cargosDistintos: Int,
-    val areasDistintas: Int
+    val areasDistintas: Int,
+    val suscripcionesActivas: Int,
+    val suscripcionesInactivas: Int,
+    val usuariosConPremium: Int,
+    val usuariosConFree: Int
 )
 
 @Serializable
@@ -22,9 +28,15 @@ data class UsuarioResumenRes(
     val usuarioId: String,
     val correo: String,
     val nombre: String? = null,
+    val estado: String = "activo",
     val area: String? = null,
     val metaCargo: String? = null,
-    val nivel: String? = null
+    val nivel: String? = null,
+    val fechaCreacion: String? = null,
+    val fechaUltimoLogin: String? = null,
+    val planSuscripcion: String? = null,
+    val estadoSuscripcion: String? = null,
+    val fechaExpiracionSuscripcion: String? = null
 )
 
 @Serializable

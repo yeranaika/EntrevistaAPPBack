@@ -81,10 +81,20 @@ class AdminUserRepository(
             }
         }
 
-    /** Eliminar un usuario */
+    /** Desactivar un usuario (cambiar estado a inactivo) */
     suspend fun deleteUser(userId: UUID): Int =
         newSuspendedTransaction(db = db) {
-            UsuarioTable.deleteWhere { UsuarioTable.usuarioId eq userId }
+            UsuarioTable.update({ UsuarioTable.usuarioId eq userId }) {
+                it[estado] = "inactivo"
+            }
+        }
+
+    /** Reactivar un usuario (cambiar estado a activo) */
+    suspend fun activateUser(userId: UUID): Int =
+        newSuspendedTransaction(db = db) {
+            UsuarioTable.update({ UsuarioTable.usuarioId eq userId }) {
+                it[estado] = "activo"
+            }
         }
 
     /** Verificar si un usuario existe por ID */
