@@ -46,7 +46,7 @@ fun Route.intentosPracticaRoutes() {
                         IntentoRow(
                             intentoId = row[IntentoPruebaAppTable.id].toString(),
                             pruebaId = row[IntentoPruebaAppTable.pruebaId].toString(),
-                            tipoPrueba = row[PruebaTable.tipoPrueba],
+                            tipoPrueba = row[PruebaTable.tipoPrueba].normalizaTipoPrueba(),
                             fechaFin = row[IntentoPruebaAppTable.fechaFin],
                             puntaje = row[IntentoPruebaAppTable.puntaje]?.toInt(),
                             puntajeTotal = row[IntentoPruebaAppTable.puntajeTotal],
@@ -64,7 +64,7 @@ fun Route.intentosPracticaRoutes() {
                         IntentoRow(
                             intentoId = row[IntentoPracticaTable.intentoId].toString(),
                             pruebaId = row[IntentoPracticaTable.pruebaId].toString(),
-                            tipoPrueba = row[PruebaTable.tipoPrueba],
+                            tipoPrueba = row[PruebaTable.tipoPrueba].normalizaTipoPrueba(),
                             fechaFin = row[IntentoPracticaTable.fechaFin],
                             puntaje = row[IntentoPracticaTable.puntaje]?.toInt(),
                             puntajeTotal = row[IntentoPracticaTable.puntajeTotal],
@@ -94,6 +94,17 @@ fun Route.intentosPracticaRoutes() {
             call.respond(intentos)
         }
     }
+}
+
+/**
+ * Los registros históricos antiguos pueden tener valores como "nivel" o "blended".
+ * Para que el cliente filtre correctamente, los normalizamos a "nivelacion",
+ * "practica" o "entrevista".
+ */
+private fun String.normalizaTipoPrueba(): String = when (this.lowercase()) {
+    "nivel", "nivelacion" -> "nivelacion"
+    "blended", "ent", "entrenamiento", "entrevista" -> "entrevista"
+    else -> "practica"
 }
 
 private data class IntentoRow(
