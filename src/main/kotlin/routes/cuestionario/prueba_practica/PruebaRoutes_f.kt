@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.Random
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.lowerCase
 import java.util.UUID
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -177,7 +178,7 @@ fun Route.pruebaFrontRoutes(
         val req = call.receive<CrearPruebaNivelacionReq>()
 
         val nivelNormalizado = req.nivel.trim().lowercase()
-        val nivelesValidos = setOf("jr", "mid", "sr")
+        val nivelesValidos = setOf("jr", "mid", "sr", "ssr", "1", "2", "3")
 
         // =========================
         // Validar tipoPrueba
@@ -219,7 +220,7 @@ fun Route.pruebaFrontRoutes(
         if (nivelNormalizado !in nivelesValidos) {
             return@post call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "nivel debe ser uno de: jr, mid, sr")
+                mapOf("error" to "nivel debe ser uno de: jr, mid, sr, ssr, 1, 2, 3")
             )
         }
 
@@ -361,6 +362,12 @@ fun Route.pruebaFrontRoutes(
                 }
             }
 
+            fun tipoBancoObjetivo(tipoBanco: String): List<String> = when (tipoBanco.uppercase()) {
+                "NV" -> listOf("nv", "nivel", "nivelacion", "nivelación")
+                "BL" -> listOf("bl", "blandas", "blanda")
+                else -> listOf("pr", "practica", "práctica", "pr")
+            }
+
             fun seleccionarPreguntasBanco(tipoBanco: String, limite: Int): List<ResultRow> {
                 if (limite <= 0) return emptyList()
 
@@ -370,10 +377,12 @@ fun Route.pruebaFrontRoutes(
                 fun tomar(tipoPregunta: String?, cantidad: Int): List<ResultRow> {
                     if (cantidad <= 0) return emptyList()
 
+                    val bancosObjetivo = tipoBancoObjetivo(tipoBanco)
+
                     val query = PreguntaTable
                         .selectAll()
                         .where {
-                            (PreguntaTable.tipoBanco eq tipoBanco) and
+                            (PreguntaTable.tipoBanco.lowerCase() inList bancosObjetivo) and
                             (PreguntaTable.sector eq req.sector) and
                             (PreguntaTable.nivel eq nivelNormalizado) and
                             (PreguntaTable.activa eq true)
