@@ -9,26 +9,48 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import org.jetbrains.exposed.sql.statements.jdbc.JdbcConnectionImpl
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.postgresql.util.PGobject
 import services.JSearchService
 import services.InterviewQuestionService
 import services.JobNormalizedDto
 import services.MixedGeneratedQuestionDto
 import java.io.File
+import java.nio.charset.StandardCharsets
+import java.sql.Connection
+import java.sql.Types
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 // ===================== Constantes =====================
 
-private const val QUESTIONS_PER_JOB = 3          // cuántas preguntas devolvemos al cliente por cada meta_dato
-private const val BOOTSTRAP_TOTAL = 30          // total esperado en bootstrap
-private const val BOOTSTRAP_PER_LEVEL = 10      // 10 jr, 10 mid, 10 sr
-private const val MAX_JOBS = 1                  // cuántos avisos tomamos desde JSearch por meta_dato
+private const val QUESTIONS_PER_JOB = 3
+private const val BOOTSTRAP_TOTAL = 30
+private const val BOOTSTRAP_PER_LEVEL = 10
+private const val MAX_JOBS = 1
 private const val BACKUP_FILE_PATH = "src/DB/preguntas_backup.json"
+
+// Solo estos bancos cuentan para “prueba”
+private val BANKS_FOR_TEST = listOf("AIJOB", "PR")
+
+// JSON (único) para todo el archivo
+private val JSON = Json {
+    prettyPrint = true
+    ignoreUnknownKeys = true
+    isLenient = true
+    explicitNulls = false
+}
 
 // ===================== DTOs =====================
 
@@ -42,9 +64,9 @@ data class GenerateJobsRequest(
 @Serializable
 data class JobWithSavedQuestionsDto(
     val job: JobNormalizedDto,
-    val preguntas: List<String>,      // enunciados devueltos al cliente
-    val generadoPorIA: Boolean,       // true si se generaron nuevas preguntas
-    val motivo: String? = null        // explicación del flujo
+    val preguntas: List<String>,
+    val generadoPorIA: Boolean,
+    val motivo: String? = null
 )
 
 @Serializable
@@ -61,8 +83,8 @@ data class PreguntaDto(
     val sector: String?,
     val nivel: String?,
     val texto: String,
-    val pistas: String?,           // JSON como string
-    val configRespuesta: String?,  // JSON como string
+    val pistas: String?,
+    val configRespuesta: String?,
     val activa: Boolean,
     val fechaCreacion: String
 )
@@ -94,12 +116,8 @@ data class BackupContainer(
 
 // ===================== Helpers =====================
 
-/**
- * Determina el nivel (jr / mid / sr) en base al título del aviso (fallback).
- */
 private fun inferNivelFromTitle(titulo: String): String {
     val t = titulo.lowercase()
-
     return when {
         "senior" in t || " sr" in t || "sr " in t -> "sr"
         "semi" in t || "medio" in t || "middle" in t || "ssr" in t -> "mid"
@@ -108,167 +126,258 @@ private fun inferNivelFromTitle(titulo: String): String {
     }
 }
 
-/**
- * Dado un meta_cargo (metaDato), determina el sector usando los valores del MVP.
- *
- * Si no matchea nada, sector = "Otra área".
- */
 private fun inferSectorFromMetaCargo(metaCargo: String): String {
     val t = metaCargo.lowercase()
-
     return when {
         // Desarrollador
-        "desarrollador backend" in t || ("developer" in t && "backend" in t) ->
-            "Desarrollador"
-        "desarrollador frontend" in t || ("developer" in t && "frontend" in t) ->
-            "Desarrollador"
-        "desarrollador fullstack" in t || ("developer" in t && ("fullstack" in t || "full stack" in t)) ->
-            "Desarrollador"
-        "desarrollador android" in t || ("developer" in t && "android" in t) ->
-            "Desarrollador"
-        "qa automation" in t ->
-            "Desarrollador"
+        "desarrollador backend" in t || ("developer" in t && "backend" in t) -> "Desarrollador"
+        "desarrollador frontend" in t || ("developer" in t && "frontend" in t) -> "Desarrollador"
+        "desarrollador fullstack" in t || ("developer" in t && ("fullstack" in t || "full stack" in t)) -> "Desarrollador"
+        "desarrollador android" in t || ("developer" in t && "android" in t) -> "Desarrollador"
+        "qa automation" in t -> "Desarrollador"
 
         // Analista TI
-        "soporte ti" in t || "helpdesk" in t || "help desk" in t ->
-            "Analista TI"
-        "devops" in t ->
-            "Analista TI"
-        "sysadmin" in t || "administrador de sistemas" in t ->
-            "Analista TI"
+        "soporte ti" in t || "helpdesk" in t || "help desk" in t -> "Analista TI"
+        "devops" in t -> "Analista TI"
+        "sysadmin" in t || "administrador de sistemas" in t -> "Analista TI"
 
         // Analista
-        "analista de datos" in t || "data analyst" in t ->
-            "Analista"
-        "analista de negocios" in t || "business analyst" in t ->
-            "Analista"
-        "analista qa" in t ->
-            "Analista"
-        "analista funcional" in t ->
-            "Analista"
+        "analista de datos" in t || "data analyst" in t -> "Analista"
+        "analista de negocios" in t || "business analyst" in t -> "Analista"
+        "analista qa" in t -> "Analista"
+        "analista funcional" in t -> "Analista"
 
         // Administración
-        "asistente administrativo" in t || "administrativo" in t ->
-            "Administracion"
-        "analista contable" in t || "contador" in t ->
-            "Administracion"
-        "jefe de administración" in t || "jefe de administracion" in t ->
-            "Administracion"
+        "asistente administrativo" in t || "administrativo" in t -> "Administracion"
+        "analista contable" in t || "contador" in t -> "Administracion"
+        "jefe de administración" in t || "jefe de administracion" in t -> "Administracion"
 
         else -> "Otra área"
     }
 }
 
-/**
- * Convierte lista de pistas (List<String>) a JSON string seguro para insertar.
- */
-private fun buildPistasJson(pistas: List<String>): String {
-    if (pistas.isEmpty()) return "[]"
-    val safeHints = pistas.map { it.replace("\"", "\\\"") }
-    return safeHints.joinToString(
-        separator = "\", \"",
-        prefix = "[\"",
-        postfix = "\"]"
-    )
-}
+private fun buildPistasJson(pistas: List<String>): String =
+    JSON.encodeToString(pistas)
 
 /**
- * Construye el JSON de config_respuesta SIN incluir el campo "tipo".
+ * FIX: NO usar Map<String, Any> porque kotlinx.serialization no puede serializar Any.
+ * Construimos JsonElement (buildJsonObject/buildJsonArray) y serializamos JsonElement.
  */
 private fun buildConfigRespuestaJson(q: MixedGeneratedQuestionDto): String {
-    return if (q.tipo == "seleccion_unica") {
-        // Pregunta cerrada con alternativas
-        val safeOpciones = q.opciones.map { opt ->
-            val safeTexto = opt.texto.replace("\"", "\\\"")
-            """{"id":"${opt.id}","texto":"$safeTexto"}"""
+    val elem: JsonElement =
+        if (q.tipo == "seleccion_unica") {
+            buildJsonObject {
+                put(
+                    "opciones",
+                    buildJsonArray {
+                        q.opciones.forEach { opt ->
+                            add(
+                                buildJsonObject {
+                                    put("id", JsonPrimitive(opt.id))
+                                    put("texto", JsonPrimitive(opt.texto))
+                                }
+                            )
+                        }
+                    }
+                )
+                put("respuesta_correcta", JsonPrimitive(q.respuesta_correcta ?: ""))
+            }
+        } else {
+            val min = q.min_caracteres ?: 20
+            val max = q.max_caracteres ?: 300
+            buildJsonObject {
+                put("min_caracteres", JsonPrimitive(min))
+                put("max_caracteres", JsonPrimitive(max))
+            }
         }
 
-        val opcionesJoined = safeOpciones.joinToString(
-            separator = ",",
-            prefix = "[",
-            postfix = "]"
-        )
-
-        val correct = q.respuesta_correcta ?: ""
-
-        """
-        {
-          "opciones": $opcionesJoined,
-          "respuesta_correcta": "$correct"
-        }
-        """.trimIndent().replace("\n", "")
-    } else {
-        // Pregunta abierta
-        val min = q.min_caracteres ?: 20
-        val max = q.max_caracteres ?: 300
-
-        """
-        {
-          "min_caracteres": $min,
-          "max_caracteres": $max
-        }
-        """.trimIndent().replace("\n", "")
-    }
+    return JSON.encodeToString(JsonElement.serializer(), elem)
 }
 
 /**
- * 🆕 Construye el JSON de config_evaluacion según el tipo de pregunta.
+ * FIX: idem, evitar Any.
  */
 private fun buildConfigEvaluacionJson(q: MixedGeneratedQuestionDto): String {
-    return if (q.tipo == "seleccion_unica") {
-        // Pregunta de selección única (choice)
-        val safeExplicacionCorrecta = q.explicacion_correcta
-            ?.replace("\"", "\\\"")
-            ?.replace("\n", " ") ?: ""
-        
-        val safeExplicacionIncorrecta = q.explicacion_incorrecta
-            ?.replace("\"", "\\\"")
-            ?.replace("\n", " ") ?: ""
-        
-        """
-        {
-          "tipo_item": "choice",
-          "nlp": {
-            "explicacion_correcta": "$safeExplicacionCorrecta",
-            "explicacion_incorrecta": "$safeExplicacionIncorrecta"
-          }
-        }
-        """.trimIndent().replace("\n", "")
-    } else {
-        // Pregunta abierta (open)
-        val safeFeedback = q.feedback_generico
-            ?.replace("\"", "\\\"")
-            ?.replace("\n", " ") ?: ""
-        
-        val safeFrases = q.frases_clave_esperadas.map { 
-            it.replace("\"", "\\\"") 
-        }
-        
-        val frasesJoined = if (safeFrases.isEmpty()) {
-            "[]"
+    val elem: JsonElement =
+        if (q.tipo == "seleccion_unica") {
+            buildJsonObject {
+                put("tipo_item", JsonPrimitive("choice"))
+                put(
+                    "nlp",
+                    buildJsonObject {
+                        put("explicacion_correcta", JsonPrimitive(q.explicacion_correcta ?: ""))
+                        put("explicacion_incorrecta", JsonPrimitive(q.explicacion_incorrecta ?: ""))
+                    }
+                )
+            }
         } else {
-            safeFrases.joinToString(
-                separator = "\", \"",
-                prefix = "[\"",
-                postfix = "\"]"
-            )
+            buildJsonObject {
+                put("tipo_item", JsonPrimitive("open"))
+                put(
+                    "nlp",
+                    buildJsonObject {
+                        put(
+                            "frases_clave_esperadas",
+                            buildJsonArray {
+                                (q.frases_clave_esperadas ?: emptyList()).forEach { s ->
+                                    add(JsonPrimitive(s))
+                                }
+                            }
+                        )
+                    }
+                )
+                put("feedback_generico", JsonPrimitive(q.feedback_generico ?: ""))
+            }
         }
-        
-        """
-        {
-          "tipo_item": "open",
-          "nlp": {
-            "frases_clave_esperadas": $frasesJoined
-          },
-          "feedback_generico": "$safeFeedback"
-        }
-        """.trimIndent().replace("\n", "")
+
+    return JSON.encodeToString(JsonElement.serializer(), elem)
+}
+
+private fun toJsonb(json: String): PGobject =
+    PGobject().apply {
+        type = "jsonb"
+        value = json
+    }
+
+/**
+ * FIX REAL (runtime):
+ * TransactionManager.current().connection es JdbcConnectionImpl (Exposed), NO java.sql.Connection.
+ * JdbcConnectionImpl sí expone la JDBC connection real vía `.connection`.
+ */
+private fun jdbcConnection(): Connection {
+    val exposedConn = TransactionManager.current().connection
+    return when (exposedConn) {
+        is JdbcConnectionImpl -> exposedConn.connection
+        is Connection -> exposedConn
+        else -> error("No se pudo obtener java.sql.Connection desde Exposed connection: ${exposedConn::class.qualifiedName}")
     }
 }
 
-/**
- * 🆕 Guarda la pregunta en el archivo de backup JSON
- */
+private fun insertPreguntaSafe(
+    preguntaId: UUID,
+    tipoBanco: String,
+    sector: String,
+    nivel: String,
+    metaCargo: String,
+    tipoPreguntaDb: String,
+    texto: String,
+    pistasJson: String,
+    configRespuestaJson: String,
+    configEvaluacionJson: String?
+) {
+    val sql = """
+        INSERT INTO pregunta (
+            pregunta_id,
+            tipo_banco,
+            sector,
+            nivel,
+            meta_cargo,
+            tipo_pregunta,
+            texto,
+            pistas,
+            config_respuesta,
+            config_evaluacion,
+            activa,
+            fecha_creacion
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true, now())
+    """.trimIndent()
+
+    val conn = jdbcConnection()
+    val stmt = conn.prepareStatement(sql)
+    try {
+        stmt.setObject(1, preguntaId)
+        stmt.setString(2, tipoBanco)
+        stmt.setString(3, sector)
+        stmt.setString(4, nivel)
+        stmt.setString(5, metaCargo)
+        stmt.setString(6, tipoPreguntaDb)
+        stmt.setString(7, texto)
+
+        stmt.setObject(8, toJsonb(pistasJson))
+        stmt.setObject(9, toJsonb(configRespuestaJson))
+
+        if (configEvaluacionJson == null) {
+            stmt.setNull(10, Types.OTHER)
+        } else {
+            stmt.setObject(10, toJsonb(configEvaluacionJson))
+        }
+
+        stmt.executeUpdate()
+    } finally {
+        try { stmt.close() } catch (_: Exception) {}
+    }
+}
+
+private fun countBancoParaSectorMeta(sector: String, metaCargo: String): Int {
+    val sql = """
+        SELECT COUNT(*) AS cnt
+        FROM pregunta
+        WHERE sector = ?
+          AND meta_cargo = ?
+          AND tipo_banco IN ('AIJOB', 'PR')
+    """.trimIndent()
+
+    val conn = jdbcConnection()
+    val stmt = conn.prepareStatement(sql)
+    try {
+        stmt.setString(1, sector)
+        stmt.setString(2, metaCargo)
+
+        val rs = stmt.executeQuery()
+        try {
+            return if (rs.next()) rs.getInt("cnt") else 0
+        } finally {
+            try { rs.close() } catch (_: Exception) {}
+        }
+    } finally {
+        try { stmt.close() } catch (_: Exception) {}
+    }
+}
+
+private fun fetchPreguntasExistentes(
+    sector: String,
+    metaCargo: String,
+    nivel: String,
+    limit: Int
+): List<String> {
+    val sql = """
+        SELECT texto
+        FROM pregunta
+        WHERE sector = ?
+          AND meta_cargo = ?
+          AND nivel = ?
+          AND tipo_banco IN ('AIJOB', 'PR')
+        ORDER BY fecha_creacion DESC
+        LIMIT ?
+    """.trimIndent()
+
+    val out = mutableListOf<String>()
+
+    val conn = jdbcConnection()
+    val stmt = conn.prepareStatement(sql)
+    try {
+        stmt.setString(1, sector)
+        stmt.setString(2, metaCargo)
+        stmt.setString(3, nivel)
+        stmt.setInt(4, limit)
+
+        val rs = stmt.executeQuery()
+        try {
+            while (rs.next()) {
+                val t = rs.getString("texto")
+                if (!t.isNullOrBlank()) out.add(t)
+            }
+        } finally {
+            try { rs.close() } catch (_: Exception) {}
+        }
+    } finally {
+        try { stmt.close() } catch (_: Exception) {}
+    }
+
+    return out
+}
+
 private fun guardarPreguntaEnBackup(
     preguntaId: UUID,
     tipoBanco: String,
@@ -283,15 +392,12 @@ private fun guardarPreguntaEnBackup(
 ) {
     try {
         val backupFile = File(BACKUP_FILE_PATH)
-        val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
-        
-        // Crear directorio si no existe
         backupFile.parentFile?.mkdirs()
-        
-        // Leer backup existente o crear uno nuevo
+
         val container: BackupContainer = if (backupFile.exists()) {
             try {
-                json.decodeFromString(backupFile.readText())
+                val raw = backupFile.readText(StandardCharsets.UTF_8)
+                JSON.decodeFromString(raw)
             } catch (e: Exception) {
                 println("⚠️ Error leyendo backup existente, creando nuevo: ${e.message}")
                 BackupContainer(
@@ -307,8 +413,7 @@ private fun guardarPreguntaEnBackup(
                 preguntas = emptyList()
             )
         }
-        
-        // Crear nueva pregunta
+
         val nuevaPregunta = PreguntaBackup(
             pregunta_id = preguntaId.toString(),
             tipo_banco = tipoBanco,
@@ -322,23 +427,19 @@ private fun guardarPreguntaEnBackup(
             config_evaluacion = configEvaluacionJson,
             fecha_creacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
         )
-        
-        // Agregar a la lista (evitar duplicados por UUID)
+
         val preguntasActualizadas = container.preguntas
             .filterNot { it.pregunta_id == preguntaId.toString() }
             .plus(nuevaPregunta)
-        
-        // Actualizar container
+
         val containerActualizado = container.copy(
             fecha_actualizacion = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
             total_preguntas = preguntasActualizadas.size,
             preguntas = preguntasActualizadas
         )
-        
-        // Escribir archivo
-        backupFile.writeText(json.encodeToString(containerActualizado))
-        
-        println("✅ Pregunta ${preguntaId} guardada en backup (total: ${preguntasActualizadas.size})")
+
+        backupFile.writeText(JSON.encodeToString(containerActualizado), StandardCharsets.UTF_8)
+        println("✅ Pregunta $preguntaId guardada en backup (total: ${preguntasActualizadas.size})")
     } catch (e: Exception) {
         println("⚠️ Error guardando backup: ${e.message}")
         e.printStackTrace()
@@ -351,20 +452,9 @@ fun Route.jobsGeneratorRoutes(
     jSearchService: JSearchService,
     interviewQuestionService: InterviewQuestionService
 ) {
-
     route("/jobs") {
 
-        /**
-         * POST /jobs/generate-and-save
-         *
-         * Body esperado:
-         * {
-         *   "meta_dato": "Desarrollador Android",
-         *   "country": "cl"
-         * }
-         */
         post("/generate-and-save") {
-
             val req = try {
                 call.receive<GenerateJobsRequest>()
             } catch (e: Exception) {
@@ -380,15 +470,11 @@ fun Route.jobsGeneratorRoutes(
             }
 
             if (req.metaDato.isBlank()) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("error" to "El campo meta_dato es obligatorio")
-                )
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "El campo meta_dato es obligatorio"))
                 return@post
             }
 
             try {
-                // Usamos metaDato como query hacia JSearch
                 val jobs = jSearchService.searchJobs(
                     query = req.metaDato,
                     country = req.country,
@@ -405,303 +491,187 @@ fun Route.jobsGeneratorRoutes(
                 for (job in subset) {
                     val nivelInferido = inferNivelFromTitle(job.titulo)
 
-                    // Ahora el meta_cargo viene del request
-                    val metaCargoInferido = req.metaDato
-                    val sectorInferido = inferSectorFromMetaCargo(metaCargoInferido)
+                    val metaCargo = req.metaDato
+                    val sector = inferSectorFromMetaCargo(metaCargo)
+                    val nivelBase = nivelInferido
 
-                    val safeSector = sectorInferido.replace("'", "''")
-                    val safeMetaCargo = metaCargoInferido.replace("'", "''")
-                    val safeNivelBase = nivelInferido.replace("'", "''")
-
-                    // ----------------------------------------------------------------
-                    // 0) ¿Existe ALGUNA pregunta para este (sector, meta_cargo)?
-                    //    (cualquier nivel, cualquier tipo_banco)
-                    // ----------------------------------------------------------------
                     val existeBancoParaSectorMeta = transaction {
-                        var count = 0
-                        val sql = """
-                            SELECT COUNT(*) AS cnt
-                            FROM pregunta
-                            WHERE sector = '$safeSector'
-                            AND meta_cargo = '$safeMetaCargo'
-                            AND tipo_banco IN ('AIJOB', 'PR')   -- Solo buscamos 'AIJOB' o 'PR'
-                        """.trimIndent()
-
-                        TransactionManager.current().exec(sql) { rs ->
-                            if (rs.next()) {
-                                count = rs.getInt("cnt")
-                            }
-                        }
-                        count > 0   // Retorna true si hay al menos una pregunta que cumple con las condiciones
+                        countBancoParaSectorMeta(sector = sector, metaCargo = metaCargo) > 0
                     }
 
                     if (!existeBancoParaSectorMeta) {
-                        // =========================================================
-                        // Caso A: NO hay nada aún para este sector/meta_cargo
-                        //         -> Crear banco inicial:
-                        //            10 jr, 10 mid, 10 sr (total 30)
-                        // =========================================================
-                        println("🆕 No existe banco para sector=$safeSector, meta_cargo=$safeMetaCargo. Generando banco inicial (10 jr, 10 mid, 10 sr)...")
+                        println("🆕 No existe banco para sector=$sector, meta_cargo=$metaCargo. Generando banco inicial (10 jr, 10 mid, 10 sr)...")
 
                         val nivelesBootstrap = listOf("jr", "mid", "sr")
                         val preguntasBootstrap = mutableListOf<Pair<MixedGeneratedQuestionDto, String>>()
 
                         for (nivelTarget in nivelesBootstrap) {
                             var acumuladasNivel = 0
-
-                            // Loop para asegurar hasta 10 por nivel (si la IA coopera)
                             while (acumuladasNivel < BOOTSTRAP_PER_LEVEL) {
                                 val batch = interviewQuestionService.generateMixedQuestionsForJob(
                                     job = job,
-                                    cantidad = 1 // pedimos 1 para no depender de que respete el "cantidad"
+                                    cantidad = 1
                                 )
 
                                 println("   🔧 IA nivel=$nivelTarget devolvió ${batch.size} preguntas (acumuladasNivel=$acumuladasNivel)")
 
                                 if (batch.isEmpty()) {
-                                    // Evita loop infinito si la IA empieza a devolver 0
-                                    println("   ⚠️ La IA devolvió 0 preguntas para nivel=$nivelTarget, se detiene el loop de este nivel.")
+                                    println("   ⚠️ IA devolvió 0 preguntas para nivel=$nivelTarget, se detiene este nivel.")
                                     break
                                 }
 
-                                batch.forEach { q ->
-                                    preguntasBootstrap += q to nivelTarget
+                                for (q in batch) {
+                                    preguntasBootstrap.add(q to nivelTarget)
                                     acumuladasNivel++
-
-                                    if (acumuladasNivel >= BOOTSTRAP_PER_LEVEL) return@forEach
+                                    if (acumuladasNivel >= BOOTSTRAP_PER_LEVEL) break
                                 }
                             }
                         }
 
-                        println("✅ Total preguntas generadas en bootstrap para meta_cargo=$safeMetaCargo: ${preguntasBootstrap.size}")
+                        println("✅ Total preguntas generadas en bootstrap para meta_cargo=$metaCargo: ${preguntasBootstrap.size}")
 
                         transaction {
-                            preguntasBootstrap.forEach { (q, nivelTarget) ->
-                                val safeTexto = q.enunciado.replace("'", "''")
-
-                                // Nivel forzado por batch (jr / mid / sr)
-                                val safeNivel = nivelTarget.replace("'", "''")
-
-                                val tipoPreguntaDb = if (q.tipo == "seleccion_unica") {
-                                    "opcion_multiple"
-                                } else {
-                                    "abierta"
-                                }
+                            for ((q, nivelTarget) in preguntasBootstrap) {
+                                val tipoPreguntaDb = if (q.tipo == "seleccion_unica") "opcion_multiple" else "abierta"
 
                                 val pistasJson = buildPistasJson(q.pistas)
                                 val configRespuestaJson = buildConfigRespuestaJson(q)
-                                val configEvaluacionJson = buildConfigEvaluacionJson(q)  // 🆕 NUEVA LÍNEA
+                                val configEvaluacionJson = buildConfigEvaluacionJson(q)
 
-                                val newId = java.util.UUID.randomUUID()
-                                val sql = """
-                                    INSERT INTO pregunta (
-                                        pregunta_id,
-                                        tipo_banco,
-                                        sector,
-                                        nivel,
-                                        meta_cargo,
-                                        tipo_pregunta,
-                                        texto,
-                                        pistas,
-                                        config_respuesta,
-                                        config_evaluacion,
-                                        activa,
-                                        fecha_creacion
-                                    )
-                                    VALUES (
-                                        '$newId',
-                                        'IAJOB',
-                                        '$safeSector',
-                                        '$safeNivel',
-                                        '$safeMetaCargo',
-                                        '$tipoPreguntaDb',
-                                        '$safeTexto',
-                                        '$pistasJson'::jsonb,
-                                        '$configRespuestaJson'::jsonb,
-                                        '$configEvaluacionJson'::jsonb,
-                                        true,
-                                        now()
-                                    )
-                                """.trimIndent()
+                                val newId = UUID.randomUUID()
 
-                                TransactionManager.current().exec(sql)
-                                println("💾 [Bootstrap] Insertada pregunta sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivel")
-                                
-                                // 🆕 Guardar en backup
-                                guardarPreguntaEnBackup(
+                                insertPreguntaSafe(
                                     preguntaId = newId,
                                     tipoBanco = "IAJOB",
-                                    sector = safeSector,
-                                    nivel = safeNivel,
-                                    metaCargo = safeMetaCargo,
-                                    tipoPregunta = tipoPreguntaDb,
-                                    texto = safeTexto,
+                                    sector = sector,
+                                    nivel = nivelTarget,
+                                    metaCargo = metaCargo,
+                                    tipoPreguntaDb = tipoPreguntaDb,
+                                    texto = q.enunciado,
                                     pistasJson = pistasJson,
                                     configRespuestaJson = configRespuestaJson,
                                     configEvaluacionJson = configEvaluacionJson
                                 )
-                                
+
+                                guardarPreguntaEnBackup(
+                                    preguntaId = newId,
+                                    tipoBanco = "IAJOB",
+                                    sector = sector,
+                                    nivel = nivelTarget,
+                                    metaCargo = metaCargo,
+                                    tipoPregunta = tipoPreguntaDb,
+                                    texto = q.enunciado,
+                                    pistasJson = pistasJson,
+                                    configRespuestaJson = configRespuestaJson,
+                                    configEvaluacionJson = configEvaluacionJson
+                                )
+
                                 totalGuardadas++
                             }
                         }
 
-                        // Devolvemos al cliente solo las primeras QUESTIONS_PER_JOB preguntas como ejemplo
-                        result += JobWithSavedQuestionsDto(
-                            job = job,
-                            preguntas = preguntasBootstrap
-                                .map { it.first.enunciado }
-                                .take(QUESTIONS_PER_JOB),
-                            generadoPorIA = true,
-                            motivo = "Se creó banco inicial de hasta $BOOTSTRAP_TOTAL preguntas (10 jr, 10 mid, 10 sr) para este sector y meta_cargo, porque no existían preguntas previas."
+                        result.add(
+                            JobWithSavedQuestionsDto(
+                                job = job,
+                                preguntas = preguntasBootstrap.map { it.first.enunciado }.take(QUESTIONS_PER_JOB),
+                                generadoPorIA = true,
+                                motivo = "Se creó banco inicial de hasta $BOOTSTRAP_TOTAL preguntas (10 jr, 10 mid, 10 sr) para este sector y meta_cargo, porque no existían preguntas previas (PR/AIJOB)."
+                            )
                         )
 
-                        // Pasamos al siguiente aviso
                         continue
                     }
 
-                    // =========================================================
-                    // Caso B: YA hay banco para este sector/meta_cargo
-                    //         -> Intentamos reutilizar por nivel
-                    // =========================================================
                     val preguntasExistentes: List<String> = transaction {
-                        val existing = mutableListOf<String>()
-                        val sql = """
-                            SELECT texto
-                            FROM pregunta
-                            WHERE sector = '$safeSector'
-                            AND meta_cargo = '$safeMetaCargo'
-                            AND nivel = '$safeNivelBase'
-                            AND tipo_banco <> 'NV'
-                            ORDER BY fecha_creacion DESC
-                            LIMIT $QUESTIONS_PER_JOB
-                        """.trimIndent()
-
-                        TransactionManager.current().exec(sql) { rs ->
-                            while (rs.next()) {
-                                val texto = rs.getString("texto")
-                                if (!texto.isNullOrBlank()) {
-                                    existing += texto
-                                }
-                            }
-                        }
-
-                        existing
+                        fetchPreguntasExistentes(
+                            sector = sector,
+                            metaCargo = metaCargo,
+                            nivel = nivelBase,
+                            limit = QUESTIONS_PER_JOB
+                        )
                     }
 
                     if (preguntasExistentes.isNotEmpty()) {
-                        println("🔁 Reutilizando ${preguntasExistentes.size} preguntas existentes para sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivelBase")
-
-                        result += JobWithSavedQuestionsDto(
-                            job = job,
-                            preguntas = preguntasExistentes,
-                            generadoPorIA = false,
-                            motivo = "No se generaron preguntas nuevas porque ya existen preguntas para este sector, meta_cargo y nivel."
+                        result.add(
+                            JobWithSavedQuestionsDto(
+                                job = job,
+                                preguntas = preguntasExistentes,
+                                generadoPorIA = false,
+                                motivo = "No se generaron preguntas nuevas porque ya existen preguntas (PR/AIJOB) para este sector, meta_cargo y nivel."
+                            )
                         )
                         continue
                     }
 
-                    // =========================================================
-                    // Caso C: Sí hay banco para el sector/meta_cargo,
-                    //         pero no para este nivel específico -> generamos
-                    // =========================================================
                     val preguntasGeneradas = interviewQuestionService.generateMixedQuestionsForJob(
                         job = job,
                         cantidad = QUESTIONS_PER_JOB
                     )
 
-                    println("\n🎯 Aviso: ${job.titulo} (${job.empresa ?: "Sin empresa"})")
-                    preguntasGeneradas.forEachIndexed { idx, p ->
-                        println("   ❓ [${idx + 1}] (${p.tipo}) ${p.enunciado}")
-                    }
-
                     transaction {
-                        preguntasGeneradas.forEach { q ->
-                            val safeTexto = q.enunciado.replace("'", "''")
+                        for (q in preguntasGeneradas) {
                             val rawNivel = q.nivel ?: nivelInferido
-                            val safeNivel = when (rawNivel.lowercase()) {
+                            val nivelNormalizado = when (rawNivel.lowercase()) {
                                 "medio", "intermedio", "semi", "ssr", "middle" -> "mid"
                                 "senior", "sr" -> "sr"
                                 else -> "jr"
-                            }.replace("'", "''")
-
-                            val tipoPreguntaDb = if (q.tipo == "seleccion_unica") {
-                                "opcion_multiple"
-                            } else {
-                                "abierta"
                             }
+
+                            val tipoPreguntaDb = if (q.tipo == "seleccion_unica") "opcion_multiple" else "abierta"
 
                             val pistasJson = buildPistasJson(q.pistas)
                             val configRespuestaJson = buildConfigRespuestaJson(q)
-                            val configEvaluacionJson = buildConfigEvaluacionJson(q)  // 🆕 NUEVA LÍNEA
+                            val configEvaluacionJson = buildConfigEvaluacionJson(q)
 
-                            val newId = java.util.UUID.randomUUID()
-                            val sql = """
-                                INSERT INTO pregunta (
-                                    pregunta_id,
-                                    tipo_banco,
-                                    sector,
-                                    nivel,
-                                    meta_cargo,
-                                    tipo_pregunta,
-                                    texto,
-                                    pistas,
-                                    config_respuesta,
-                                    config_evaluacion,
-                                    activa,
-                                    fecha_creacion
-                                )
-                                VALUES (
-                                    '$newId',
-                                    'IAJOB',
-                                    '$safeSector',
-                                    '$safeNivel',
-                                    '$safeMetaCargo',
-                                    '$tipoPreguntaDb',
-                                    '$safeTexto',
-                                    '$pistasJson'::jsonb,
-                                    '$configRespuestaJson'::jsonb,
-                                    '$configEvaluacionJson'::jsonb,
-                                    true,
-                                    now()
-                                )
-                            """.trimIndent()
+                            val newId = UUID.randomUUID()
 
-                            TransactionManager.current().exec(sql)
-                            println("💾 Insertada pregunta en BD: [${q.tipo}] sector=$safeSector, meta_cargo=$safeMetaCargo, nivel=$safeNivel, texto=$safeTexto")
-                            
-                            // 🆕 Guardar en backup
-                            guardarPreguntaEnBackup(
+                            insertPreguntaSafe(
                                 preguntaId = newId,
                                 tipoBanco = "IAJOB",
-                                sector = safeSector,
-                                nivel = safeNivel,
-                                metaCargo = safeMetaCargo,
-                                tipoPregunta = tipoPreguntaDb,
-                                texto = safeTexto,
+                                sector = sector,
+                                nivel = nivelNormalizado,
+                                metaCargo = metaCargo,
+                                tipoPreguntaDb = tipoPreguntaDb,
+                                texto = q.enunciado,
                                 pistasJson = pistasJson,
                                 configRespuestaJson = configRespuestaJson,
                                 configEvaluacionJson = configEvaluacionJson
                             )
-                            
+
+                            guardarPreguntaEnBackup(
+                                preguntaId = newId,
+                                tipoBanco = "IAJOB",
+                                sector = sector,
+                                nivel = nivelNormalizado,
+                                metaCargo = metaCargo,
+                                tipoPregunta = tipoPreguntaDb,
+                                texto = q.enunciado,
+                                pistasJson = pistasJson,
+                                configRespuestaJson = configRespuestaJson,
+                                configEvaluacionJson = configEvaluacionJson
+                            )
+
                             totalGuardadas++
                         }
                     }
 
-                    result += JobWithSavedQuestionsDto(
-                        job = job,
-                        preguntas = preguntasGeneradas.map { it.enunciado },
-                        generadoPorIA = true,
-                        motivo = "Se generaron preguntas con IA (IAJOB) para este nivel porque ya existía banco para el sector/meta_cargo, pero no para este nivel."
+                    result.add(
+                        JobWithSavedQuestionsDto(
+                            job = job,
+                            preguntas = preguntasGeneradas.map { it.enunciado },
+                            generadoPorIA = true,
+                            motivo = "Se generaron preguntas con IA (IAJOB) para este nivel porque ya existía banco (PR/AIJOB) para el sector/meta_cargo, pero no para este nivel."
+                        )
                     )
                 }
 
-                val responsePayload = GenerateJobsResponse(
-                    message = "Se guardaron $totalGuardadas preguntas generadas automáticamente (IAJOB)",
-                    totalEmpleosProcesados = result.size,
-                    items = result
+                call.respond(
+                    GenerateJobsResponse(
+                        message = "Se guardaron $totalGuardadas preguntas generadas automáticamente (IAJOB)",
+                        totalEmpleosProcesados = result.size,
+                        items = result
+                    )
                 )
-
-                call.respond(responsePayload)
             } catch (e: Exception) {
                 e.printStackTrace()
                 call.respond(
@@ -714,26 +684,26 @@ fun Route.jobsGeneratorRoutes(
             }
         }
 
-        /**
-         * GET /jobs/generated-questions
-         */
         get("/generated-questions") {
-            val nivelFilter = call.request.queryParameters["nivel"]  // jr / mid / sr
+            val nivelFilter = call.request.queryParameters["nivel"]
             val sectorFilter = call.request.queryParameters["sector"]
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
 
             val preguntas: List<PreguntaDto> = transaction {
                 val conditions = mutableListOf<String>()
+                val params = mutableListOf<Any>()
 
-                // Solo tipo_banco = 'IAJOB'
-                conditions += "tipo_banco = 'IAJOB'"
+                conditions.add("tipo_banco = ?")
+                params.add("IAJOB")
 
                 if (!nivelFilter.isNullOrBlank()) {
-                    conditions += "nivel = '${nivelFilter.replace("'", "''")}'"
+                    conditions.add("nivel = ?")
+                    params.add(nivelFilter)
                 }
 
                 if (!sectorFilter.isNullOrBlank()) {
-                    conditions += "sector = '${sectorFilter.replace("'", "''")}'"
+                    conditions.add("sector = ?")
+                    params.add(sectorFilter)
                 }
 
                 val whereClause = if (conditions.isNotEmpty()) {
@@ -756,35 +726,56 @@ fun Route.jobsGeneratorRoutes(
                     FROM pregunta
                     $whereClause
                     ORDER BY fecha_creacion DESC
-                    LIMIT $limit
+                    LIMIT ?
                 """.trimIndent()
 
                 val list = mutableListOf<PreguntaDto>()
 
-                TransactionManager.current().exec(sql) { rs ->
-                    while (rs.next()) {
-                        val id = rs.getObject("pregunta_id")?.toString() ?: ""
-                        val tipoBanco = rs.getString("tipo_banco")
-                        val sector = rs.getString("sector")
-                        val nivel = rs.getString("nivel")
-                        val texto = rs.getString("texto")
-                        val pistas = rs.getString("pistas")
-                        val configRespuesta = rs.getString("config_respuesta")
-                        val activa = rs.getBoolean("activa")
-                        val fechaCreacion = rs.getTimestamp("fecha_creacion")?.toInstant()?.toString() ?: ""
-
-                        list += PreguntaDto(
-                            preguntaId = id,
-                            tipoBanco = tipoBanco,
-                            sector = sector,
-                            nivel = nivel,
-                            texto = texto,
-                            pistas = pistas,
-                            configRespuesta = configRespuesta,
-                            activa = activa,
-                            fechaCreacion = fechaCreacion
-                        )
+                val conn = jdbcConnection()
+                val stmt = conn.prepareStatement(sql)
+                try {
+                    var i = 1
+                    for (p in params) {
+                        when (p) {
+                            is String -> stmt.setString(i++, p)
+                            is Int -> stmt.setInt(i++, p)
+                            else -> stmt.setObject(i++, p)
+                        }
                     }
+                    stmt.setInt(i, limit)
+
+                    val rs = stmt.executeQuery()
+                    try {
+                        while (rs.next()) {
+                            val id = rs.getObject("pregunta_id")?.toString() ?: ""
+                            val tipoBanco = rs.getString("tipo_banco")
+                            val sector = rs.getString("sector")
+                            val nivel = rs.getString("nivel")
+                            val texto = rs.getString("texto")
+                            val pistas = rs.getString("pistas")
+                            val configRespuesta = rs.getString("config_respuesta")
+                            val activa = rs.getBoolean("activa")
+                            val fechaCreacion = rs.getTimestamp("fecha_creacion")?.toInstant()?.toString() ?: ""
+
+                            list.add(
+                                PreguntaDto(
+                                    preguntaId = id,
+                                    tipoBanco = tipoBanco,
+                                    sector = sector,
+                                    nivel = nivel,
+                                    texto = texto,
+                                    pistas = pistas,
+                                    configRespuesta = configRespuesta,
+                                    activa = activa,
+                                    fechaCreacion = fechaCreacion
+                                )
+                            )
+                        }
+                    } finally {
+                        try { rs.close() } catch (_: Exception) {}
+                    }
+                } finally {
+                    try { stmt.close() } catch (_: Exception) {}
                 }
 
                 list
