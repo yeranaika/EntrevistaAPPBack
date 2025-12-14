@@ -17,6 +17,9 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.*
@@ -30,6 +33,17 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+@Serializable
+private data class GetUltimoIntentoRes(
+    val pruebaId: String,
+    val intentoId: String,
+    val feedbackMode: String,
+    val puntaje: String? = null,
+    val feedbackGeneralV2: FeedbackGeneralV2? = null,
+    @SerialName("feedbackGeneralV2Raw")
+    val feedbackGeneralV2Raw: String? = null
+)
+
 fun Route.pruebaPracticaRespuestaRoutes(
     feedbackService: PracticeGlobalFeedbackService,
     suscripcionRepository: SuscripcionRepository
@@ -42,6 +56,87 @@ fun Route.pruebaPracticaRespuestaRoutes(
     }
 
     authenticate("auth-jwt") {
+
+        /**
+         * GET /api/prueba-practica/{pruebaId}/respuestas
+         * Devuelve el último intento del usuario (incluye feedback_general_v2).
+         */
+        get("/api/prueba-practica/{pruebaId}/respuestas") {
+            val pruebaIdPath = call.parameters["pruebaId"]
+                ?: return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Falta pruebaId en la URL")
+                )
+
+            val pruebaUuid = try {
+                UUID.fromString(pruebaIdPath)
+            } catch (_: IllegalArgumentException) {
+                return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "pruebaId no es un UUID válido")
+                )
+            }
+
+            val principal = call.principal<JWTPrincipal>()
+                ?: return@get call.respond(HttpStatusCode.Unauthorized)
+
+            val usuarioId = try {
+                UUID.fromString(principal.subject ?: "")
+            } catch (_: Exception) {
+                return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "subject del token no es un UUID válido")
+                )
+            }
+
+            val row = transaction {
+                IntentoPruebaTable
+                    .selectAll()
+                    .where {
+                        (IntentoPruebaTable.usuarioId eq usuarioId) and
+                            (IntentoPruebaTable.pruebaId eq pruebaUuid)
+                    }
+                    .orderBy(IntentoPruebaTable.creadoEn, SortOrder.DESC)
+                    .limit(1)
+                    .singleOrNull()
+            }
+
+            if (row == null) {
+                return@get call.respond(
+                    HttpStatusCode.NotFound,
+                    mapOf("error" to "No existe un intento para esta prueba y usuario")
+                )
+            }
+
+            val intentoId = row[IntentoPruebaTable.id].toString()
+            val puntaje = row[IntentoPruebaTable.puntaje]?.toString()
+            val recomendaciones = row[IntentoPruebaTable.recomendaciones]
+            val feedbackMode = if (recomendaciones?.startsWith("feedback_mode:ia") == true) "ia" else "nlp"
+
+            val feedbackJsonStr = row[IntentoPruebaTable.feedbackGeneralV2]
+
+            val feedbackGeneralV2: FeedbackGeneralV2? = runCatching {
+                if (feedbackJsonStr.isNullOrBlank()) null
+                else json.decodeFromString<FeedbackGeneralV2>(feedbackJsonStr)
+            }.getOrNull()
+
+            // ✅ IMPORTANTE: responder con DTO tipado (no Map mezclando String y FeedbackGeneralV2)
+            call.respond(
+                GetUltimoIntentoRes(
+                    pruebaId = pruebaIdPath,
+                    intentoId = intentoId,
+                    feedbackMode = feedbackMode,
+                    puntaje = puntaje,
+                    feedbackGeneralV2 = feedbackGeneralV2,
+                    feedbackGeneralV2Raw = feedbackJsonStr
+                )
+            )
+        }
+
+        /**
+         * POST /api/prueba-practica/{pruebaId}/respuestas
+         * Guarda intento + respuestas y (si aplica) genera feedback IA y lo persiste en JSONB.
+         */
         post("/api/prueba-practica/{pruebaId}/respuestas") {
             val pruebaIdPath = call.parameters["pruebaId"]
                 ?: return@post call.respond(
@@ -85,7 +180,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
             var detalleResultados: List<ResultadoPreguntaRes> = emptyList()
             var totalPreguntas = 0
             var correctas = 0
-
             val resultadosConTexto = mutableListOf<ResultadoPreguntaResConTexto>()
 
             val ahoraStr = OffsetDateTime.now()
@@ -96,7 +190,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
                 val respuestaUsuario: String?,
                 val correcta: Boolean
             )
-
             val respuestasAGuardar = mutableListOf<RespuestaAGuardar>()
 
             var iaUsosPrevios = 0
@@ -234,9 +327,6 @@ fun Route.pruebaPracticaRespuestaRoutes(
                     it[IntentoPruebaTable.recomendaciones] = "feedback_mode:$feedbackMode"
                     it[IntentoPruebaTable.creadoEn] = ahoraStr
                     it[IntentoPruebaTable.actualizadoEn] = ahoraStr
-
-                    // aunque tu Table lo mapee como text(), en BD es jsonb
-                    // aquí lo dejamos null; luego lo actualizamos con exec + cast
                     it[IntentoPruebaTable.feedbackGeneralV2] = null
                 }
 
@@ -266,10 +356,10 @@ fun Route.pruebaPracticaRespuestaRoutes(
                 val intentoIdParaUpdate = intentoUuid
                 if (intentoIdParaUpdate != null) {
                     val jsonStr = json.encodeToString(v2)
-                    // IMPORTANTE: escapar comillas simples para SQL literal
                     val safeJson = jsonStr.replace("'", "''")
 
                     transaction {
+                        // ✅ exec SIN genéricos (compatible con tu versión Exposed)
                         exec(
                             """
                             UPDATE app.intento_prueba
