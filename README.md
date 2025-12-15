@@ -22,7 +22,7 @@ Backend de práctica con **Ktor**.
 ./gradlew run
 
 # combinacion de comando comun 
-./gradlew --refresh-dependencies clean test run
+./gradlew --refresh-dependencies clean run
 gradle --refresh-dependencies clean run
 
 ```

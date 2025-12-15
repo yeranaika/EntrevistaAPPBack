@@ -8413,8 +8413,5 @@
             "config_evaluacion": "{\n    \"tipo_item\": \"open\",\n    \"nlp\": {\n        \"frases_clave_esperadas\": [\n            \"verificar conexiones físicas\",\n            \"configuración de IP\",\n            \"usar herramientas de diagnóstico\",\n            \"revisar dispositivos de red\"\n        ]\n    },\n    \"feedback_generico\": \"Se espera que describas un enfoque sistemático para resolver problemas de conectividad, incluyendo herramientas y pasos específicos.\"\n}",
             "fecha_creacion": "2025-12-14T19:27:39.1511586"
         }
-      },
-      "fecha_creacion": "2025-12-14T11:32:09-03:00"
-    }
   ]
 }
